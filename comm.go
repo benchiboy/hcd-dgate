@@ -1,5 +1,10 @@
 package main
 
+import (
+	"bytes"
+	"encoding/binary"
+)
+
 const ONLINE = "online"
 const GET_COLOPHON = "get_colophon"
 const GET_INSTLL_DATADRIVE = "get_install_datadrive"
@@ -19,6 +24,24 @@ const TYPE_RESULT = "result"
 const TYPE_RAW = "raw"
 const TYPE_LOG = "log"
 
+const HEAD_LEN = 6
+
+//整形转换成字节
+func IntToBytes(n int) []byte {
+	x := int32(n)
+	bytesBuffer := bytes.NewBuffer([]byte{})
+	binary.Write(bytesBuffer, binary.BigEndian, x)
+	return bytesBuffer.Bytes()
+}
+
+//字节转换成整形
+func BytesToInt(b []byte) int32 {
+	bytesBuffer := bytes.NewBuffer(b)
+	var x int32
+	binary.Read(bytesBuffer, binary.BigEndian, &x)
+	return int32(x)
+}
+
 /*
 	设备定义
 */
@@ -37,9 +60,17 @@ type Device struct {
 /*
 	在线命令定义
 */
+type Command struct {
+	Method string `json:"method"`
+}
+
+/*
+	在线命令定义
+*/
 type Online struct {
 	Method  string `json:"method"`
 	Gate    string `json:"gate"`
+	Sn      string `json:"sn"`
 	Ip      string `json:"ip"`
 	Dev_cnt string `json:"dev_cnt"`
 	Devices Device `json:"devices"`

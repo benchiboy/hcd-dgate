@@ -3,8 +3,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"encoding/binary"
 
 	//	"encoding/hex"
 	"encoding/json"
@@ -16,28 +14,119 @@ import (
 	"net"
 )
 
-//整形转换成字节
-func IntToBytes(n int) []byte {
-	x := int32(n)
-	bytesBuffer := bytes.NewBuffer([]byte{})
-	binary.Write(bytesBuffer, binary.BigEndian, x)
-	return bytesBuffer.Bytes()
+func Cmd_HeartBeat(conn *net.TCPConn, heart Heartbeat) {
+	fmt.Println("Cmd_HeartBeat======>", heart)
+	var heartResp HeartbeatResp
+	heartResp.Chip_id = heart.Chip_id
+	heartResp.Method = heart.Method
+	heartResp.Sn = heart.Sn
+	heartResp.Success = true
+	heartBuf, err := json.Marshal(&heartResp)
+	if err != nil {
+		fmt.Println(err)
+	}
+	len, err := conn.Write(heartBuf)
+	fmt.Println(len)
 }
 
-//字节转换成整形
-func BytesToInt(b []byte) int32 {
-	bytesBuffer := bytes.NewBuffer(b)
-	var x int32
-	binary.Read(bytesBuffer, binary.BigEndian, &x)
-
-	return int32(x)
+func Cmd_OnLine(conn *net.TCPConn, online Online) {
+	fmt.Println("Cmd_OnLine======>", online)
+	var onlineResp OnlineResp
+	onlineResp.Method = online.Method
+	onlineResp.Sn = online.Sn
+	onlineResp.Success = true
 }
 
-func ProcPacket(buf []byte) {
-	fmt.Println(string(buf))
-	var online Online
-	json.Unmarshal(buf, &online)
-	fmt.Println(online)
+func Cmd_GetColoPhon(conn *net.TCPConn, coloPhon GetColophon) {
+	fmt.Println("Cmd_HeartBeat======>", coloPhon)
+	var coloPhonResp GetColophonResp
+	coloPhonResp.Method = coloPhon.Method
+	coloPhonResp.Sn = coloPhon.Sn
+	coloPhonResp.Success = true
+}
+
+func Cmd_GetInstallDrive(conn *net.TCPConn, getInstDrive GetInstallDataDrive) {
+	fmt.Println("Cmd_GetColoPhon======>", getInstDrive)
+	var getInstDataDriveResp GetColophonResp
+	getInstDataDriveResp.Method = getInstDrive.Method
+	getInstDataDriveResp.Sn = getInstDrive.Sn
+	getInstDataDriveResp.Success = true
+
+}
+
+func Cmd_PostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive) {
+	fmt.Println("Cmd_PostInstallDrive======>", postInstDrive)
+	var postInstDataDriveResp GetColophonResp
+	postInstDataDriveResp.Method = postInstDrive.Method
+	postInstDataDriveResp.Sn = postInstDrive.Sn
+	postInstDataDriveResp.Success = true
+}
+
+func Cmd_GetFile(getFile GetFile) {
+	fmt.Println("Cmd_GetFile======>", getFile)
+}
+
+func Cmd_PostFileInfo(posFileInfo PostFileInfo) {
+	fmt.Println("Cmd_PostFileInfo======>", posFileInfo)
+}
+
+func Cmd_PostFile(postFile PostFile) {
+	fmt.Println("Cmd_PostFile======>", postFile)
+}
+func Cmd_PushFileInfo(pushFileInfo PushFileInfo) {
+	fmt.Println("Cmd_PushFileInfo======>", pushFileInfo)
+}
+
+func Cmd_PushFile(pushFile PushFile) {
+	fmt.Println("Cmd_PushFile======>", pushFile)
+}
+
+func ProcPacket(conn *net.TCPConn, packBuf []byte) {
+	var command Command
+	json.Unmarshal(packBuf, &command)
+	switch command.Method {
+	case HEARTBEAT:
+		var heart Heartbeat
+		json.Unmarshal(packBuf, &heart)
+		Cmd_HeartBeat(conn, heart)
+	case ONLINE:
+		var online Online
+		json.Unmarshal(packBuf, &online)
+		Cmd_OnLine(conn, online)
+	case GET_COLOPHON:
+		var coloPhon GetColophon
+		json.Unmarshal(packBuf, &coloPhon)
+		Cmd_GetColoPhon(conn, coloPhon)
+	case GET_INSTLL_DATADRIVE:
+		var getInstDrive GetInstallDataDrive
+		json.Unmarshal(packBuf, &getInstDrive)
+		Cmd_GetInstallDrive(conn, getInstDrive)
+	case POST_INSTLL_DATADRIVE:
+		var postInstDrive PostInstallDataDrive
+		json.Unmarshal(packBuf, &postInstDrive)
+		Cmd_PostInstallDrive(conn, postInstDrive)
+	case GET_FILE:
+		var getFile GetFile
+		json.Unmarshal(packBuf, &getFile)
+		Cmd_GetFile(getFile)
+	case POST_FILE_INFO:
+		var postFileInfo PostFileInfo
+		json.Unmarshal(packBuf, &postFileInfo)
+		Cmd_PostFileInfo(postFileInfo)
+	case POST_FILE:
+		var postFile PostFile
+		json.Unmarshal(packBuf, &postFile)
+		Cmd_PostFile(postFile)
+
+	case PUSH_FILE_INFO:
+		var pushFileInfo PushFileInfo
+		json.Unmarshal(packBuf, &pushFileInfo)
+		Cmd_PushFileInfo(pushFileInfo)
+	case PUSH_FILE:
+		var pushFile PushFile
+		json.Unmarshal(packBuf, &pushFile)
+		Cmd_PushFile(pushFile)
+	}
 }
 
 func tcpPipe(conn *net.TCPConn) {
@@ -53,20 +142,19 @@ func tcpPipe(conn *net.TCPConn) {
 		readBuf := make([]byte, 1024)
 		var nLen int
 		nLen, err := reader.Read(readBuf)
-		if err != nil {
+		fmt.Println("Recv Len==", nLen, string(readBuf[0:nLen]))
+		if err != nil || nLen <= 0 {
 			fmt.Println(err)
 			return
 		}
+		copy(packBuf[nSum:], readBuf[0:nLen])
 		nSum = nSum + int32(nLen)
-		if nSum < 10 {
-			copy(packBuf[nSum:], readBuf[0:nLen])
-			fmt.Println("<<6", string(packBuf), nSum)
+		if nSum < HEAD_LEN {
 			continue
 		}
-		fmt.Println(">6", string(packBuf), nSum)
 		packLen := BytesToInt(packBuf[2:6])
 		if nSum >= packLen {
-			ProcPacket(packBuf[0:packLen])
+			ProcPacket(conn, packBuf[6:packLen])
 			copy(packBuf, packBuf[nSum:])
 			nSum = nSum - packLen
 		}
@@ -100,4 +188,9 @@ func main() {
 		fmt.Println("A client connected : " + tcpConn.RemoteAddr().String())
 		go tcpPipe(tcpConn)
 	}
+	//	buf := []byte("123456789")
+	//	fmt.Println(string(buf))
+	//	copy(buf[0:], []byte("fffff"))
+	//	fmt.Println(string(buf))
+
 }
