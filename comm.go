@@ -3,13 +3,19 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+
+	"encoding/json"
+	"fmt"
+	"net"
+	"net/http"
 )
 
 const ONLINE = "online"
 const GET_COLOPHON = "get_colophon"
 const GET_INSTLL_DATADRIVE = "get_install_datadrive"
 const POST_INSTLL_DATADRIVE = "post_install_datadrive"
-const GET_FILE = "get_file"
+const GET_FILE_RESP = "get_file"
+const START_GET_FILE = "get_file"
 const POST_FILE_INFO = "post_file_info"
 const PUSH_FILE_INFO = "push_file_info"
 const PUSH_FILE = "push_file"
@@ -46,15 +52,15 @@ func BytesToInt(b []byte) int32 {
 	设备定义
 */
 type Device struct {
-	protocol      string `json:"protocol"`
-	device_series string `json:"device_series"`
-	device_name   string `json:"device_name"`
-	device_ver    string `json:"device_ver"`
-	hw_ver        string `json:"hw_ver"`
-	sw_ver        string `json:"sw_ver"`
-	sn            string `json:"sn"`
-	chip_id       string `json:"chip_id"`
-	device_time   string `json:"device_time"`
+	Potocol       string `json:"protocol"`
+	Device_series string `json:"device_series"`
+	Device_name   string `json:"device_name"`
+	Device_ver    string `json:"device_ver"`
+	Hw_ver        string `json:"hw_ver"`
+	Sw_ver        string `json:"sw_ver"`
+	Sn            string `json:"sn"`
+	Chip_id       string `json:"chip_id"`
+	Device_time   string `json:"device_time"`
 }
 
 /*
@@ -68,12 +74,11 @@ type Command struct {
 	在线命令定义
 */
 type Online struct {
-	Method  string `json:"method"`
-	Gate    string `json:"gate"`
-	Sn      string `json:"sn"`
-	Ip      string `json:"ip"`
-	Dev_cnt string `json:"dev_cnt"`
-	Devices Device `json:"devices"`
+	Method  string   `json:"method"`
+	Gate    string   `json:"gate"`
+	Ip      string   `json:"ip"`
+	Dev_cnt int      `json:"dev_cnt"`
+	Devices []Device `json:"devices"`
 }
 
 type OnlineResp struct {
@@ -141,13 +146,13 @@ type PostInstallDataDrive struct {
 	Datadrive   []Datadrive `json:"datadrive"`
 }
 
-type GetFile struct {
+type StartGetFile struct {
 	Method  string `json:"method"`
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
 	Type    string `json:"type"`
 	Range   string `json:"range"`
-	Count   string `json:"count"`
+	Count   int    `json:"count"`
 	From    string `json:"from"`
 	To      string `json:"to"`
 }
@@ -164,8 +169,8 @@ type GetFileResp struct {
 
 type File struct {
 	Name     string `json:"name"`
-	Length   string `json:"length"`
-	File_crc string `json:"file_crc"`
+	Length   int    `json:"length"`
+	File_crc int    `json:"file_crc"`
 }
 
 type PostFileInfo struct {
@@ -173,9 +178,9 @@ type PostFileInfo struct {
 	Sn                string `json:"sn"`
 	Chip_id           string `json:"chip_id"`
 	Type              string `json:"type"`
-	Total_file        string `json:"total_file"`
-	File_in_procesing string `json:"file_in_procesing"`
-	File              []File `json:"file"`
+	Total_file        int    `json:"total_file"`
+	File_in_procesing int    `json:"file_in_procesing"`
+	File              File   `json:"file"`
 }
 
 type PostFileInfoResp struct {
@@ -189,25 +194,25 @@ type PostFileInfoResp struct {
 }
 
 type Fragment struct {
-	Index    string `json:"index"`
-	Eof      string `json:"eof"`
-	Checksum string `json:"checksum"`
-	Length   string `json:"length"`
+	Index    int    `json:"index"`
+	Eof      bool   `json:"eof"`
+	Checksum uint32 `json:"checksum"`
+	Length   int    `json:"length"`
 	Source   string `json:"source"`
 }
 
 type PostFile struct {
-	Method   string     `json:"method"`
-	Sn       string     `json:"sn"`
-	Chip_id  string     `json:"chip_id"`
-	Fragment []Fragment `json:"fragment"`
+	Method   string   `json:"method"`
+	Sn       string   `json:"sn"`
+	Chip_id  string   `json:"chip_id"`
+	Fragment Fragment `json:"fragment"`
 }
 
 type PostFileResp struct {
 	Method  string `json:"method"`
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
-	Index   string `json:"index"`
+	Index   int    `json:"index"`
 	Success bool   `json:"success"`
 }
 
@@ -291,4 +296,60 @@ type HeartbeatResp struct {
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
 	Success bool   `json:"success"`
+}
+
+func GetFileControl(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("hello")
+
+	var getFile StartGetFile
+	getFile.Method = START_GET_FILE
+	getFile.Chip_id = "BJ4233245"
+	getFile.Sn = "011401K0500031"
+	getFile.Type = "result"
+	getFile.Range = "advanced"
+	getFile.Count = 0
+	getFile.From = "2017-02-02"
+	getFile.To = "2019-07-02"
+	c, ok := GConnMap.Load("0001")
+	if ok {
+		fmt.Println("load ok....")
+	}
+	getBuf, _ := json.Marshal(getFile)
+	conn, ret := c.(*net.TCPConn)
+	fmt.Println(conn)
+	if ret {
+
+		Send_Resp(conn, string(getBuf))
+		//conn.Write([]byte("helllo.................."))
+	} else {
+
+	}
+}
+
+func PushFileControl(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("hello")
+
+	var getFile StartGetFile
+	getFile.Method = START_GET_FILE
+	getFile.Chip_id = "BJ4233245"
+	getFile.Sn = "011401K0500031"
+	getFile.Type = "result"
+	getFile.Range = "advanced"
+	getFile.Count = 0
+	getFile.From = "2017-02-02"
+	getFile.To = "2019-07-02"
+	c, ok := GConnMap.Load("0001")
+	if ok {
+		fmt.Println("load ok....")
+	}
+	getBuf, _ := json.Marshal(getFile)
+	conn, ret := c.(*net.TCPConn)
+	fmt.Println(conn)
+	if ret {
+
+		Send_Resp(conn, string(getBuf))
+		//conn.Write([]byte("helllo.................."))
+	} else {
+
+	}
 }
