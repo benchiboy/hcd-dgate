@@ -6,6 +6,7 @@ import (
 
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 )
@@ -146,7 +147,7 @@ type PostInstallDataDrive struct {
 	Datadrive   []Datadrive `json:"datadrive"`
 }
 
-type StartGetFile struct {
+type GetFile struct {
 	Method  string `json:"method"`
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
@@ -298,10 +299,87 @@ type HeartbeatResp struct {
 	Success bool   `json:"success"`
 }
 
-func GetFileControl(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("hello")
+type BusiGetFile struct {
+	No      string `json:"no"`
+	Sn      string `json:"sn"`
+	Chip_id string `json:"chip_id"`
+	Type    string `json:"type"`
+	Range   string `json:"range"`
+	Count   int    `json:"count"`
+	From    string `json:"from"`
+	To      string `json:"to"`
+}
 
-	var getFile StartGetFile
+type BusiGetFileResp struct {
+	No        string `json:"no"`
+	ErrorCode string `json:"error_code"`
+	ErrorMsg  string `json:"error msg"`
+}
+
+type BusiGetColophon struct {
+	Sn      string `json:"sn"`
+	Chip_id string `json:"chip_id"`
+}
+
+type BusiGetColophonResp struct {
+	No        string `json:"no"`
+	ErrorCode string `json:"error_code"`
+	ErrorMsg  string `json:"error msg"`
+}
+
+type BusiGetDataDrive struct {
+	Sn      string `json:"sn"`
+	Chip_id string `json:"chip_id"`
+}
+
+type BusiGetDataDriveResp struct {
+	No        string `json:"no"`
+	ErrorCode string `json:"error_code"`
+	ErrorMsg  string `json:"error msg"`
+}
+
+/*
+	从设备获取文件的指令控制
+*/
+func GetFileControl(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("GetFileControl")
+	var busiFile BusiGetFile
+	reqBuf, err := ioutil.ReadAll(req.Body)
+	err = json.Unmarshal(reqBuf, &busiFile)
+	if err != nil {
+		fmt.Println("Unmarshal error")
+		return
+	}
+	defer req.Body.Close()
+	var getFile GetFile
+	getFile.Method = START_GET_FILE
+	getFile.Chip_id = busiFile.Chip_id
+	getFile.Sn = busiFile.Sn
+	getFile.Type = busiFile.Type
+	getFile.Range = busiFile.Range
+	getFile.Count = busiFile.Count
+	getFile.From = busiFile.From
+	getFile.To = busiFile.To
+	c, ok := GConnMap.Load(busiFile.Sn)
+	if ok {
+		fmt.Println("load ok....")
+	}
+	getBuf, _ := json.Marshal(getFile)
+	conn, ret := c.(*net.TCPConn)
+	if ret {
+		Send_Resp(conn, string(getBuf))
+	} else {
+	}
+	w.Write([]byte("ok"))
+}
+
+/*
+ 下发文件的到设备的指令控制
+*/
+
+func PushFileControl(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("hello")
+	var getFile GetFile
 	getFile.Method = START_GET_FILE
 	getFile.Chip_id = "BJ4233245"
 	getFile.Sn = "011401K0500031"
@@ -318,18 +396,19 @@ func GetFileControl(w http.ResponseWriter, req *http.Request) {
 	conn, ret := c.(*net.TCPConn)
 	fmt.Println(conn)
 	if ret {
-
 		Send_Resp(conn, string(getBuf))
-		//conn.Write([]byte("helllo.................."))
 	} else {
 
 	}
 }
 
-func PushFileControl(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("hello")
+/*
+	从设备获取版本记录的指令控制
+*/
 
-	var getFile StartGetFile
+func GetVerListControl(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("hello")
+	var getFile GetFile
 	getFile.Method = START_GET_FILE
 	getFile.Chip_id = "BJ4233245"
 	getFile.Sn = "011401K0500031"
@@ -346,9 +425,36 @@ func PushFileControl(w http.ResponseWriter, req *http.Request) {
 	conn, ret := c.(*net.TCPConn)
 	fmt.Println(conn)
 	if ret {
-
 		Send_Resp(conn, string(getBuf))
-		//conn.Write([]byte("helllo.................."))
+	} else {
+
+	}
+}
+
+/*
+	从设备获取已经安装芯片的指令控制
+*/
+
+func GetDataDriveControl(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("hello")
+	var getFile GetFile
+	getFile.Method = START_GET_FILE
+	getFile.Chip_id = "BJ4233245"
+	getFile.Sn = "011401K0500031"
+	getFile.Type = "result"
+	getFile.Range = "advanced"
+	getFile.Count = 0
+	getFile.From = "2017-02-02"
+	getFile.To = "2019-07-02"
+	c, ok := GConnMap.Load("0001")
+	if ok {
+		fmt.Println("load ok....")
+	}
+	getBuf, _ := json.Marshal(getFile)
+	conn, ret := c.(*net.TCPConn)
+	fmt.Println(conn)
+	if ret {
+		Send_Resp(conn, string(getBuf))
 	} else {
 
 	}
