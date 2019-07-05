@@ -266,10 +266,8 @@ func go_WebServer() {
 	}
 }
 func main() {
-
 	go go_WebServer()
 	fmt.Println(".................")
-
 	var tcpAddr *net.TCPAddr
 	tcpAddr, _ = net.ResolveTCPAddr("tcp", ":8089")
 	tcpListener, _ := net.ListenTCP("tcp", tcpAddr)
