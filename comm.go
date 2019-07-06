@@ -13,15 +13,30 @@ import (
 
 const ONLINE = "online"
 const GET_COLOPHON = "get_colophon"
+const GET_COLOPHON_RESP = "get_colophon"
 const GET_INSTLL_DATADRIVE = "get_install_datadrive"
+const GET_INSTLL_DATADRIVE_RESP = "get_install_datadrive"
+
 const POST_INSTLL_DATADRIVE = "post_install_datadrive"
+const POST_INSTLL_DATADRIVE_RESP = "post_install_datadrive"
+
+const GET_FILE = "get_file"
 const GET_FILE_RESP = "get_file"
-const START_GET_FILE = "get_file"
+
 const POST_FILE_INFO = "post_file_info"
-const PUSH_FILE_INFO = "push_file_info"
-const PUSH_FILE = "push_file"
+
+const POST_FILE_INFO_RESP = "post_file_info"
 const POST_FILE = "post_file"
+const POST_FILE_RESP = "post_file"
+
+const PUSH_FILE_INFO = "push_file_info"
+const PUSH_FILE_INFO_RESP = "push_file_info"
+const PUSH_FILE = "push_file"
+const PUSH_FILE_RESP = "push_file"
+
 const PUSH_INFO = "push_info"
+const PUSH_INFO_RESP = "push_info"
+
 const CHECK_UDATE = "check_update"
 const HEARTBEAT = "heartbeat"
 const TYPE_CHIP = "chip"
@@ -197,7 +212,7 @@ type PostFileInfoResp struct {
 type Fragment struct {
 	Index    int    `json:"index"`
 	Eof      bool   `json:"eof"`
-	Checksum uint32 `json:"checksum"`
+	Checksum int    `json:"checksum"`
 	Length   int    `json:"length"`
 	Source   string `json:"source"`
 }
@@ -238,17 +253,17 @@ type PushFileInfoResp struct {
 }
 
 type PushFile struct {
-	Method   string     `json:"method"`
-	Sn       string     `json:"sn"`
-	Chip_id  string     `json:"chip_id"`
-	Fragment []Fragment `json:"fragment"`
+	Method   string   `json:"method"`
+	Sn       string   `json:"sn"`
+	Chip_id  string   `json:"chip_id"`
+	Fragment Fragment `json:"fragment"`
 }
 
 type PushFileResp struct {
 	Method  string `json:"method"`
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
-	Index   string `json:"index"`
+	Index   int    `json:"index"`
 	Success bool   `json:"success"`
 }
 
@@ -299,6 +314,36 @@ type HeartbeatResp struct {
 	Success bool   `json:"success"`
 }
 
+type BusiPushFile struct {
+	No      string `json:"no"`
+	Sn      string `json:"sn"`
+	Chip_id string `json:"chip_id"`
+	Type    string `json:"type"`
+	Name    string `json:"type"`
+	Length  int    `json:"length"`
+}
+
+type BusiPushFileResp struct {
+	No        string `json:"no"`
+	ErrorCode string `json:"err_code"`
+	ErrorMsg  string `json:"err_msg"`
+}
+
+type BusiPushInfo struct {
+	No      string `json:"no"`
+	Sn      string `json:"sn"`
+	Chip_id string `json:"chip_id"`
+	Type    string `json:"type"`
+	Purpose string `json:"purpose"`
+	Info    string `json:"info"`
+}
+
+type BusiPushInfoResp struct {
+	No        string `json:"no"`
+	ErrorCode string `json:"err_code"`
+	ErrorMsg  string `json:"err_msg"`
+}
+
 type BusiGetFile struct {
 	No      string `json:"no"`
 	Sn      string `json:"sn"`
@@ -312,37 +357,53 @@ type BusiGetFile struct {
 
 type BusiGetFileResp struct {
 	No        string `json:"no"`
-	ErrorCode string `json:"error_code"`
-	ErrorMsg  string `json:"error msg"`
+	ErrorCode string `json:"err_code"`
+	ErrorMsg  string `json:"err_msg"`
 }
 
 type BusiGetColophon struct {
+	No      string `json:"no"`
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
 }
 
 type BusiGetColophonResp struct {
 	No        string `json:"no"`
-	ErrorCode string `json:"error_code"`
-	ErrorMsg  string `json:"error msg"`
+	ErrorCode string `json:"err_code"`
+	ErrorMsg  string `json:"err_msg"`
 }
 
 type BusiGetDataDrive struct {
+	No      string `json:"no"`
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
 }
 
 type BusiGetDataDriveResp struct {
 	No        string `json:"no"`
-	ErrorCode string `json:"error_code"`
-	ErrorMsg  string `json:"error msg"`
+	ErrorCode string `json:"err_code"`
+	ErrorMsg  string `json:"err msg"`
+}
+
+type BusiQueryStatus struct {
+	No   string `json:"sn"`
+	Type string `json:"type"`
+}
+
+type BusiQueryStatusResp struct {
+	No        string `json:"no"`
+	Status    string `json:"status"`
+	Duration  string `json:"duration"`
+	ErrorCode string `json:"err_code"`
+	ErrorMsg  string `json:"err_msg"`
 }
 
 /*
 	从设备获取文件的指令控制
 */
 func GetFileControl(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("GetFileControl")
+	fmt.Println("==========>GetFileControl==============")
+
 	var busiFile BusiGetFile
 	reqBuf, err := ioutil.ReadAll(req.Body)
 	err = json.Unmarshal(reqBuf, &busiFile)
@@ -350,9 +411,10 @@ func GetFileControl(w http.ResponseWriter, req *http.Request) {
 		fmt.Println("Unmarshal error")
 		return
 	}
+	fmt.Println(busiFile)
 	defer req.Body.Close()
 	var getFile GetFile
-	getFile.Method = START_GET_FILE
+	getFile.Method = GET_FILE
 	getFile.Chip_id = busiFile.Chip_id
 	getFile.Sn = busiFile.Sn
 	getFile.Type = busiFile.Type
@@ -378,28 +440,69 @@ func GetFileControl(w http.ResponseWriter, req *http.Request) {
 */
 
 func PushFileControl(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("hello")
-	var getFile GetFile
-	getFile.Method = START_GET_FILE
-	getFile.Chip_id = "BJ4233245"
-	getFile.Sn = "011401K0500031"
-	getFile.Type = "result"
-	getFile.Range = "advanced"
-	getFile.Count = 0
-	getFile.From = "2017-02-02"
-	getFile.To = "2019-07-02"
-	c, ok := GConnMap.Load("0001")
+	fmt.Println("============>PushFileControl===========>")
+	var pushFile BusiPushFile
+	reqBuf, err := ioutil.ReadAll(req.Body)
+	err = json.Unmarshal(reqBuf, &pushFile)
+	if err != nil {
+		fmt.Println("Unmarshal error")
+		return
+	}
+	fmt.Println(pushFile)
+	defer req.Body.Close()
+
+	var info PushFileInfo
+	info.Method = PUSH_FILE_INFO
+	info.Chip_id = pushFile.Chip_id
+	info.Sn = pushFile.Sn
+	info.Total_file = 1
+	info.Type = pushFile.Type
+	info.File = []File{{Name: pushFile.Name, Length: pushFile.Length, File_crc: 1000}}
+	c, ok := GConnMap.Load(info.Sn)
 	if ok {
 		fmt.Println("load ok....")
 	}
-	getBuf, _ := json.Marshal(getFile)
+	infoBuf, _ := json.Marshal(info)
 	conn, ret := c.(*net.TCPConn)
-	fmt.Println(conn)
 	if ret {
-		Send_Resp(conn, string(getBuf))
-	} else {
-
+		Send_Resp(conn, string(infoBuf))
 	}
+	w.Write([]byte("ok"))
+}
+
+/*
+ 下发文件的到设备的指令控制
+*/
+
+func PushInfoControl(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("============>PushInfoControl===========>")
+	var busiInfo BusiPushInfo
+	reqBuf, err := ioutil.ReadAll(req.Body)
+	err = json.Unmarshal(reqBuf, &busiInfo)
+	if err != nil {
+		fmt.Println("Unmarshal error")
+		return
+	}
+	fmt.Println(busiInfo)
+	defer req.Body.Close()
+
+	var info PushInfo
+	info.Method = PUSH_INFO
+	info.Chip_id = busiInfo.Chip_id
+	info.Sn = busiInfo.Sn
+	info.Purpose = busiInfo.Purpose
+	info.Type = busiInfo.Type
+	info.Info = busiInfo.Info
+	c, ok := GConnMap.Load(busiInfo.Sn)
+	if ok {
+		fmt.Println("load ok....")
+	}
+	infoBuf, _ := json.Marshal(info)
+	conn, ret := c.(*net.TCPConn)
+	if ret {
+		Send_Resp(conn, string(infoBuf))
+	}
+	w.Write([]byte("ok"))
 }
 
 /*
@@ -408,20 +511,26 @@ func PushFileControl(w http.ResponseWriter, req *http.Request) {
 
 func GetVerListControl(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("hello")
-	var getFile GetFile
-	getFile.Method = START_GET_FILE
-	getFile.Chip_id = "BJ4233245"
-	getFile.Sn = "011401K0500031"
-	getFile.Type = "result"
-	getFile.Range = "advanced"
-	getFile.Count = 0
-	getFile.From = "2017-02-02"
-	getFile.To = "2019-07-02"
-	c, ok := GConnMap.Load("0001")
+	var busiPhon BusiGetColophon
+	reqBuf, err := ioutil.ReadAll(req.Body)
+	err = json.Unmarshal(reqBuf, &busiPhon)
+	if err != nil {
+		fmt.Println("Unmarshal error")
+		return
+	}
+
+	fmt.Println(busiPhon)
+	defer req.Body.Close()
+	var getColoPhon GetColophon
+
+	getColoPhon.Method = GET_COLOPHON
+	getColoPhon.Chip_id = busiPhon.Chip_id
+	getColoPhon.Sn = busiPhon.Sn
+	c, ok := GConnMap.Load(busiPhon.Sn)
 	if ok {
 		fmt.Println("load ok....")
 	}
-	getBuf, _ := json.Marshal(getFile)
+	getBuf, _ := json.Marshal(getColoPhon)
 	conn, ret := c.(*net.TCPConn)
 	fmt.Println(conn)
 	if ret {
@@ -436,9 +545,41 @@ func GetVerListControl(w http.ResponseWriter, req *http.Request) {
 */
 
 func GetDataDriveControl(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("hello")
+	fmt.Println("==========>GetDataDriveControl==========>")
+	var busiDrive BusiGetDataDrive
+	reqBuf, err := ioutil.ReadAll(req.Body)
+	err = json.Unmarshal(reqBuf, &busiDrive)
+	if err != nil {
+		fmt.Println("Unmarshal error")
+		return
+	}
+	fmt.Println(busiDrive)
+	defer req.Body.Close()
+	c, ok := GConnMap.Load(busiDrive.Sn)
+	if ok {
+		fmt.Println("load ok....")
+	}
+	var dataDrive GetInstallDataDrive
+	dataDrive.Method = GET_INSTLL_DATADRIVE
+	dataDrive.Sn = busiDrive.Sn
+	dataDrive.Chip_id = busiDrive.Chip_id
+	getBuf, _ := json.Marshal(dataDrive)
+	conn, ret := c.(*net.TCPConn)
+	if ret {
+		Send_Resp(conn, string(getBuf))
+	} else {
+
+	}
+}
+
+/*
+	查询设备的指令状态
+*/
+
+func QueryStatusControl(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("QueryStatusControl")
 	var getFile GetFile
-	getFile.Method = START_GET_FILE
+	getFile.Method = GET_FILE
 	getFile.Chip_id = "BJ4233245"
 	getFile.Sn = "011401K0500031"
 	getFile.Type = "result"
