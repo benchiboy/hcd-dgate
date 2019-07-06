@@ -48,6 +48,9 @@ const TYPE_LOG = "log"
 
 const HEAD_LEN = 6
 
+const UPDATE_TIME = "update_time"
+const IS_ONLINE = "is_online"
+
 //整形转换成字节
 func IntToBytes(n int) []byte {
 	x := int32(n)

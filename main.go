@@ -6,12 +6,18 @@ import (
 
 	"encoding/hex"
 	"encoding/json"
+
 	"fmt"
 
+	"io"
 	"net"
 	"net/http"
 
+	"flag"
+	"hcd-dgate/service/dbcomm"
+	"hcd-dgate/service/device"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -40,7 +46,7 @@ func Send_Resp(conn *net.TCPConn, resp string) {
 	copy(head[2:], packLenBytes)
 	head = append(head, []byte(resp)...)
 	n, err := conn.Write([]byte(head))
-	fmt.Println("====>Send_Resp======>", n, string([]byte(head)), err)
+	log.Println("====>Send_Resp======>", n, string([]byte(head)), err)
 }
 
 /*
@@ -48,7 +54,7 @@ func Send_Resp(conn *net.TCPConn, resp string) {
 	1、更新当前设备连接的在线时间戳
 */
 func Cmd_HeartBeat(conn *net.TCPConn, heart Heartbeat) {
-	fmt.Println("Cmd_HeartBeat======>", heart)
+	log.Println("Cmd_HeartBeat======>", heart)
 	var heartResp HeartbeatResp
 	heartResp.Chip_id = heart.Chip_id
 	heartResp.Method = heart.Method
@@ -56,7 +62,7 @@ func Cmd_HeartBeat(conn *net.TCPConn, heart Heartbeat) {
 	heartResp.Success = true
 	heartBuf, err := json.Marshal(&heartResp)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	Send_Resp(conn, string(heartBuf))
 }
@@ -68,7 +74,7 @@ func Cmd_HeartBeat(conn *net.TCPConn, heart Heartbeat) {
 	3、更新数据库的在线状态
 */
 func Cmd_OnLine(conn *net.TCPConn, online Online) {
-	fmt.Println("Cmd_OnLine======>", online, time.Now())
+	PrintHead("Online")
 	var onlineResp OnlineResp
 	onlineResp.Method = online.Method
 	onlineResp.Sn = online.Devices[0].Sn
@@ -76,45 +82,67 @@ func Cmd_OnLine(conn *net.TCPConn, online Online) {
 	onlineResp.Chip_id = online.Devices[0].Chip_id
 	onlineBuf, err := json.Marshal(&onlineResp)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
+	}
+	//检测设备是否存在，如果不存在，插入；否则更新
+	r := device.New(dbcomm.GetDB(), device.DEBUG)
+	var search device.Search
+	search.Sn = onlineResp.Sn
+	if e, err := r.Get(search); err == nil {
+		onlineMap := map[string]interface{}{UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05"),
+			IS_ONLINE: 1}
+		err = r.UpdateMap(fmt.Sprintf("%d", e.Id), onlineMap, nil)
+		if err != nil {
+			log.Println("更新失败", err)
+		}
+
+	} else {
+		var e device.Device
+		e.Sn = online.Devices[0].Sn
+		e.ChipId = online.Devices[0].Chip_id
+		e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
+		r.InsertEntity(e, nil)
 	}
 	//存储客服端的链接
 	GConnMap.Store(online.Devices[0].Sn, conn)
 	Send_Resp(conn, string(onlineBuf))
 
+	PrintTail("Online")
 }
 
 func Cmd_GetColoPhonResp(conn *net.TCPConn, coloPhon GetColophon) {
-	fmt.Println("Cmd_GetColoPhonResp======>", coloPhon)
+	log.Println("Cmd_GetColoPhonResp======>", coloPhon)
 	var coloPhonResp GetColophonResp
 	coloPhonResp.Method = coloPhon.Method
 	coloPhonResp.Sn = coloPhon.Sn
 	coloPhonResp.Success = true
 }
 
-func Cmd_GetInstallDrive(conn *net.TCPConn, getInstDrive GetInstallDataDrive) {
-	fmt.Println("Cmd_GetColoPhon======>", getInstDrive)
-	var getInstDataDriveResp GetColophonResp
-	getInstDataDriveResp.Method = getInstDrive.Method
-	getInstDataDriveResp.Sn = getInstDrive.Sn
-	getInstDataDriveResp.Success = true
-
+func Cmd_GetInstallDriveResp(conn *net.TCPConn, getDriveResp GetInstallDataDriveResp) {
+	PrintHead("GetInstallDrive", getDriveResp)
+	PrintTail("GetInstallDrive")
 }
 
 func Cmd_PostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive) {
-	fmt.Println("Cmd_PostInstallDrive======>", postInstDrive)
-	var postInstDataDriveResp GetColophonResp
-	postInstDataDriveResp.Method = postInstDrive.Method
-	postInstDataDriveResp.Sn = postInstDrive.Sn
-	postInstDataDriveResp.Success = true
+	PrintHead("PostDataDrive")
+	var driveResp PostInstallDataDriveResp
+	driveResp.Method = postInstDrive.Method
+	driveResp.Sn = postInstDrive.Sn
+	driveResp.Success = true
+	respBuf, err := json.Marshal(&driveResp)
+	if err != nil {
+		log.Println(err)
+	}
+	Send_Resp(conn, string(respBuf))
+	PrintTail("PostDataDrive")
 }
 
 func Cmd_GetFileResp(getFileResp GetFileResp) {
-	fmt.Println("Cmd_GetFileResp======>", getFileResp)
+	log.Println("Cmd_GetFileResp======>", getFileResp)
 }
 
 func Cmd_PostFileInfo(conn *net.TCPConn, posFileInfo PostFileInfo) {
-	fmt.Println("Cmd_PostFileInfo======>", posFileInfo)
+	log.Println("Cmd_PostFileInfo======>", posFileInfo)
 	var infoResp PostFileInfoResp
 	infoResp.Method = posFileInfo.Method
 	infoResp.Sn = posFileInfo.Sn
@@ -124,22 +152,22 @@ func Cmd_PostFileInfo(conn *net.TCPConn, posFileInfo PostFileInfo) {
 	infoResp.Total_file = posFileInfo.Total_file
 	infoBuf, err := json.Marshal(&infoResp)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	Send_Resp(conn, string(infoBuf))
 }
 
 func Cmd_PostFile(conn *net.TCPConn, postFile PostFile) {
-	fmt.Println("Cmd_PostFile======>", postFile)
+	log.Println("Cmd_PostFile======>", postFile)
 	fileBuf, err := hex.DecodeString(postFile.Fragment.Source)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	crcCode := softwareCrc32([]byte(fileBuf), len(fileBuf))
-	fmt.Println("crc code==>", crcCode)
+	log.Println("crc code==>", crcCode)
 
 	if postFile.Fragment.Checksum != crcCode {
-		fmt.Println("CRC CHECK ERROR")
+		log.Println("CRC CHECK ERROR")
 	}
 	var fResp PostFileResp
 	fResp.Method = postFile.Method
@@ -148,7 +176,7 @@ func Cmd_PostFile(conn *net.TCPConn, postFile PostFile) {
 	fResp.Chip_id = postFile.Chip_id
 	fBuf, err := json.Marshal(&fResp)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	Send_Resp(conn, string(fBuf))
 }
@@ -158,7 +186,7 @@ func Cmd_PostFile(conn *net.TCPConn, postFile PostFile) {
 */
 func Cmd_PushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
 
-	fmt.Println("Cmd_PushFileInfoResp======>", infoResp)
+	log.Println("Cmd_PushFileInfoResp======>", infoResp)
 	//开始发送文件内容
 	var pushFile PushFile
 	pushFile.Chip_id = infoResp.Chip_id
@@ -171,7 +199,7 @@ func Cmd_PushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
 	pushFile.Fragment.Checksum = 1000000
 	fBuf, err := json.Marshal(&pushFile)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	Send_Resp(conn, string(fBuf))
 }
@@ -180,7 +208,7 @@ func Cmd_PushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
 	接收客户端发来的PUSH文件确认
 */
 func Cmd_PushFileResp(conn *net.TCPConn, fileResp PushFileResp) {
-	fmt.Println("Cmd_PushFilResp======>", fileResp)
+	log.Println("Cmd_PushFilResp======>", fileResp)
 
 }
 
@@ -188,7 +216,7 @@ func Cmd_PushFileResp(conn *net.TCPConn, fileResp PushFileResp) {
 	接收客户端发来的PUSH文件确认
 */
 func Cmd_PushInfoResp(conn *net.TCPConn, infoResp PushInfoResp) {
-	fmt.Println("Cmd_PushInfoResp======>", infoResp)
+	log.Println("Cmd_PushInfoResp======>", infoResp)
 
 }
 
@@ -202,32 +230,33 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) {
 		Cmd_HeartBeat(conn, heart)
 	case ONLINE:
 		var online Online
-		err := json.Unmarshal(packBuf, &online)
-		if err != nil {
-			fmt.Println(err)
+		if err := json.Unmarshal(packBuf, &online); err != nil {
+			log.Println(err)
 		}
-		fmt.Println("online===", conn)
 		Cmd_OnLine(conn, online)
 	case GET_COLOPHON_RESP:
 		var coloPhon GetColophon
-		json.Unmarshal(packBuf, &coloPhon)
+		if err := json.Unmarshal(packBuf, &coloPhon); err != nil {
+			log.Println(err)
+		}
 		Cmd_GetColoPhonResp(conn, coloPhon)
-
 	case GET_INSTLL_DATADRIVE_RESP:
-		var getInstDrive GetInstallDataDrive
-		json.Unmarshal(packBuf, &getInstDrive)
-		Cmd_GetInstallDrive(conn, getInstDrive)
-
+		var getInstDrive GetInstallDataDriveResp
+		if err := json.Unmarshal(packBuf, &getInstDrive); err != nil {
+			log.Println(err)
+		}
+		Cmd_GetInstallDriveResp(conn, getInstDrive)
 	case POST_INSTLL_DATADRIVE:
 		var postInstDrive PostInstallDataDrive
-		json.Unmarshal(packBuf, &postInstDrive)
+		if err := json.Unmarshal(packBuf, &postInstDrive); err != nil {
+			log.Println(err)
+		}
 		Cmd_PostInstallDrive(conn, postInstDrive)
-
 	case GET_FILE_RESP:
 		var getFileResp GetFileResp
 		err := json.Unmarshal(packBuf, &getFileResp)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		Cmd_GetFileResp(getFileResp)
 
@@ -235,7 +264,7 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) {
 		var postFileInfo PostFileInfo
 		err := json.Unmarshal(packBuf, &postFileInfo)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		Cmd_PostFileInfo(conn, postFileInfo)
 	case POST_FILE:
@@ -263,7 +292,7 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) {
 func tcpPipe(conn *net.TCPConn) {
 	ipStr := conn.RemoteAddr().String()
 	defer func() {
-		fmt.Println("disconnected :" + ipStr)
+		log.Println("disconnected :" + ipStr)
 		conn.Close()
 	}()
 
@@ -274,9 +303,9 @@ func tcpPipe(conn *net.TCPConn) {
 		readBuf := make([]byte, 1024)
 		var nLen int
 		nLen, err := reader.Read(readBuf)
-		fmt.Println("Recv Len==", nLen, string(readBuf[0:nLen]))
+		log.Println("Recv Len==", nLen, string(readBuf[0:nLen]))
 		if err != nil || nLen <= 0 {
-			fmt.Println(err)
+			log.Println(err)
 			return
 		}
 		copy(packBuf[nSum:], readBuf[0:nLen])
@@ -286,12 +315,12 @@ func tcpPipe(conn *net.TCPConn) {
 		}
 		for {
 			packLen := BytesToInt(packBuf[2:6])
-			fmt.Println("Packet Len===>", packLen)
+			log.Println("Packet Len===>", packLen)
 			if nSum >= packLen {
 				ProcPacket(conn, packBuf[6:packLen])
 				nSum = nSum - packLen
 
-				fmt.Println("nSum===>", nSum)
+				log.Println("nSum===>", nSum)
 				if nSum > 0 {
 					copy(packBuf, packBuf[packLen:])
 				}
@@ -303,7 +332,7 @@ func tcpPipe(conn *net.TCPConn) {
 }
 
 func go_WebServer() {
-	fmt.Println("........HttpServer start.........")
+	log.Println("........HttpServer start.........")
 	http.HandleFunc("/dgate/busiGetFile", GetFileControl)
 	http.HandleFunc("/dgate/busiPushFile", PushFileControl)
 	http.HandleFunc("/dgate/busiGetVersions", GetVerListControl)
@@ -315,7 +344,7 @@ func go_WebServer() {
 		Addr: ":7088",
 	}
 	if err := http_srv.ListenAndServe(); err != nil {
-		fmt.Printf("listen: %s\n", err)
+		log.Printf("listen: %s\n", err)
 	}
 }
 
@@ -340,13 +369,17 @@ func init() {
 	c.Get("/config/LISTEN_PORT", &listenPort)
 	c.Get("/config/DB_URL", &dbUrl)
 	c.Get("/config/CCDB_URL", &ccdbUrl)
-
 	c.Get("/config/OPEN_CONNS", &openConns)
 	c.Get("/config/IDLE_CONNS", &idleConns)
 
 }
 
 func main() {
+
+	dbcomm.InitDB(dbUrl, ccdbUrl, idleConns, openConns)
+	log.Println("MicroPoint Device Gate Starting....")
+	log.Println("	V0.1    ")
+
 	go go_WebServer()
 	var tcpAddr *net.TCPAddr
 	tcpAddr, _ = net.ResolveTCPAddr("tcp", ":8089")
@@ -357,7 +390,7 @@ func main() {
 		if err != nil {
 			continue
 		}
-		fmt.Println("A client connected : " + tcpConn.RemoteAddr().String())
+		log.Println("A client connected : " + tcpConn.RemoteAddr().String())
 		go tcpPipe(tcpConn)
 	}
 
