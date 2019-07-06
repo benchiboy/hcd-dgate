@@ -3,7 +3,7 @@ package dfiles
 import (
 	"database/sql"
 	"fmt"
-
+	"hcd-gate/service/pubtype"
 	"log"
 	"strings"
 	"time"
@@ -31,6 +31,8 @@ type Search struct {
 	FileName    string `json:"file_name"`
 	FileUrl     string `json:"file_url"`
 	RawFileUrls string `json:"raw_file_urls"`
+	FileCrc32   int    `json:"file_crc32"`
+	FileLength  int    `json:"file_length"`
 	FileStatus  int64  `json:"file_status"`
 	CreateTime  string `json:"create_time"`
 	CreateBy    int64  `json:"create_by"`
@@ -42,14 +44,14 @@ type Search struct {
 	SortFld     string `json:"sort_fld"`
 }
 
-type filesList struct {
-	DB     *sql.DB
-	Level  int
-	Total  int     `json:"total"`
-	filess []files `json:"files"`
+type DFilesList struct {
+	DB      *sql.DB
+	Level   int
+	Total   int      `json:"total"`
+	DFiless []DFiles `json:"DFiles"`
 }
 
-type files struct {
+type DFiles struct {
 	Id          int64  `json:"id"`
 	Sn          string `json:"sn"`
 	FileType    string `json:"file_type"`
@@ -58,6 +60,8 @@ type files struct {
 	FileName    string `json:"file_name"`
 	FileUrl     string `json:"file_url"`
 	RawFileUrls string `json:"raw_file_urls"`
+	FileCrc32   int    `json:"file_crc32"`
+	FileLength  int    `json:"file_length"`
 	FileStatus  int64  `json:"file_status"`
 	CreateTime  string `json:"create_time"`
 	CreateBy    int64  `json:"create_by"`
@@ -66,7 +70,7 @@ type files struct {
 }
 
 type Form struct {
-	Form files `json:"files"`
+	Form DFiles `json:"DFiles"`
 }
 
 /*
@@ -75,12 +79,12 @@ type Form struct {
 	出参：实例对象
 */
 
-func New(db *sql.DB, level int) *filesList {
+func New(db *sql.DB, level int) *DFilesList {
 	if db == nil {
 		log.Println(SQL_SELECT, "Database is nil")
 		return nil
 	}
-	return &filesList{DB: db, Total: 0, filess: make([]files, 0), Level: level}
+	return &DFilesList{DB: db, Total: 0, DFiless: make([]DFiles, 0), Level: level}
 }
 
 /*
@@ -89,7 +93,7 @@ func New(db *sql.DB, level int) *filesList {
 	出参：实例对象
 */
 
-func NewUrl(url string, level int) *filesList {
+func NewUrl(url string, level int) *DFilesList {
 	var err error
 	db, err := sql.Open("mysql", url)
 	if err != nil {
@@ -100,7 +104,7 @@ func NewUrl(url string, level int) *filesList {
 		log.Println(SQL_SELECT, "Ping database error:", err)
 		return nil
 	}
-	return &filesList{DB: db, Total: 0, filess: make([]files, 0), Level: level}
+	return &DFilesList{DB: db, Total: 0, DFiless: make([]DFiles, 0), Level: level}
 }
 
 /*
@@ -109,7 +113,7 @@ func NewUrl(url string, level int) *filesList {
 	出参：参数1：返回符合条件的总条件, 参数2：如果错误返回错误对象
 */
 
-func (r *filesList) GetTotal(s Search) (int, error) {
+func (r *DFilesList) GetTotal(s Search) (int, error) {
 	var where string
 	l := time.Now()
 
@@ -143,6 +147,14 @@ func (r *filesList) GetTotal(s Search) (int, error) {
 
 	if s.RawFileUrls != "" {
 		where += " and raw_file_urls='" + s.RawFileUrls + "'"
+	}
+
+	if s.FileCrc32 != 0 {
+		where += " and file_crc32=" + fmt.Sprintf("%d", s.FileCrc32)
+	}
+
+	if s.FileLength != 0 {
+		where += " and file_length=" + fmt.Sprintf("%d", s.FileLength)
 	}
 
 	if s.FileStatus != 0 {
@@ -195,7 +207,7 @@ func (r *filesList) GetTotal(s Search) (int, error) {
 	出参：参数1：返回符合条件的对象, 参数2：如果错误返回错误对象
 */
 
-func (r filesList) Get(s Search) (*files, error) {
+func (r DFilesList) Get(s Search) (*DFiles, error) {
 	var where string
 	l := time.Now()
 
@@ -229,6 +241,14 @@ func (r filesList) Get(s Search) (*files, error) {
 
 	if s.RawFileUrls != "" {
 		where += " and raw_file_urls='" + s.RawFileUrls + "'"
+	}
+
+	if s.FileCrc32 != 0 {
+		where += " and file_crc32=" + fmt.Sprintf("%d", s.FileCrc32)
+	}
+
+	if s.FileLength != 0 {
+		where += " and file_length=" + fmt.Sprintf("%d", s.FileLength)
 	}
 
 	if s.FileStatus != 0 {
@@ -255,7 +275,7 @@ func (r filesList) Get(s Search) (*files, error) {
 		where += s.ExtraWhere
 	}
 
-	qrySql := fmt.Sprintf("Select id,sn,file_type,begin_time,end_time,file_name,file_url,raw_file_urls,file_status,create_time,create_by,update_time,update_by, from lk_device_files where 1=1 %s ", where)
+	qrySql := fmt.Sprintf("Select id,sn,file_type,begin_time,end_time,file_name,file_url,raw_file_urls,file_crc32,file_length,file_status,create_time,create_by,update_time,update_by, from lk_device_files where 1=1 %s ", where)
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
 	}
@@ -266,11 +286,11 @@ func (r filesList) Get(s Search) (*files, error) {
 	}
 	defer rows.Close()
 
-	var p files
+	var p DFiles
 	if !rows.Next() {
 		return nil, fmt.Errorf("Not Finded Record")
 	} else {
-		err := rows.Scan(&p.Id, &p.Sn, &p.FileType, &p.BeginTime, &p.EndTime, &p.FileName, &p.FileUrl, &p.RawFileUrls, &p.FileStatus, &p.CreateTime, &p.CreateBy, &p.UpdateTime, &p.UpdateBy)
+		err := rows.Scan(&p.Id, &p.Sn, &p.FileType, &p.BeginTime, &p.EndTime, &p.FileName, &p.FileUrl, &p.RawFileUrls, &p.FileCrc32, &p.FileLength, &p.FileStatus, &p.CreateTime, &p.CreateBy, &p.UpdateTime, &p.UpdateBy)
 		if err != nil {
 			log.Println(SQL_ERROR, err.Error())
 			return nil, err
@@ -289,7 +309,7 @@ func (r filesList) Get(s Search) (*files, error) {
 	出参：参数1：返回符合条件的对象列表, 参数2：如果错误返回错误对象
 */
 
-func (r *filesList) GetList(s Search) ([]files, error) {
+func (r *DFilesList) GetList(s Search) ([]DFiles, error) {
 	var where string
 	l := time.Now()
 
@@ -323,6 +343,14 @@ func (r *filesList) GetList(s Search) ([]files, error) {
 
 	if s.RawFileUrls != "" {
 		where += " and raw_file_urls='" + s.RawFileUrls + "'"
+	}
+
+	if s.FileCrc32 != 0 {
+		where += " and file_crc32=" + fmt.Sprintf("%d", s.FileCrc32)
+	}
+
+	if s.FileLength != 0 {
+		where += " and file_length=" + fmt.Sprintf("%d", s.FileLength)
 	}
 
 	if s.FileStatus != 0 {
@@ -351,9 +379,9 @@ func (r *filesList) GetList(s Search) ([]files, error) {
 
 	var qrySql string
 	if s.PageSize == 0 && s.PageNo == 0 {
-		qrySql = fmt.Sprintf("Select id,sn,file_type,begin_time,end_time,file_name,file_url,raw_file_urls,file_status,create_time,create_by,update_time,update_by, from lk_device_files where 1=1 %s", where)
+		qrySql = fmt.Sprintf("Select id,sn,file_type,begin_time,end_time,file_name,file_url,raw_file_urls,file_crc32,file_length,file_status,create_time,create_by,update_time,update_by, from lk_device_files where 1=1 %s", where)
 	} else {
-		qrySql = fmt.Sprintf("Select id,sn,file_type,begin_time,end_time,file_name,file_url,raw_file_urls,file_status,create_time,create_by,update_time,update_by, from lk_device_files where 1=1 %s Limit %d offset %d", where, s.PageSize, (s.PageNo-1)*s.PageSize)
+		qrySql = fmt.Sprintf("Select id,sn,file_type,begin_time,end_time,file_name,file_url,raw_file_urls,file_crc32,file_length,file_status,create_time,create_by,update_time,update_by, from lk_device_files where 1=1 %s Limit %d offset %d", where, s.PageSize, (s.PageNo-1)*s.PageSize)
 	}
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
@@ -365,25 +393,25 @@ func (r *filesList) GetList(s Search) ([]files, error) {
 	}
 	defer rows.Close()
 
-	var p files
+	var p DFiles
 	for rows.Next() {
-		rows.Scan(&p.Id, &p.Sn, &p.FileType, &p.BeginTime, &p.EndTime, &p.FileName, &p.FileUrl, &p.RawFileUrls, &p.FileStatus, &p.CreateTime, &p.CreateBy, &p.UpdateTime, &p.UpdateBy)
-		r.filess = append(r.filess, p)
+		rows.Scan(&p.Id, &p.Sn, &p.FileType, &p.BeginTime, &p.EndTime, &p.FileName, &p.FileUrl, &p.RawFileUrls, &p.FileCrc32, &p.FileLength, &p.FileStatus, &p.CreateTime, &p.CreateBy, &p.UpdateTime, &p.UpdateBy)
+		r.DFiless = append(r.DFiless, p)
 	}
 	log.Println(SQL_ELAPSED, r)
 	if r.Level == DEBUG {
 		log.Println(SQL_ELAPSED, time.Since(l))
 	}
-	return r.filess, nil
+	return r.DFiless, nil
 }
 
 /*
-	说明：根据主键查询符合条件的记录，并保持成MAP
+	说明：根据条件查询复核条件对象列表，支持分页查询
 	入参：s: 查询条件
-	出参：参数1：返回符合条件的对象, 参数2：如果错误返回错误对象
+	出参：参数1：返回符合条件的对象列表, 参数2：如果错误返回错误对象
 */
 
-func (r *filesList) GetExt(s Search) (map[string]string, error) {
+func (r *DFilesList) GetListExt(s Search, fList []string) ([][]pubtype.Data, error) {
 	var where string
 	l := time.Now()
 
@@ -419,6 +447,14 @@ func (r *filesList) GetExt(s Search) (map[string]string, error) {
 		where += " and raw_file_urls='" + s.RawFileUrls + "'"
 	}
 
+	if s.FileCrc32 != 0 {
+		where += " and file_crc32=" + fmt.Sprintf("%d", s.FileCrc32)
+	}
+
+	if s.FileLength != 0 {
+		where += " and file_length=" + fmt.Sprintf("%d", s.FileLength)
+	}
+
 	if s.FileStatus != 0 {
 		where += " and file_status=" + fmt.Sprintf("%d", s.FileStatus)
 	}
@@ -439,7 +475,137 @@ func (r *filesList) GetExt(s Search) (map[string]string, error) {
 		where += " and update_by=" + fmt.Sprintf("%d", s.UpdateBy)
 	}
 
-	qrySql := fmt.Sprintf("Select id,sn,file_type,begin_time,end_time,file_name,file_url,raw_file_urls,file_status,create_time,create_by,update_time,update_by, from lk_device_files where 1=1 %s ", where)
+	if s.ExtraWhere != "" {
+		where += s.ExtraWhere
+	}
+
+	colNames := ""
+	for _, v := range fList {
+		colNames += v + ","
+
+	}
+	colNames = strings.TrimRight(colNames, ",")
+
+	var qrySql string
+	if s.PageSize == 0 && s.PageNo == 0 {
+		qrySql = fmt.Sprintf("Select %s from lk_device_files where 1=1 %s", colNames, where)
+	} else {
+		qrySql = fmt.Sprintf("Select %s from lk_device_files where 1=1 %s Limit %d offset %d", colNames, where, s.PageSize, (s.PageNo-1)*s.PageSize)
+	}
+	if r.Level == DEBUG {
+		log.Println(SQL_SELECT, qrySql)
+	}
+	rows, err := r.DB.Query(qrySql)
+	if err != nil {
+		log.Println(SQL_ERROR, err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	Columns, _ := rows.Columns()
+	values := make([]sql.RawBytes, len(Columns))
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+
+	rowData := make([][]pubtype.Data, 0)
+	for rows.Next() {
+		err = rows.Scan(scanArgs...)
+		colData := make([]pubtype.Data, 0)
+		for k, _ := range values {
+			d := new(pubtype.Data)
+			d.FieldName = Columns[k]
+			d.FieldValue = string(values[k])
+			colData = append(colData, *d)
+		}
+		//extra flow_batch_id
+		d2 := new(pubtype.Data)
+		d2.FieldName = "flow_batch_id"
+		d2.FieldValue = string(values[0])
+		colData = append(colData, *d2)
+
+		rowData = append(rowData, colData)
+	}
+
+	log.Println(SQL_ELAPSED, "==========>>>>>>>>>>>", rowData)
+	if r.Level == DEBUG {
+		log.Println(SQL_ELAPSED, time.Since(l))
+	}
+	return rowData, nil
+}
+
+/*
+	说明：根据主键查询符合条件的记录，并保持成MAP
+	入参：s: 查询条件
+	出参：参数1：返回符合条件的对象, 参数2：如果错误返回错误对象
+*/
+
+func (r *DFilesList) GetExt(s Search) (map[string]string, error) {
+	var where string
+	l := time.Now()
+
+	if s.Id != 0 {
+		where += " and id=" + fmt.Sprintf("%d", s.Id)
+	}
+
+	if s.Sn != "" {
+		where += " and sn='" + s.Sn + "'"
+	}
+
+	if s.FileType != "" {
+		where += " and file_type='" + s.FileType + "'"
+	}
+
+	if s.BeginTime != "" {
+		where += " and begin_time='" + s.BeginTime + "'"
+	}
+
+	if s.EndTime != "" {
+		where += " and end_time='" + s.EndTime + "'"
+	}
+
+	if s.FileName != "" {
+		where += " and file_name='" + s.FileName + "'"
+	}
+
+	if s.FileUrl != "" {
+		where += " and file_url='" + s.FileUrl + "'"
+	}
+
+	if s.RawFileUrls != "" {
+		where += " and raw_file_urls='" + s.RawFileUrls + "'"
+	}
+
+	if s.FileCrc32 != 0 {
+		where += " and file_crc32=" + fmt.Sprintf("%d", s.FileCrc32)
+	}
+
+	if s.FileLength != 0 {
+		where += " and file_length=" + fmt.Sprintf("%d", s.FileLength)
+	}
+
+	if s.FileStatus != 0 {
+		where += " and file_status=" + fmt.Sprintf("%d", s.FileStatus)
+	}
+
+	if s.CreateTime != "" {
+		where += " and create_time='" + s.CreateTime + "'"
+	}
+
+	if s.CreateBy != 0 {
+		where += " and create_by=" + fmt.Sprintf("%d", s.CreateBy)
+	}
+
+	if s.UpdateTime != "" {
+		where += " and update_time='" + s.UpdateTime + "'"
+	}
+
+	if s.UpdateBy != 0 {
+		where += " and update_by=" + fmt.Sprintf("%d", s.UpdateBy)
+	}
+
+	qrySql := fmt.Sprintf("Select id,sn,file_type,begin_time,end_time,file_name,file_url,raw_file_urls,file_crc32,file_length,file_status,create_time,create_by,update_time,update_by, from lk_device_files where 1=1 %s ", where)
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
 	}
@@ -483,13 +649,13 @@ func (r *filesList) GetExt(s Search) (map[string]string, error) {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r filesList) Insert(p files) error {
+func (r DFilesList) Insert(p DFiles) error {
 	l := time.Now()
-	exeSql := fmt.Sprintf("Insert into  lk_device_files(sn,file_type,begin_time,end_time,file_name,file_url,raw_file_urls,file_status,create_time,create_by,update_by,)  values(?,?,?,?,?,?,?,?,?,?,?,?,?,)")
+	exeSql := fmt.Sprintf("Insert into  lk_device_files(sn,file_type,begin_time,end_time,file_name,file_url,raw_file_urls,file_crc32,file_length,file_status,create_time,create_by,update_by,)  values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,)")
 	if r.Level == DEBUG {
 		log.Println(SQL_INSERT, exeSql)
 	}
-	_, err := r.DB.Exec(exeSql, p.Sn, p.FileType, p.BeginTime, p.EndTime, p.FileName, p.FileUrl, p.RawFileUrls, p.FileStatus, p.CreateTime, p.CreateBy, p.UpdateBy)
+	_, err := r.DB.Exec(exeSql, p.Sn, p.FileType, p.BeginTime, p.EndTime, p.FileName, p.FileUrl, p.RawFileUrls, p.FileCrc32, p.FileLength, p.FileStatus, p.CreateTime, p.CreateBy, p.UpdateBy)
 	if err != nil {
 		log.Println(SQL_ERROR, err.Error())
 		return err
@@ -506,7 +672,7 @@ func (r filesList) Insert(p files) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r filesList) InsertEntity(p files, tr *sql.Tx) error {
+func (r DFilesList) InsertEntity(p DFiles, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames, colTags string
 	valSlice := make([]interface{}, 0)
@@ -551,6 +717,18 @@ func (r filesList) InsertEntity(p files, tr *sql.Tx) error {
 		colNames += "raw_file_urls,"
 		colTags += "?,"
 		valSlice = append(valSlice, p.RawFileUrls)
+	}
+
+	if p.FileCrc32 != 0 {
+		colNames += "file_crc32,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.FileCrc32)
+	}
+
+	if p.FileLength != 0 {
+		colNames += "file_length,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.FileLength)
 	}
 
 	if p.FileStatus != 0 {
@@ -621,7 +799,7 @@ func (r filesList) InsertEntity(p files, tr *sql.Tx) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r filesList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
+func (r DFilesList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames, colTags string
 	valSlice := make([]interface{}, 0)
@@ -676,7 +854,7 @@ func (r filesList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r filesList) UpdataEntity(keyNo string, p files, tr *sql.Tx) error {
+func (r DFilesList) UpdataEntity(keyNo string, p DFiles, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames string
 	valSlice := make([]interface{}, 0)
@@ -726,6 +904,16 @@ func (r filesList) UpdataEntity(keyNo string, p files, tr *sql.Tx) error {
 		colNames += "raw_file_urls=?,"
 
 		valSlice = append(valSlice, p.RawFileUrls)
+	}
+
+	if p.FileCrc32 != 0 {
+		colNames += "file_crc32=?,"
+		valSlice = append(valSlice, p.FileCrc32)
+	}
+
+	if p.FileLength != 0 {
+		colNames += "file_length=?,"
+		valSlice = append(valSlice, p.FileLength)
 	}
 
 	if p.FileStatus != 0 {
@@ -801,7 +989,7 @@ func (r filesList) UpdataEntity(keyNo string, p files, tr *sql.Tx) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r filesList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx) error {
+func (r DFilesList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx) error {
 	l := time.Now()
 
 	var colNames string
@@ -853,7 +1041,7 @@ func (r filesList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx)
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r filesList) Delete(keyNo string, tr *sql.Tx) error {
+func (r DFilesList) Delete(keyNo string, tr *sql.Tx) error {
 	l := time.Now()
 	delSql := fmt.Sprintf("Delete from  lk_device_files  where id=?")
 	if r.Level == DEBUG {

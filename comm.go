@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,8 +11,11 @@ import (
 )
 
 const ONLINE = "online"
+const ONLINE_RESP = "online"
+
 const GET_COLOPHON = "get_colophon"
 const GET_COLOPHON_RESP = "get_colophon"
+
 const GET_INSTLL_DATADRIVE = "get_install_datadrive"
 const GET_INSTLL_DATADRIVE_RESP = "get_install_datadrive"
 
@@ -24,7 +26,6 @@ const GET_FILE = "get_file"
 const GET_FILE_RESP = "get_file"
 
 const POST_FILE_INFO = "post_file_info"
-
 const POST_FILE_INFO_RESP = "post_file_info"
 const POST_FILE = "post_file"
 const POST_FILE_RESP = "post_file"
@@ -38,7 +39,11 @@ const PUSH_INFO = "push_info"
 const PUSH_INFO_RESP = "push_info"
 
 const CHECK_UDATE = "check_update"
+const CHECK_UDATE_RESP = "check_update"
+
 const HEARTBEAT = "heartbeat"
+const HEARTBEAT_RESP = "heartbeat"
+
 const TYPE_CHIP = "chip"
 const TYPE_UPGRADE = "upgrade"
 const TYPE_CONFIG = "config"
@@ -322,7 +327,7 @@ type BusiPushFile struct {
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
 	Type    string `json:"type"`
-	Name    string `json:"type"`
+	Name    string `json:"name"`
 	Length  int    `json:"length"`
 }
 

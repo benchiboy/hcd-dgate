@@ -14,8 +14,11 @@ import (
 	"net/http"
 
 	"flag"
+	"hcd-dgate/service/chip"
 	"hcd-dgate/service/dbcomm"
 	"hcd-dgate/service/device"
+	"hcd-dgate/service/dfile"
+
 	"log"
 	"os"
 	"sync"
@@ -36,8 +39,6 @@ var (
 	GConnMap   = &sync.Map{}
 )
 
-var heartCnt int
-
 func Send_Resp(conn *net.TCPConn, resp string) {
 	head := make([]byte, 6)
 	head[0] = 0x7E
@@ -57,7 +58,7 @@ func Cmd_HeartBeat(conn *net.TCPConn, heart Heartbeat) {
 	log.Println("Cmd_HeartBeat======>", heart)
 	var heartResp HeartbeatResp
 	heartResp.Chip_id = heart.Chip_id
-	heartResp.Method = heart.Method
+	heartResp.Method = HEARTBEAT_RESP
 	heartResp.Sn = heart.Sn
 	heartResp.Success = true
 	heartBuf, err := json.Marshal(&heartResp)
@@ -123,6 +124,10 @@ func Cmd_GetInstallDriveResp(conn *net.TCPConn, getDriveResp GetInstallDataDrive
 	PrintTail("GetInstallDrive")
 }
 
+/*
+	接收从设备上传芯片参数信息
+	1、做数据库记录
+*/
 func Cmd_PostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive) {
 	PrintHead("PostDataDrive")
 	var driveResp PostInstallDataDriveResp
@@ -133,6 +138,23 @@ func Cmd_PostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive)
 	if err != nil {
 		log.Println(err)
 	}
+	//记录数据库
+	r := chips.New(dbcomm.GetDB(), chips.DEBUG)
+	var search chips.Search
+	search.Sn = postInstDrive.Sn
+	if err := r.Delete(search.Sn, nil); err != nil {
+		fmt.Println(err)
+	}
+	var e chips.Chips
+	e.Sn = postInstDrive.Sn
+	for _, v := range postInstDrive.Datadrive {
+		e.ChipLot = v.Lot
+		e.ChipInstallDate = v.Install_time
+		e.ActiveDate = v.Create_time
+		e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
+		r.InsertEntity(e, nil)
+	}
+
 	Send_Resp(conn, string(respBuf))
 	PrintTail("PostDataDrive")
 }
@@ -141,8 +163,11 @@ func Cmd_GetFileResp(getFileResp GetFileResp) {
 	log.Println("Cmd_GetFileResp======>", getFileResp)
 }
 
+/*
+	1
+*/
 func Cmd_PostFileInfo(conn *net.TCPConn, posFileInfo PostFileInfo) {
-	log.Println("Cmd_PostFileInfo======>", posFileInfo)
+	PrintHead("PostFileInfo", posFileInfo)
 	var infoResp PostFileInfoResp
 	infoResp.Method = posFileInfo.Method
 	infoResp.Sn = posFileInfo.Sn
@@ -152,42 +177,56 @@ func Cmd_PostFileInfo(conn *net.TCPConn, posFileInfo PostFileInfo) {
 	infoResp.Total_file = posFileInfo.Total_file
 	infoBuf, err := json.Marshal(&infoResp)
 	if err != nil {
+		fmt.Println(err)
+	}
+	//记录数据库
+	r := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
+	var e dfiles.DFiles
+	e.FileName = posFileInfo.File.Name
+	e.FileLength = posFileInfo.File.Length
+	e.FileCrc32 = posFileInfo.File.File_crc
+	e.FileType = posFileInfo.Type
+	e.Sn = posFileInfo.Sn
+	e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
+	if err := r.InsertEntity(e, nil); err != nil {
 		log.Println(err)
 	}
 	Send_Resp(conn, string(infoBuf))
+	PrintTail("PostFileInfo", posFileInfo)
 }
 
+/*
+	接收设备上传的文件
+	1、
+*/
 func Cmd_PostFile(conn *net.TCPConn, postFile PostFile) {
-	log.Println("Cmd_PostFile======>", postFile)
+	PrintHead("PostFile")
 	fileBuf, err := hex.DecodeString(postFile.Fragment.Source)
 	if err != nil {
 		log.Println(err)
 	}
 	crcCode := softwareCrc32([]byte(fileBuf), len(fileBuf))
-	log.Println("crc code==>", crcCode)
-
 	if postFile.Fragment.Checksum != crcCode {
-		log.Println("CRC CHECK ERROR")
+		log.Println("crc32 check error!")
 	}
 	var fResp PostFileResp
 	fResp.Method = postFile.Method
 	fResp.Sn = postFile.Sn
 	fResp.Success = true
 	fResp.Chip_id = postFile.Chip_id
-	fBuf, err := json.Marshal(&fResp)
-	if err != nil {
+	if fBuf, err := json.Marshal(&fResp); err != nil {
 		log.Println(err)
+	} else {
+		Send_Resp(conn, string(fBuf))
 	}
-	Send_Resp(conn, string(fBuf))
+	PrintTail("PostFile")
 }
 
 /*
 	接收客户端发来的PUSHINFO文件确认
 */
 func Cmd_PushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
-
-	log.Println("Cmd_PushFileInfoResp======>", infoResp)
-	//开始发送文件内容
+	PrintHead("PUSH_FILE_INFO_RESP", infoResp)
 	var pushFile PushFile
 	pushFile.Chip_id = infoResp.Chip_id
 	pushFile.Method = PUSH_FILE
@@ -202,6 +241,28 @@ func Cmd_PushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
 		log.Println(err)
 	}
 	Send_Resp(conn, string(fBuf))
+	PrintTail("PUSH_FILE_INFO_RESP")
+}
+
+/*
+	接收客户端发来的PUSHINFO文件确认
+*/
+func Cmd_CheckUpdate(conn *net.TCPConn, upDate CheckUpdate) {
+
+	PrintHead("CHECK_UPDATE")
+	var upResp CheckUpdateResp
+	upResp.Chip_id = upDate.Chip_id
+	upResp.Method = CHECK_UDATE_RESP
+	upResp.Sn = upDate.Sn
+	upResp.Success = true
+	upResp.Type = "chip"
+
+	if upBuf, err := json.Marshal(&upResp); err != nil {
+		log.Println(err)
+	} else {
+		Send_Resp(conn, string(upBuf))
+	}
+	PrintTail("CHECK_UPDATE")
 }
 
 /*
@@ -222,7 +283,9 @@ func Cmd_PushInfoResp(conn *net.TCPConn, infoResp PushInfoResp) {
 
 func ProcPacket(conn *net.TCPConn, packBuf []byte) {
 	var command Command
-	json.Unmarshal(packBuf, &command)
+	if err := json.Unmarshal(packBuf, &command); err != nil {
+		log.Println(err)
+	}
 	switch command.Method {
 	case HEARTBEAT:
 		var heart Heartbeat
@@ -286,7 +349,15 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) {
 		var infoResp PushInfoResp
 		json.Unmarshal(packBuf, &infoResp)
 		Cmd_PushInfoResp(conn, infoResp)
+
+	case CHECK_UDATE:
+		var upDate CheckUpdate
+		if err := json.Unmarshal(packBuf, &upDate); err != nil {
+			log.Println(err)
+		}
+		Cmd_CheckUpdate(conn, upDate)
 	}
+
 }
 
 func tcpPipe(conn *net.TCPConn) {

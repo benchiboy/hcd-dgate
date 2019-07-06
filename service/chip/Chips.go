@@ -3,6 +3,7 @@ package chips
 import (
 	"database/sql"
 	"fmt"
+	"hcd-gate/service/pubtype"
 	"log"
 	"strings"
 	"time"
@@ -24,7 +25,7 @@ const (
 type Search struct {
 	Id              int64  `json:"id"`
 	Sn              string `json:"sn"`
-	ChipLot         int    `json:"chip_lot"`
+	ChipLot         string `json:"chip_lot"`
 	CheckItem       string `json:"check_item"`
 	SampleType      string `json:"sample_type"`
 	ProductDate     string `json:"product_date"`
@@ -40,17 +41,17 @@ type Search struct {
 	SortFld         string `json:"sort_fld"`
 }
 
-type chipsList struct {
+type ChipsList struct {
 	DB     *sql.DB
 	Level  int
 	Total  int     `json:"total"`
-	chipss []chips `json:"chips"`
+	Chipss []Chips `json:"Chips"`
 }
 
-type chips struct {
+type Chips struct {
 	Id              int64  `json:"id"`
 	Sn              string `json:"sn"`
-	ChipLot         int    `json:"chip_lot"`
+	ChipLot         string `json:"chip_lot"`
 	CheckItem       string `json:"check_item"`
 	SampleType      string `json:"sample_type"`
 	ProductDate     string `json:"product_date"`
@@ -63,7 +64,7 @@ type chips struct {
 }
 
 type Form struct {
-	Form chips `json:"chips"`
+	Form Chips `json:"Chips"`
 }
 
 /*
@@ -72,12 +73,12 @@ type Form struct {
 	出参：实例对象
 */
 
-func New(db *sql.DB, level int) *chipsList {
+func New(db *sql.DB, level int) *ChipsList {
 	if db == nil {
 		log.Println(SQL_SELECT, "Database is nil")
 		return nil
 	}
-	return &chipsList{DB: db, Total: 0, chipss: make([]chips, 0), Level: level}
+	return &ChipsList{DB: db, Total: 0, Chipss: make([]Chips, 0), Level: level}
 }
 
 /*
@@ -86,7 +87,7 @@ func New(db *sql.DB, level int) *chipsList {
 	出参：实例对象
 */
 
-func NewUrl(url string, level int) *chipsList {
+func NewUrl(url string, level int) *ChipsList {
 	var err error
 	db, err := sql.Open("mysql", url)
 	if err != nil {
@@ -97,7 +98,7 @@ func NewUrl(url string, level int) *chipsList {
 		log.Println(SQL_SELECT, "Ping database error:", err)
 		return nil
 	}
-	return &chipsList{DB: db, Total: 0, chipss: make([]chips, 0), Level: level}
+	return &ChipsList{DB: db, Total: 0, Chipss: make([]Chips, 0), Level: level}
 }
 
 /*
@@ -106,7 +107,7 @@ func NewUrl(url string, level int) *chipsList {
 	出参：参数1：返回符合条件的总条件, 参数2：如果错误返回错误对象
 */
 
-func (r *chipsList) GetTotal(s Search) (int, error) {
+func (r *ChipsList) GetTotal(s Search) (int, error) {
 	var where string
 	l := time.Now()
 
@@ -118,8 +119,8 @@ func (r *chipsList) GetTotal(s Search) (int, error) {
 		where += " and sn='" + s.Sn + "'"
 	}
 
-	if s.ChipLot != 0 {
-		where += " and chip_lot=" + fmt.Sprintf("%d", s.ChipLot)
+	if s.ChipLot != "" {
+		where += " and chip_lot=" + "'"
 	}
 
 	if s.CheckItem != "" {
@@ -188,7 +189,7 @@ func (r *chipsList) GetTotal(s Search) (int, error) {
 	出参：参数1：返回符合条件的对象, 参数2：如果错误返回错误对象
 */
 
-func (r chipsList) Get(s Search) (*chips, error) {
+func (r ChipsList) Get(s Search) (*Chips, error) {
 	var where string
 	l := time.Now()
 
@@ -200,8 +201,8 @@ func (r chipsList) Get(s Search) (*chips, error) {
 		where += " and sn='" + s.Sn + "'"
 	}
 
-	if s.ChipLot != 0 {
-		where += " and chip_lot=" + fmt.Sprintf("%d", s.ChipLot)
+	if s.ChipLot != "" {
+		where += " and chip_lot=" + "'"
 	}
 
 	if s.CheckItem != "" {
@@ -255,7 +256,7 @@ func (r chipsList) Get(s Search) (*chips, error) {
 	}
 	defer rows.Close()
 
-	var p chips
+	var p Chips
 	if !rows.Next() {
 		return nil, fmt.Errorf("Not Finded Record")
 	} else {
@@ -278,7 +279,7 @@ func (r chipsList) Get(s Search) (*chips, error) {
 	出参：参数1：返回符合条件的对象列表, 参数2：如果错误返回错误对象
 */
 
-func (r *chipsList) GetList(s Search) ([]chips, error) {
+func (r *ChipsList) GetList(s Search) ([]Chips, error) {
 	var where string
 	l := time.Now()
 
@@ -290,8 +291,8 @@ func (r *chipsList) GetList(s Search) ([]chips, error) {
 		where += " and sn='" + s.Sn + "'"
 	}
 
-	if s.ChipLot != 0 {
-		where += " and chip_lot=" + fmt.Sprintf("%d", s.ChipLot)
+	if s.ChipLot != "" {
+		where += " and chip_lot=" + "'"
 	}
 
 	if s.CheckItem != "" {
@@ -350,25 +351,25 @@ func (r *chipsList) GetList(s Search) ([]chips, error) {
 	}
 	defer rows.Close()
 
-	var p chips
+	var p Chips
 	for rows.Next() {
 		rows.Scan(&p.Id, &p.Sn, &p.ChipLot, &p.CheckItem, &p.SampleType, &p.ProductDate, &p.ActiveDate, &p.ChipInstallDate, &p.CreateTime, &p.CreateBy, &p.UpdateTime, &p.UpdateBy)
-		r.chipss = append(r.chipss, p)
+		r.Chipss = append(r.Chipss, p)
 	}
 	log.Println(SQL_ELAPSED, r)
 	if r.Level == DEBUG {
 		log.Println(SQL_ELAPSED, time.Since(l))
 	}
-	return r.chipss, nil
+	return r.Chipss, nil
 }
 
 /*
-	说明：根据主键查询符合条件的记录，并保持成MAP
+	说明：根据条件查询复核条件对象列表，支持分页查询
 	入参：s: 查询条件
-	出参：参数1：返回符合条件的对象, 参数2：如果错误返回错误对象
+	出参：参数1：返回符合条件的对象列表, 参数2：如果错误返回错误对象
 */
 
-func (r *chipsList) GetExt(s Search) (map[string]string, error) {
+func (r *ChipsList) GetListExt(s Search, fList []string) ([][]pubtype.Data, error) {
 	var where string
 	l := time.Now()
 
@@ -380,8 +381,126 @@ func (r *chipsList) GetExt(s Search) (map[string]string, error) {
 		where += " and sn='" + s.Sn + "'"
 	}
 
-	if s.ChipLot != 0 {
-		where += " and chip_lot=" + fmt.Sprintf("%d", s.ChipLot)
+	if s.ChipLot != "" {
+		where += " and chip_lot=" + "'"
+	}
+
+	if s.CheckItem != "" {
+		where += " and check_item='" + s.CheckItem + "'"
+	}
+
+	if s.SampleType != "" {
+		where += " and sample_type='" + s.SampleType + "'"
+	}
+
+	if s.ProductDate != "" {
+		where += " and product_date='" + s.ProductDate + "'"
+	}
+
+	if s.ActiveDate != "" {
+		where += " and active_date='" + s.ActiveDate + "'"
+	}
+
+	if s.ChipInstallDate != "" {
+		where += " and chip_install_date='" + s.ChipInstallDate + "'"
+	}
+
+	if s.CreateTime != "" {
+		where += " and create_time='" + s.CreateTime + "'"
+	}
+
+	if s.CreateBy != 0 {
+		where += " and create_by=" + fmt.Sprintf("%d", s.CreateBy)
+	}
+
+	if s.UpdateTime != "" {
+		where += " and update_time='" + s.UpdateTime + "'"
+	}
+
+	if s.UpdateBy != 0 {
+		where += " and update_by=" + fmt.Sprintf("%d", s.UpdateBy)
+	}
+
+	if s.ExtraWhere != "" {
+		where += s.ExtraWhere
+	}
+
+	colNames := ""
+	for _, v := range fList {
+		colNames += v + ","
+
+	}
+	colNames = strings.TrimRight(colNames, ",")
+
+	var qrySql string
+	if s.PageSize == 0 && s.PageNo == 0 {
+		qrySql = fmt.Sprintf("Select %s from lk_device_chips where 1=1 %s", colNames, where)
+	} else {
+		qrySql = fmt.Sprintf("Select %s from lk_device_chips where 1=1 %s Limit %d offset %d", colNames, where, s.PageSize, (s.PageNo-1)*s.PageSize)
+	}
+	if r.Level == DEBUG {
+		log.Println(SQL_SELECT, qrySql)
+	}
+	rows, err := r.DB.Query(qrySql)
+	if err != nil {
+		log.Println(SQL_ERROR, err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	Columns, _ := rows.Columns()
+	values := make([]sql.RawBytes, len(Columns))
+	scanArgs := make([]interface{}, len(values))
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+
+	rowData := make([][]pubtype.Data, 0)
+	for rows.Next() {
+		err = rows.Scan(scanArgs...)
+		colData := make([]pubtype.Data, 0)
+		for k, _ := range values {
+			d := new(pubtype.Data)
+			d.FieldName = Columns[k]
+			d.FieldValue = string(values[k])
+			colData = append(colData, *d)
+		}
+		//extra flow_batch_id
+		d2 := new(pubtype.Data)
+		d2.FieldName = "flow_batch_id"
+		d2.FieldValue = string(values[0])
+		colData = append(colData, *d2)
+
+		rowData = append(rowData, colData)
+	}
+
+	log.Println(SQL_ELAPSED, "==========>>>>>>>>>>>", rowData)
+	if r.Level == DEBUG {
+		log.Println(SQL_ELAPSED, time.Since(l))
+	}
+	return rowData, nil
+}
+
+/*
+	说明：根据主键查询符合条件的记录，并保持成MAP
+	入参：s: 查询条件
+	出参：参数1：返回符合条件的对象, 参数2：如果错误返回错误对象
+*/
+
+func (r *ChipsList) GetExt(s Search) (map[string]string, error) {
+	var where string
+	l := time.Now()
+
+	if s.Id != 0 {
+		where += " and id=" + fmt.Sprintf("%d", s.Id)
+	}
+
+	if s.Sn != "" {
+		where += " and sn='" + s.Sn + "'"
+	}
+
+	if s.ChipLot != "" {
+		where += " and chip_lot=" + s.Sn + "'"
 	}
 
 	if s.CheckItem != "" {
@@ -464,7 +583,7 @@ func (r *chipsList) GetExt(s Search) (map[string]string, error) {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r chipsList) Insert(p chips) error {
+func (r ChipsList) Insert(p Chips) error {
 	l := time.Now()
 	exeSql := fmt.Sprintf("Insert into  lk_device_chips(sn,chip_lot,check_item,sample_type,product_date,active_date,chip_install_date,create_time,create_by,update_by,)  values(?,?,?,?,?,?,?,?,?,?,?,?,)")
 	if r.Level == DEBUG {
@@ -487,7 +606,7 @@ func (r chipsList) Insert(p chips) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r chipsList) InsertEntity(p chips, tr *sql.Tx) error {
+func (r ChipsList) InsertEntity(p Chips, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames, colTags string
 	valSlice := make([]interface{}, 0)
@@ -498,7 +617,7 @@ func (r chipsList) InsertEntity(p chips, tr *sql.Tx) error {
 		valSlice = append(valSlice, p.Sn)
 	}
 
-	if p.ChipLot != 0 {
+	if p.ChipLot != "" {
 		colNames += "chip_lot,"
 		colTags += "?,"
 		valSlice = append(valSlice, p.ChipLot)
@@ -596,7 +715,7 @@ func (r chipsList) InsertEntity(p chips, tr *sql.Tx) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r chipsList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
+func (r ChipsList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames, colTags string
 	valSlice := make([]interface{}, 0)
@@ -651,7 +770,7 @@ func (r chipsList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r chipsList) UpdataEntity(keyNo string, p chips, tr *sql.Tx) error {
+func (r ChipsList) UpdataEntity(keyNo string, p Chips, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames string
 	valSlice := make([]interface{}, 0)
@@ -667,7 +786,7 @@ func (r chipsList) UpdataEntity(keyNo string, p chips, tr *sql.Tx) error {
 		valSlice = append(valSlice, p.Sn)
 	}
 
-	if p.ChipLot != 0 {
+	if p.ChipLot != "" {
 		colNames += "chip_lot=?,"
 		valSlice = append(valSlice, p.ChipLot)
 	}
@@ -770,7 +889,7 @@ func (r chipsList) UpdataEntity(keyNo string, p chips, tr *sql.Tx) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r chipsList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx) error {
+func (r ChipsList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx) error {
 	l := time.Now()
 
 	var colNames string
@@ -822,9 +941,9 @@ func (r chipsList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx)
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r chipsList) Delete(keyNo string, tr *sql.Tx) error {
+func (r ChipsList) Delete(keyNo string, tr *sql.Tx) error {
 	l := time.Now()
-	delSql := fmt.Sprintf("Delete from  lk_device_chips  where id=?")
+	delSql := fmt.Sprintf("Delete from  lk_device_chips  where sn=?")
 	if r.Level == DEBUG {
 		log.Println(SQL_UPDATE, delSql)
 	}
