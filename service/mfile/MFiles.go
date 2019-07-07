@@ -1,4 +1,4 @@
-package dfiles
+package mfiles
 
 import (
 	"database/sql"
@@ -23,60 +23,66 @@ const (
 )
 
 type Search struct {
-	Id          int64  `json:"id"`
-	BatchNo     string `json:"batch_no"`
-	Sn          string `json:"sn"`
-	ChipId      string `json:"chip_id"`
-	FileType    string `json:"file_type"`
-	BeginTime   string `json:"begin_time"`
-	EndTime     string `json:"end_time"`
-	FileName    string `json:"file_name"`
-	FileIndex   int    `json:"file_index"`
-	FileUrl     string `json:"file_url"`
-	RawFileUrls string `json:"raw_file_urls"`
-	FileCrc32   int64  `json:"file_crc32"`
-	FileLength  int64  `json:"file_length"`
-	CreateTime  string `json:"create_time"`
-	CreateBy    int64  `json:"create_by"`
-	UpdateTime  string `json:"update_time"`
-	UpdateBy    int64  `json:"update_by"`
-	Version     int64  `json:"version"`
-	PageNo      int    `json:"page_no"`
-	PageSize    int    `json:"page_size"`
-	ExtraWhere  string `json:"extra_where"`
-	SortFld     string `json:"sort_fld"`
+	Id         int64  `json:"id"`
+	BatchNo    string `json:"batch_no"`
+	Sn         string `json:"sn"`
+	ChipId     string `json:"chip_id"`
+	CmdType    string `json:"cmd_type"`
+	Type       string `json:"type"`
+	Purpose    string `json:"purpose"`
+	Frange     string `json:"frange"`
+	FromDate   string `json:"from_date"`
+	ToDate     string `json:"to_date"`
+	TodoCount  int    `json:"todo_count"`
+	DoneCount  int    `json:"done_count"`
+	InfoMsg    string `json:"info_msg"`
+	Status     string `json:"status"`
+	FailMsg    string `json:"fail_msg"`
+	StartTime  string `json:"start_time"`
+	EndTime    string `json:"end_time"`
+	CreateBy   int64  `json:"create_by"`
+	UpdateTime string `json:"update_time"`
+	UpdateBy   int64  `json:"update_by"`
+	Version    int64  `json:"version"`
+	PageNo     int    `json:"page_no"`
+	PageSize   int    `json:"page_size"`
+	ExtraWhere string `json:"extra_where"`
+	SortFld    string `json:"sort_fld"`
 }
 
-type DFilesList struct {
+type MFilesList struct {
 	DB      *sql.DB
 	Level   int
 	Total   int      `json:"total"`
-	DFiless []DFiles `json:"DFiles"`
+	MFiless []MFiles `json:"MFiles"`
 }
 
-type DFiles struct {
-	Id          int64  `json:"id"`
-	BatchNo     string `json:"batch_no"`
-	Sn          string `json:"sn"`
-	ChipId      string `json:"chip_id"`
-	FileType    string `json:"file_type"`
-	BeginTime   string `json:"begin_time"`
-	EndTime     string `json:"end_time"`
-	FileName    string `json:"file_name"`
-	FileIndex   int    `json:"file_index"`
-	FileUrl     string `json:"file_url"`
-	RawFileUrls string `json:"raw_file_urls"`
-	FileCrc32   int    `json:"file_crc32"`
-	FileLength  int    `json:"file_length"`
-	CreateTime  string `json:"create_time"`
-	CreateBy    int64  `json:"create_by"`
-	UpdateTime  string `json:"update_time"`
-	UpdateBy    int64  `json:"update_by"`
-	Version     int64  `json:"version"`
+type MFiles struct {
+	Id         int64  `json:"id"`
+	BatchNo    string `json:"batch_no"`
+	Sn         string `json:"sn"`
+	ChipId     string `json:"chip_id"`
+	CmdType    string `json:"cmd_type"`
+	Type       string `json:"type"`
+	Purpose    string `json:"purpose"`
+	Frange     string `json:"frange"`
+	FromDate   string `json:"from_date"`
+	ToDate     string `json:"to_date"`
+	TodoCount  int    `json:"todo_count"`
+	DoneCount  int    `json:"done_count"`
+	InfoMsg    string `json:"info_msg"`
+	Status     string `json:"status"`
+	FailMsg    string `json:"fail_msg"`
+	StartTime  string `json:"start_time"`
+	EndTime    string `json:"end_time"`
+	CreateBy   int64  `json:"create_by"`
+	UpdateTime string `json:"update_time"`
+	UpdateBy   int64  `json:"update_by"`
+	Version    int64  `json:"version"`
 }
 
 type Form struct {
-	Form DFiles `json:"DFiles"`
+	Form MFiles `json:"MFiles"`
 }
 
 /*
@@ -85,12 +91,12 @@ type Form struct {
 	出参：实例对象
 */
 
-func New(db *sql.DB, level int) *DFilesList {
+func New(db *sql.DB, level int) *MFilesList {
 	if db == nil {
 		log.Println(SQL_SELECT, "Database is nil")
 		return nil
 	}
-	return &DFilesList{DB: db, Total: 0, DFiless: make([]DFiles, 0), Level: level}
+	return &MFilesList{DB: db, Total: 0, MFiless: make([]MFiles, 0), Level: level}
 }
 
 /*
@@ -99,7 +105,7 @@ func New(db *sql.DB, level int) *DFilesList {
 	出参：实例对象
 */
 
-func NewUrl(url string, level int) *DFilesList {
+func NewUrl(url string, level int) *MFilesList {
 	var err error
 	db, err := sql.Open("mysql", url)
 	if err != nil {
@@ -110,7 +116,7 @@ func NewUrl(url string, level int) *DFilesList {
 		log.Println(SQL_SELECT, "Ping database error:", err)
 		return nil
 	}
-	return &DFilesList{DB: db, Total: 0, DFiless: make([]DFiles, 0), Level: level}
+	return &MFilesList{DB: db, Total: 0, MFiless: make([]MFiles, 0), Level: level}
 }
 
 /*
@@ -119,7 +125,7 @@ func NewUrl(url string, level int) *DFilesList {
 	出参：参数1：返回符合条件的总条件, 参数2：如果错误返回错误对象
 */
 
-func (r *DFilesList) GetTotal(s Search) (int, error) {
+func (r *MFilesList) GetTotal(s Search) (int, error) {
 	var where string
 	l := time.Now()
 
@@ -139,44 +145,56 @@ func (r *DFilesList) GetTotal(s Search) (int, error) {
 		where += " and chip_id='" + s.ChipId + "'"
 	}
 
-	if s.FileType != "" {
-		where += " and file_type='" + s.FileType + "'"
+	if s.CmdType != "" {
+		where += " and cmd_type='" + s.CmdType + "'"
 	}
 
-	if s.BeginTime != "" {
-		where += " and begin_time='" + s.BeginTime + "'"
+	if s.Type != "" {
+		where += " and type='" + s.Type + "'"
+	}
+
+	if s.Purpose != "" {
+		where += " and purpose='" + s.Purpose + "'"
+	}
+
+	if s.Frange != "" {
+		where += " and frange='" + s.Frange + "'"
+	}
+
+	if s.FromDate != "" {
+		where += " and from_date='" + s.FromDate + "'"
+	}
+
+	if s.ToDate != "" {
+		where += " and to_date='" + s.ToDate + "'"
+	}
+
+	if s.TodoCount != 0 {
+		where += " and todo_count=" + fmt.Sprintf("%d", s.TodoCount)
+	}
+
+	if s.DoneCount != 0 {
+		where += " and done_count=" + fmt.Sprintf("%d", s.DoneCount)
+	}
+
+	if s.InfoMsg != "" {
+		where += " and info_msg='" + s.InfoMsg + "'"
+	}
+
+	if s.Status != "" {
+		where += " and status='" + s.Status + "'"
+	}
+
+	if s.FailMsg != "" {
+		where += " and fail_msg='" + s.FailMsg + "'"
+	}
+
+	if s.StartTime != "" {
+		where += " and start_time='" + s.StartTime + "'"
 	}
 
 	if s.EndTime != "" {
 		where += " and end_time='" + s.EndTime + "'"
-	}
-
-	if s.FileName != "" {
-		where += " and file_name='" + s.FileName + "'"
-	}
-
-	if s.FileIndex != 0 {
-		where += " and file_index=" + fmt.Sprintf("%d", s.FileIndex)
-	}
-
-	if s.FileUrl != "" {
-		where += " and file_url='" + s.FileUrl + "'"
-	}
-
-	if s.RawFileUrls != "" {
-		where += " and raw_file_urls='" + s.RawFileUrls + "'"
-	}
-
-	if s.FileCrc32 != 0 {
-		where += " and file_crc32=" + fmt.Sprintf("%d", s.FileCrc32)
-	}
-
-	if s.FileLength != 0 {
-		where += " and file_length=" + fmt.Sprintf("%d", s.FileLength)
-	}
-
-	if s.CreateTime != "" {
-		where += " and create_time='" + s.CreateTime + "'"
 	}
 
 	if s.CreateBy != 0 {
@@ -199,7 +217,7 @@ func (r *DFilesList) GetTotal(s Search) (int, error) {
 		where += s.ExtraWhere
 	}
 
-	qrySql := fmt.Sprintf("Select count(1) as total from lk_device_dfiles   where 1=1 %s", where)
+	qrySql := fmt.Sprintf("Select count(1) as total from lk_device_mfiles   where 1=1 %s", where)
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
 	}
@@ -225,7 +243,7 @@ func (r *DFilesList) GetTotal(s Search) (int, error) {
 	出参：参数1：返回符合条件的对象, 参数2：如果错误返回错误对象
 */
 
-func (r DFilesList) Get(s Search) (*DFiles, error) {
+func (r MFilesList) Get(s Search) (*MFiles, error) {
 	var where string
 	l := time.Now()
 
@@ -245,44 +263,56 @@ func (r DFilesList) Get(s Search) (*DFiles, error) {
 		where += " and chip_id='" + s.ChipId + "'"
 	}
 
-	if s.FileType != "" {
-		where += " and file_type='" + s.FileType + "'"
+	if s.CmdType != "" {
+		where += " and cmd_type='" + s.CmdType + "'"
 	}
 
-	if s.BeginTime != "" {
-		where += " and begin_time='" + s.BeginTime + "'"
+	if s.Type != "" {
+		where += " and type='" + s.Type + "'"
+	}
+
+	if s.Purpose != "" {
+		where += " and purpose='" + s.Purpose + "'"
+	}
+
+	if s.Frange != "" {
+		where += " and frange='" + s.Frange + "'"
+	}
+
+	if s.FromDate != "" {
+		where += " and from_date='" + s.FromDate + "'"
+	}
+
+	if s.ToDate != "" {
+		where += " and to_date='" + s.ToDate + "'"
+	}
+
+	if s.TodoCount != 0 {
+		where += " and todo_count=" + fmt.Sprintf("%d", s.TodoCount)
+	}
+
+	if s.DoneCount != 0 {
+		where += " and done_count=" + fmt.Sprintf("%d", s.DoneCount)
+	}
+
+	if s.InfoMsg != "" {
+		where += " and info_msg='" + s.InfoMsg + "'"
+	}
+
+	if s.Status != "" {
+		where += " and status='" + s.Status + "'"
+	}
+
+	if s.FailMsg != "" {
+		where += " and fail_msg='" + s.FailMsg + "'"
+	}
+
+	if s.StartTime != "" {
+		where += " and start_time='" + s.StartTime + "'"
 	}
 
 	if s.EndTime != "" {
 		where += " and end_time='" + s.EndTime + "'"
-	}
-
-	if s.FileName != "" {
-		where += " and file_name='" + s.FileName + "'"
-	}
-
-	if s.FileIndex != 0 {
-		where += " and file_index=" + fmt.Sprintf("%d", s.FileIndex)
-	}
-
-	if s.FileUrl != "" {
-		where += " and file_url='" + s.FileUrl + "'"
-	}
-
-	if s.RawFileUrls != "" {
-		where += " and raw_file_urls='" + s.RawFileUrls + "'"
-	}
-
-	if s.FileCrc32 != 0 {
-		where += " and file_crc32=" + fmt.Sprintf("%d", s.FileCrc32)
-	}
-
-	if s.FileLength != 0 {
-		where += " and file_length=" + fmt.Sprintf("%d", s.FileLength)
-	}
-
-	if s.CreateTime != "" {
-		where += " and create_time='" + s.CreateTime + "'"
 	}
 
 	if s.CreateBy != 0 {
@@ -305,7 +335,7 @@ func (r DFilesList) Get(s Search) (*DFiles, error) {
 		where += s.ExtraWhere
 	}
 
-	qrySql := fmt.Sprintf("Select id,batch_no,sn,chip_id,file_type,begin_time,end_time,file_name,file_index,file_url,raw_file_urls,file_crc32,file_length,create_time,create_by,update_time,update_by,version from lk_device_dfiles where 1=1 %s ", where)
+	qrySql := fmt.Sprintf("Select id,batch_no,todo_count,done_count from lk_device_mfiles where 1=1 %s ", where)
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
 	}
@@ -316,11 +346,11 @@ func (r DFilesList) Get(s Search) (*DFiles, error) {
 	}
 	defer rows.Close()
 
-	var p DFiles
+	var p MFiles
 	if !rows.Next() {
 		return nil, fmt.Errorf("Not Finded Record")
 	} else {
-		err := rows.Scan(&p.Id, &p.BatchNo, &p.Sn, &p.ChipId, &p.FileType, &p.BeginTime, &p.EndTime, &p.FileName, &p.FileIndex, &p.FileUrl, &p.RawFileUrls, &p.FileCrc32, &p.FileLength, &p.CreateTime, &p.CreateBy, &p.UpdateTime, &p.UpdateBy, &p.Version)
+		err := rows.Scan(&p.Id, &p.BatchNo, &p.TodoCount, &p.DoneCount)
 		if err != nil {
 			log.Println(SQL_ERROR, err.Error())
 			return nil, err
@@ -339,7 +369,7 @@ func (r DFilesList) Get(s Search) (*DFiles, error) {
 	出参：参数1：返回符合条件的对象列表, 参数2：如果错误返回错误对象
 */
 
-func (r *DFilesList) GetList(s Search) ([]DFiles, error) {
+func (r *MFilesList) GetList(s Search) ([]MFiles, error) {
 	var where string
 	l := time.Now()
 
@@ -359,44 +389,56 @@ func (r *DFilesList) GetList(s Search) ([]DFiles, error) {
 		where += " and chip_id='" + s.ChipId + "'"
 	}
 
-	if s.FileType != "" {
-		where += " and file_type='" + s.FileType + "'"
+	if s.CmdType != "" {
+		where += " and cmd_type='" + s.CmdType + "'"
 	}
 
-	if s.BeginTime != "" {
-		where += " and begin_time='" + s.BeginTime + "'"
+	if s.Type != "" {
+		where += " and type='" + s.Type + "'"
+	}
+
+	if s.Purpose != "" {
+		where += " and purpose='" + s.Purpose + "'"
+	}
+
+	if s.Frange != "" {
+		where += " and frange='" + s.Frange + "'"
+	}
+
+	if s.FromDate != "" {
+		where += " and from_date='" + s.FromDate + "'"
+	}
+
+	if s.ToDate != "" {
+		where += " and to_date='" + s.ToDate + "'"
+	}
+
+	if s.TodoCount != 0 {
+		where += " and todo_count=" + fmt.Sprintf("%d", s.TodoCount)
+	}
+
+	if s.DoneCount != 0 {
+		where += " and done_count=" + fmt.Sprintf("%d", s.DoneCount)
+	}
+
+	if s.InfoMsg != "" {
+		where += " and info_msg='" + s.InfoMsg + "'"
+	}
+
+	if s.Status != "" {
+		where += " and status='" + s.Status + "'"
+	}
+
+	if s.FailMsg != "" {
+		where += " and fail_msg='" + s.FailMsg + "'"
+	}
+
+	if s.StartTime != "" {
+		where += " and start_time='" + s.StartTime + "'"
 	}
 
 	if s.EndTime != "" {
 		where += " and end_time='" + s.EndTime + "'"
-	}
-
-	if s.FileName != "" {
-		where += " and file_name='" + s.FileName + "'"
-	}
-
-	if s.FileIndex != 0 {
-		where += " and file_index=" + fmt.Sprintf("%d", s.FileIndex)
-	}
-
-	if s.FileUrl != "" {
-		where += " and file_url='" + s.FileUrl + "'"
-	}
-
-	if s.RawFileUrls != "" {
-		where += " and raw_file_urls='" + s.RawFileUrls + "'"
-	}
-
-	if s.FileCrc32 != 0 {
-		where += " and file_crc32=" + fmt.Sprintf("%d", s.FileCrc32)
-	}
-
-	if s.FileLength != 0 {
-		where += " and file_length=" + fmt.Sprintf("%d", s.FileLength)
-	}
-
-	if s.CreateTime != "" {
-		where += " and create_time='" + s.CreateTime + "'"
 	}
 
 	if s.CreateBy != 0 {
@@ -421,9 +463,9 @@ func (r *DFilesList) GetList(s Search) ([]DFiles, error) {
 
 	var qrySql string
 	if s.PageSize == 0 && s.PageNo == 0 {
-		qrySql = fmt.Sprintf("Select id,batch_no,sn,chip_id,file_type,begin_time,end_time,file_name,file_index,file_url,raw_file_urls,file_crc32,file_length,create_time,create_by,update_time,update_by,version from lk_device_dfiles where 1=1 %s", where)
+		qrySql = fmt.Sprintf("Select id,batch_no,sn,chip_id,cmd_type,type,purpose,frange,from_date,to_date,todo_count,done_count,info_msg,status,fail_msg,start_time,end_time,create_by,update_time,update_by,version from lk_device_mfiles where 1=1 %s", where)
 	} else {
-		qrySql = fmt.Sprintf("Select id,batch_no,sn,chip_id,file_type,begin_time,end_time,file_name,file_index,file_url,raw_file_urls,file_crc32,file_length,create_time,create_by,update_time,update_by,version from lk_device_dfiles where 1=1 %s Limit %d offset %d", where, s.PageSize, (s.PageNo-1)*s.PageSize)
+		qrySql = fmt.Sprintf("Select id,batch_no,sn,chip_id,cmd_type,type,purpose,frange,from_date,to_date,todo_count,done_count,info_msg,status,fail_msg,start_time,end_time,create_by,update_time,update_by,version from lk_device_mfiles where 1=1 %s Limit %d offset %d", where, s.PageSize, (s.PageNo-1)*s.PageSize)
 	}
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
@@ -435,16 +477,16 @@ func (r *DFilesList) GetList(s Search) ([]DFiles, error) {
 	}
 	defer rows.Close()
 
-	var p DFiles
+	var p MFiles
 	for rows.Next() {
-		rows.Scan(&p.Id, &p.BatchNo, &p.Sn, &p.ChipId, &p.FileType, &p.BeginTime, &p.EndTime, &p.FileName, &p.FileIndex, &p.FileUrl, &p.RawFileUrls, &p.FileCrc32, &p.FileLength, &p.CreateTime, &p.CreateBy, &p.UpdateTime, &p.UpdateBy, &p.Version)
-		r.DFiless = append(r.DFiless, p)
+		rows.Scan(&p.Id, &p.BatchNo, &p.Sn, &p.ChipId, &p.CmdType, &p.Type, &p.Purpose, &p.Frange, &p.FromDate, &p.ToDate, &p.TodoCount, &p.DoneCount, &p.InfoMsg, &p.Status, &p.FailMsg, &p.StartTime, &p.EndTime, &p.CreateBy, &p.UpdateTime, &p.UpdateBy, &p.Version)
+		r.MFiless = append(r.MFiless, p)
 	}
 	log.Println(SQL_ELAPSED, r)
 	if r.Level == DEBUG {
 		log.Println(SQL_ELAPSED, time.Since(l))
 	}
-	return r.DFiless, nil
+	return r.MFiless, nil
 }
 
 /*
@@ -453,7 +495,7 @@ func (r *DFilesList) GetList(s Search) ([]DFiles, error) {
 	出参：参数1：返回符合条件的对象列表, 参数2：如果错误返回错误对象
 */
 
-func (r *DFilesList) GetListExt(s Search, fList []string) ([][]pubtype.Data, error) {
+func (r *MFilesList) GetListExt(s Search, fList []string) ([][]pubtype.Data, error) {
 	var where string
 	l := time.Now()
 
@@ -473,44 +515,56 @@ func (r *DFilesList) GetListExt(s Search, fList []string) ([][]pubtype.Data, err
 		where += " and chip_id='" + s.ChipId + "'"
 	}
 
-	if s.FileType != "" {
-		where += " and file_type='" + s.FileType + "'"
+	if s.CmdType != "" {
+		where += " and cmd_type='" + s.CmdType + "'"
 	}
 
-	if s.BeginTime != "" {
-		where += " and begin_time='" + s.BeginTime + "'"
+	if s.Type != "" {
+		where += " and type='" + s.Type + "'"
+	}
+
+	if s.Purpose != "" {
+		where += " and purpose='" + s.Purpose + "'"
+	}
+
+	if s.Frange != "" {
+		where += " and frange='" + s.Frange + "'"
+	}
+
+	if s.FromDate != "" {
+		where += " and from_date='" + s.FromDate + "'"
+	}
+
+	if s.ToDate != "" {
+		where += " and to_date='" + s.ToDate + "'"
+	}
+
+	if s.TodoCount != 0 {
+		where += " and todo_count=" + fmt.Sprintf("%d", s.TodoCount)
+	}
+
+	if s.DoneCount != 0 {
+		where += " and done_count=" + fmt.Sprintf("%d", s.DoneCount)
+	}
+
+	if s.InfoMsg != "" {
+		where += " and info_msg='" + s.InfoMsg + "'"
+	}
+
+	if s.Status != "" {
+		where += " and status='" + s.Status + "'"
+	}
+
+	if s.FailMsg != "" {
+		where += " and fail_msg='" + s.FailMsg + "'"
+	}
+
+	if s.StartTime != "" {
+		where += " and start_time='" + s.StartTime + "'"
 	}
 
 	if s.EndTime != "" {
 		where += " and end_time='" + s.EndTime + "'"
-	}
-
-	if s.FileName != "" {
-		where += " and file_name='" + s.FileName + "'"
-	}
-
-	if s.FileIndex != 0 {
-		where += " and file_index=" + fmt.Sprintf("%d", s.FileIndex)
-	}
-
-	if s.FileUrl != "" {
-		where += " and file_url='" + s.FileUrl + "'"
-	}
-
-	if s.RawFileUrls != "" {
-		where += " and raw_file_urls='" + s.RawFileUrls + "'"
-	}
-
-	if s.FileCrc32 != 0 {
-		where += " and file_crc32=" + fmt.Sprintf("%d", s.FileCrc32)
-	}
-
-	if s.FileLength != 0 {
-		where += " and file_length=" + fmt.Sprintf("%d", s.FileLength)
-	}
-
-	if s.CreateTime != "" {
-		where += " and create_time='" + s.CreateTime + "'"
 	}
 
 	if s.CreateBy != 0 {
@@ -542,9 +596,9 @@ func (r *DFilesList) GetListExt(s Search, fList []string) ([][]pubtype.Data, err
 
 	var qrySql string
 	if s.PageSize == 0 && s.PageNo == 0 {
-		qrySql = fmt.Sprintf("Select %s from lk_device_dfiles where 1=1 %s", colNames, where)
+		qrySql = fmt.Sprintf("Select %s from lk_device_mfiles where 1=1 %s", colNames, where)
 	} else {
-		qrySql = fmt.Sprintf("Select %s from lk_device_dfiles where 1=1 %s Limit %d offset %d", colNames, where, s.PageSize, (s.PageNo-1)*s.PageSize)
+		qrySql = fmt.Sprintf("Select %s from lk_device_mfiles where 1=1 %s Limit %d offset %d", colNames, where, s.PageSize, (s.PageNo-1)*s.PageSize)
 	}
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
@@ -595,7 +649,7 @@ func (r *DFilesList) GetListExt(s Search, fList []string) ([][]pubtype.Data, err
 	出参：参数1：返回符合条件的对象, 参数2：如果错误返回错误对象
 */
 
-func (r *DFilesList) GetExt(s Search) (map[string]string, error) {
+func (r *MFilesList) GetExt(s Search) (map[string]string, error) {
 	var where string
 	l := time.Now()
 
@@ -615,44 +669,56 @@ func (r *DFilesList) GetExt(s Search) (map[string]string, error) {
 		where += " and chip_id='" + s.ChipId + "'"
 	}
 
-	if s.FileType != "" {
-		where += " and file_type='" + s.FileType + "'"
+	if s.CmdType != "" {
+		where += " and cmd_type='" + s.CmdType + "'"
 	}
 
-	if s.BeginTime != "" {
-		where += " and begin_time='" + s.BeginTime + "'"
+	if s.Type != "" {
+		where += " and type='" + s.Type + "'"
+	}
+
+	if s.Purpose != "" {
+		where += " and purpose='" + s.Purpose + "'"
+	}
+
+	if s.Frange != "" {
+		where += " and frange='" + s.Frange + "'"
+	}
+
+	if s.FromDate != "" {
+		where += " and from_date='" + s.FromDate + "'"
+	}
+
+	if s.ToDate != "" {
+		where += " and to_date='" + s.ToDate + "'"
+	}
+
+	if s.TodoCount != 0 {
+		where += " and todo_count=" + fmt.Sprintf("%d", s.TodoCount)
+	}
+
+	if s.DoneCount != 0 {
+		where += " and done_count=" + fmt.Sprintf("%d", s.DoneCount)
+	}
+
+	if s.InfoMsg != "" {
+		where += " and info_msg='" + s.InfoMsg + "'"
+	}
+
+	if s.Status != "" {
+		where += " and status='" + s.Status + "'"
+	}
+
+	if s.FailMsg != "" {
+		where += " and fail_msg='" + s.FailMsg + "'"
+	}
+
+	if s.StartTime != "" {
+		where += " and start_time='" + s.StartTime + "'"
 	}
 
 	if s.EndTime != "" {
 		where += " and end_time='" + s.EndTime + "'"
-	}
-
-	if s.FileName != "" {
-		where += " and file_name='" + s.FileName + "'"
-	}
-
-	if s.FileIndex != 0 {
-		where += " and file_index=" + fmt.Sprintf("%d", s.FileIndex)
-	}
-
-	if s.FileUrl != "" {
-		where += " and file_url='" + s.FileUrl + "'"
-	}
-
-	if s.RawFileUrls != "" {
-		where += " and raw_file_urls='" + s.RawFileUrls + "'"
-	}
-
-	if s.FileCrc32 != 0 {
-		where += " and file_crc32=" + fmt.Sprintf("%d", s.FileCrc32)
-	}
-
-	if s.FileLength != 0 {
-		where += " and file_length=" + fmt.Sprintf("%d", s.FileLength)
-	}
-
-	if s.CreateTime != "" {
-		where += " and create_time='" + s.CreateTime + "'"
 	}
 
 	if s.CreateBy != 0 {
@@ -671,7 +737,7 @@ func (r *DFilesList) GetExt(s Search) (map[string]string, error) {
 		where += " and version=" + fmt.Sprintf("%d", s.Version)
 	}
 
-	qrySql := fmt.Sprintf("Select id,batch_no,sn,chip_id,file_type,begin_time,end_time,file_name,file_index,file_url,raw_file_urls,file_crc32,file_length,create_time,create_by,update_time,update_by,version from lk_device_dfiles where 1=1 %s ", where)
+	qrySql := fmt.Sprintf("Select id,batch_no,sn,chip_id,cmd_type,type,purpose,frange,from_date,to_date,todo_count,done_count,info_msg,status,fail_msg,start_time,end_time,create_by,update_time,update_by,version from lk_device_mfiles where 1=1 %s ", where)
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
 	}
@@ -715,13 +781,13 @@ func (r *DFilesList) GetExt(s Search) (map[string]string, error) {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r DFilesList) Insert(p DFiles) error {
+func (r MFilesList) Insert(p MFiles) error {
 	l := time.Now()
-	exeSql := fmt.Sprintf("Insert into  lk_device_dfiles(batch_no,sn,chip_id,file_type,begin_time,end_time,file_name,file_index,file_url,raw_file_urls,file_crc32,file_length,create_time,create_by,update_by,version)  values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+	exeSql := fmt.Sprintf("Insert into  lk_device_mfiles(batch_no,sn,chip_id,cmd_type,type,purpose,frange,from_date,to_date,todo_count,done_count,info_msg,status,fail_msg,start_time,end_time,create_by,update_by,version)  values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 	if r.Level == DEBUG {
 		log.Println(SQL_INSERT, exeSql)
 	}
-	_, err := r.DB.Exec(exeSql, p.BatchNo, p.Sn, p.ChipId, p.FileType, p.BeginTime, p.EndTime, p.FileName, p.FileIndex, p.FileUrl, p.RawFileUrls, p.FileCrc32, p.FileLength, p.CreateTime, p.CreateBy, p.UpdateBy, p.Version)
+	_, err := r.DB.Exec(exeSql, p.BatchNo, p.Sn, p.ChipId, p.CmdType, p.Type, p.Purpose, p.Frange, p.FromDate, p.ToDate, p.TodoCount, p.DoneCount, p.InfoMsg, p.Status, p.FailMsg, p.StartTime, p.EndTime, p.CreateBy, p.UpdateBy, p.Version)
 	if err != nil {
 		log.Println(SQL_ERROR, err.Error())
 		return err
@@ -738,7 +804,7 @@ func (r DFilesList) Insert(p DFiles) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r DFilesList) InsertEntity(p DFiles, tr *sql.Tx) error {
+func (r MFilesList) InsertEntity(p MFiles, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames, colTags string
 	valSlice := make([]interface{}, 0)
@@ -761,64 +827,82 @@ func (r DFilesList) InsertEntity(p DFiles, tr *sql.Tx) error {
 		valSlice = append(valSlice, p.ChipId)
 	}
 
-	if p.FileType != "" {
-		colNames += "file_type,"
+	if p.CmdType != "" {
+		colNames += "cmd_type,"
 		colTags += "?,"
-		valSlice = append(valSlice, p.FileType)
+		valSlice = append(valSlice, p.CmdType)
 	}
 
-	if p.BeginTime != "" {
-		colNames += "begin_time,"
+	if p.Type != "" {
+		colNames += "type,"
 		colTags += "?,"
-		valSlice = append(valSlice, p.BeginTime)
+		valSlice = append(valSlice, p.Type)
+	}
+
+	if p.Purpose != "" {
+		colNames += "purpose,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.Purpose)
+	}
+
+	if p.Frange != "" {
+		colNames += "frange,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.Frange)
+	}
+
+	if p.FromDate != "" {
+		colNames += "from_date,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.FromDate)
+	}
+
+	if p.ToDate != "" {
+		colNames += "to_date,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.ToDate)
+	}
+
+	if p.TodoCount != 0 {
+		colNames += "todo_count,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.TodoCount)
+	}
+
+	if p.DoneCount != 0 {
+		colNames += "done_count,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.DoneCount)
+	}
+
+	if p.InfoMsg != "" {
+		colNames += "info_msg,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.InfoMsg)
+	}
+
+	if p.Status != "" {
+		colNames += "status,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.Status)
+	}
+
+	if p.FailMsg != "" {
+		colNames += "fail_msg,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.FailMsg)
+	}
+
+	if p.StartTime != "" {
+		colNames += "start_time,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.StartTime)
 	}
 
 	if p.EndTime != "" {
 		colNames += "end_time,"
 		colTags += "?,"
 		valSlice = append(valSlice, p.EndTime)
-	}
-
-	if p.FileName != "" {
-		colNames += "file_name,"
-		colTags += "?,"
-		valSlice = append(valSlice, p.FileName)
-	}
-
-	if p.FileIndex != 0 {
-		colNames += "file_index,"
-		colTags += "?,"
-		valSlice = append(valSlice, p.FileIndex)
-	}
-
-	if p.FileUrl != "" {
-		colNames += "file_url,"
-		colTags += "?,"
-		valSlice = append(valSlice, p.FileUrl)
-	}
-
-	if p.RawFileUrls != "" {
-		colNames += "raw_file_urls,"
-		colTags += "?,"
-		valSlice = append(valSlice, p.RawFileUrls)
-	}
-
-	if p.FileCrc32 != 0 {
-		colNames += "file_crc32,"
-		colTags += "?,"
-		valSlice = append(valSlice, p.FileCrc32)
-	}
-
-	if p.FileLength != 0 {
-		colNames += "file_length,"
-		colTags += "?,"
-		valSlice = append(valSlice, p.FileLength)
-	}
-
-	if p.CreateTime != "" {
-		colNames += "create_time,"
-		colTags += "?,"
-		valSlice = append(valSlice, p.CreateTime)
 	}
 
 	if p.CreateBy != 0 {
@@ -841,7 +925,7 @@ func (r DFilesList) InsertEntity(p DFiles, tr *sql.Tx) error {
 
 	colNames = strings.TrimRight(colNames, ",")
 	colTags = strings.TrimRight(colTags, ",")
-	exeSql := fmt.Sprintf("Insert into  lk_device_dfiles(%s)  values(%s)", colNames, colTags)
+	exeSql := fmt.Sprintf("Insert into  lk_device_mfiles(%s)  values(%s)", colNames, colTags)
 	if r.Level == DEBUG {
 		log.Println(SQL_INSERT, exeSql)
 	}
@@ -883,7 +967,7 @@ func (r DFilesList) InsertEntity(p DFiles, tr *sql.Tx) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r DFilesList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
+func (r MFilesList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames, colTags string
 	valSlice := make([]interface{}, 0)
@@ -895,7 +979,7 @@ func (r DFilesList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
 	colNames = strings.TrimRight(colNames, ",")
 	colTags = strings.TrimRight(colTags, ",")
 
-	exeSql := fmt.Sprintf("Insert into  lk_device_dfiles(%s)  values(%s)", colNames, colTags)
+	exeSql := fmt.Sprintf("Insert into  lk_device_mfiles(%s)  values(%s)", colNames, colTags)
 	if r.Level == DEBUG {
 		log.Println(SQL_INSERT, exeSql)
 	}
@@ -938,7 +1022,7 @@ func (r DFilesList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r DFilesList) UpdataEntity(keyNo string, p DFiles, tr *sql.Tx) error {
+func (r MFilesList) UpdataEntity(keyNo string, p MFiles, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames string
 	valSlice := make([]interface{}, 0)
@@ -966,61 +1050,80 @@ func (r DFilesList) UpdataEntity(keyNo string, p DFiles, tr *sql.Tx) error {
 		valSlice = append(valSlice, p.ChipId)
 	}
 
-	if p.FileType != "" {
-		colNames += "file_type=?,"
+	if p.CmdType != "" {
+		colNames += "cmd_type=?,"
 
-		valSlice = append(valSlice, p.FileType)
+		valSlice = append(valSlice, p.CmdType)
 	}
 
-	if p.BeginTime != "" {
-		colNames += "begin_time=?,"
+	if p.Type != "" {
+		colNames += "type=?,"
 
-		valSlice = append(valSlice, p.BeginTime)
+		valSlice = append(valSlice, p.Type)
+	}
+
+	if p.Purpose != "" {
+		colNames += "purpose=?,"
+
+		valSlice = append(valSlice, p.Purpose)
+	}
+
+	if p.Frange != "" {
+		colNames += "frange=?,"
+
+		valSlice = append(valSlice, p.Frange)
+	}
+
+	if p.FromDate != "" {
+		colNames += "from_date=?,"
+
+		valSlice = append(valSlice, p.FromDate)
+	}
+
+	if p.ToDate != "" {
+		colNames += "to_date=?,"
+
+		valSlice = append(valSlice, p.ToDate)
+	}
+
+	if p.TodoCount != 0 {
+		colNames += "todo_count=?,"
+		valSlice = append(valSlice, p.TodoCount)
+	}
+
+	if p.DoneCount != 0 {
+		colNames += "done_count=?,"
+		valSlice = append(valSlice, p.DoneCount)
+	}
+
+	if p.InfoMsg != "" {
+		colNames += "info_msg=?,"
+
+		valSlice = append(valSlice, p.InfoMsg)
+	}
+
+	if p.Status != "" {
+		colNames += "status=?,"
+
+		valSlice = append(valSlice, p.Status)
+	}
+
+	if p.FailMsg != "" {
+		colNames += "fail_msg=?,"
+
+		valSlice = append(valSlice, p.FailMsg)
+	}
+
+	if p.StartTime != "" {
+		colNames += "start_time=?,"
+
+		valSlice = append(valSlice, p.StartTime)
 	}
 
 	if p.EndTime != "" {
 		colNames += "end_time=?,"
 
 		valSlice = append(valSlice, p.EndTime)
-	}
-
-	if p.FileName != "" {
-		colNames += "file_name=?,"
-
-		valSlice = append(valSlice, p.FileName)
-	}
-
-	if p.FileIndex != 0 {
-		colNames += "file_index=?,"
-		valSlice = append(valSlice, p.FileIndex)
-	}
-
-	if p.FileUrl != "" {
-		colNames += "file_url=?,"
-
-		valSlice = append(valSlice, p.FileUrl)
-	}
-
-	if p.RawFileUrls != "" {
-		colNames += "raw_file_urls=?,"
-
-		valSlice = append(valSlice, p.RawFileUrls)
-	}
-
-	if p.FileCrc32 != 0 {
-		colNames += "file_crc32=?,"
-		valSlice = append(valSlice, p.FileCrc32)
-	}
-
-	if p.FileLength != 0 {
-		colNames += "file_length=?,"
-		valSlice = append(valSlice, p.FileLength)
-	}
-
-	if p.CreateTime != "" {
-		colNames += "create_time=?,"
-
-		valSlice = append(valSlice, p.CreateTime)
 	}
 
 	if p.CreateBy != 0 {
@@ -1047,159 +1150,7 @@ func (r DFilesList) UpdataEntity(keyNo string, p DFiles, tr *sql.Tx) error {
 	colNames = strings.TrimRight(colNames, ",")
 	valSlice = append(valSlice, keyNo)
 
-	exeSql := fmt.Sprintf("update  lk_device_dfiles  set %s  where id=? ", colNames)
-	if r.Level == DEBUG {
-		log.Println(SQL_INSERT, exeSql)
-	}
-
-	var stmt *sql.Stmt
-	var err error
-	if tr == nil {
-		stmt, err = r.DB.Prepare(exeSql)
-	} else {
-		stmt, err = tr.Prepare(exeSql)
-	}
-
-	if err != nil {
-		log.Println(SQL_ERROR, err.Error())
-		return err
-	}
-	defer stmt.Close()
-
-	ret, err := stmt.Exec(valSlice...)
-	if err != nil {
-		log.Println(SQL_INSERT, "Update data error: %v\n", err)
-		return err
-	}
-	if LastInsertId, err := ret.LastInsertId(); nil == err {
-		log.Println(SQL_INSERT, "LastInsertId:", LastInsertId)
-	}
-	if RowsAffected, err := ret.RowsAffected(); nil == err {
-		log.Println(SQL_INSERT, "RowsAffected:", RowsAffected)
-	}
-
-	if r.Level == DEBUG {
-		log.Println(SQL_ELAPSED, time.Since(l))
-	}
-	return nil
-}
-
-/*
-	说明：插入对象到数据表中，这个方法会判读对象的各个属性，如果属性不为空，才加入插入列中；
-	入参：p:插入的对象
-	出参：参数1：如果出错，返回错误对象；成功返回nil
-*/
-
-func (r DFilesList) UpdataEntityExt(batchNo string, indexNo int, p DFiles, tr *sql.Tx) error {
-	l := time.Now()
-	var colNames string
-	valSlice := make([]interface{}, 0)
-
-	if p.Id != 0 {
-		colNames += "id=?,"
-		valSlice = append(valSlice, p.Id)
-	}
-
-	if p.BatchNo != "" {
-		colNames += "batch_no=?,"
-
-		valSlice = append(valSlice, p.BatchNo)
-	}
-
-	if p.Sn != "" {
-		colNames += "sn=?,"
-
-		valSlice = append(valSlice, p.Sn)
-	}
-
-	if p.ChipId != "" {
-		colNames += "chip_id=?,"
-
-		valSlice = append(valSlice, p.ChipId)
-	}
-
-	if p.FileType != "" {
-		colNames += "file_type=?,"
-
-		valSlice = append(valSlice, p.FileType)
-	}
-
-	if p.BeginTime != "" {
-		colNames += "begin_time=?,"
-
-		valSlice = append(valSlice, p.BeginTime)
-	}
-
-	if p.EndTime != "" {
-		colNames += "end_time=?,"
-
-		valSlice = append(valSlice, p.EndTime)
-	}
-
-	if p.FileName != "" {
-		colNames += "file_name=?,"
-
-		valSlice = append(valSlice, p.FileName)
-	}
-
-	if p.FileIndex != 0 {
-		colNames += "file_index=?,"
-		valSlice = append(valSlice, p.FileIndex)
-	}
-
-	if p.FileUrl != "" {
-		colNames += "file_url=?,"
-
-		valSlice = append(valSlice, p.FileUrl)
-	}
-
-	if p.RawFileUrls != "" {
-		colNames += "raw_file_urls=?,"
-
-		valSlice = append(valSlice, p.RawFileUrls)
-	}
-
-	if p.FileCrc32 != 0 {
-		colNames += "file_crc32=?,"
-		valSlice = append(valSlice, p.FileCrc32)
-	}
-
-	if p.FileLength != 0 {
-		colNames += "file_length=?,"
-		valSlice = append(valSlice, p.FileLength)
-	}
-
-	if p.CreateTime != "" {
-		colNames += "create_time=?,"
-
-		valSlice = append(valSlice, p.CreateTime)
-	}
-
-	if p.CreateBy != 0 {
-		colNames += "create_by=?,"
-		valSlice = append(valSlice, p.CreateBy)
-	}
-
-	if p.UpdateTime != "" {
-		colNames += "update_time=?,"
-
-		valSlice = append(valSlice, p.UpdateTime)
-	}
-
-	if p.UpdateBy != 0 {
-		colNames += "update_by=?,"
-		valSlice = append(valSlice, p.UpdateBy)
-	}
-
-	if p.Version != 0 {
-		colNames += "version=?,"
-		valSlice = append(valSlice, p.Version)
-	}
-
-	colNames = strings.TrimRight(colNames, ",")
-	valSlice = append(valSlice, batchNo, indexNo)
-
-	exeSql := fmt.Sprintf("update  lk_device_dfiles  set %s  where batch_no=?  and file_index=?", colNames)
+	exeSql := fmt.Sprintf("update  lk_device_mfiles  set %s  where batch_no=? ", colNames)
 	if r.Level == DEBUG {
 		log.Println(SQL_INSERT, exeSql)
 	}
@@ -1242,7 +1193,7 @@ func (r DFilesList) UpdataEntityExt(batchNo string, indexNo int, p DFiles, tr *s
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r DFilesList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx) error {
+func (r MFilesList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx) error {
 	l := time.Now()
 
 	var colNames string
@@ -1253,7 +1204,7 @@ func (r DFilesList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx
 	}
 	valSlice = append(valSlice, keyNo)
 	colNames = strings.TrimRight(colNames, ",")
-	updateSql := fmt.Sprintf("Update lk_device_dfiles set %s where id=?", colNames)
+	updateSql := fmt.Sprintf("Update lk_device_mfiles set %s where id=?", colNames)
 	if r.Level == DEBUG {
 		log.Println(SQL_UPDATE, updateSql)
 	}
@@ -1294,9 +1245,9 @@ func (r DFilesList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r DFilesList) Delete(keyNo string, tr *sql.Tx) error {
+func (r MFilesList) Delete(keyNo string, tr *sql.Tx) error {
 	l := time.Now()
-	delSql := fmt.Sprintf("Delete from  lk_device_dfiles  where id=?")
+	delSql := fmt.Sprintf("Delete from  lk_device_mfiles  where id=?")
 	if r.Level == DEBUG {
 		log.Println(SQL_UPDATE, delSql)
 	}

@@ -5,9 +5,13 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"hcd-dgate/service/dbcomm"
+	"hcd-dgate/service/mfile"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
+	"time"
 )
 
 const ONLINE = "online"
@@ -51,10 +55,39 @@ const TYPE_RESULT = "result"
 const TYPE_RAW = "raw"
 const TYPE_LOG = "log"
 
-const HEAD_LEN = 6
+const CMDTYPE_GET = "get"
+const CMDTYPE_PUSH = "push"
+const CMDTYPE_INFO = "info"
+const CMDTYPE_VER = "ver"
 
+const STATUS_INIT = "I"
+const STATUS_DOING = "D"
+
+const STATUS_SUCC = "S"
+const STATUS_FAIL = "F"
+
+const HEAD_LEN = 6
 const UPDATE_TIME = "update_time"
 const IS_ONLINE = "is_online"
+
+const ERR_CODE_SUCCESS = "0000"
+const ERR_CODE_DBERROR = "1001"
+const ERR_CODE_JSONERR = "2001"
+const ERR_CODE_STATUSD = "3001"
+const ERR_CODE_TYPEERR = "4000"
+const ERR_CODE_STATUS = "5000"
+
+var (
+	ERROR_MAP map[string]string = map[string]string{
+		ERR_CODE_SUCCESS: "执行成功:",
+		ERR_CODE_DBERROR: "DB执行错误:",
+		ERR_CODE_JSONERR: "JSON格式错误:",
+		ERR_CODE_TYPEERR: "类型转换错误:",
+		ERR_CODE_STATUSD: "正在处理中",
+
+		ERR_CODE_STATUS: "状态不正确:",
+	}
+)
 
 //整形转换成字节
 func IntToBytes(n int) []byte {
@@ -70,6 +103,18 @@ func BytesToInt(b []byte) int32 {
 	var x int32
 	binary.Read(bytesBuffer, binary.BigEndian, &x)
 	return int32(x)
+}
+
+/*
+	SEESION存储信息
+*/
+type StoreInfo struct {
+	CurrConn   *net.TCPConn
+	SignInTime time.Time
+	BatchNo    string
+	Status     string
+	FileIndex  int
+	FileName   string
 }
 
 /*
@@ -323,7 +368,7 @@ type HeartbeatResp struct {
 }
 
 type BusiPushFile struct {
-	No      string `json:"no"`
+	UserId  int64  `json:"user_id"`
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
 	Type    string `json:"type"`
@@ -338,7 +383,7 @@ type BusiPushFileResp struct {
 }
 
 type BusiPushInfo struct {
-	No      string `json:"no"`
+	UserId  int64  `json:"user_id"`
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
 	Type    string `json:"type"`
@@ -353,7 +398,7 @@ type BusiPushInfoResp struct {
 }
 
 type BusiGetFile struct {
-	No      string `json:"no"`
+	UserId  int64  `json:"user_id"`
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
 	Type    string `json:"type"`
@@ -370,7 +415,7 @@ type BusiGetFileResp struct {
 }
 
 type BusiGetColophon struct {
-	No      string `json:"no"`
+	UserId  int64  `json:"user_id"`
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
 }
@@ -382,7 +427,7 @@ type BusiGetColophonResp struct {
 }
 
 type BusiGetDataDrive struct {
-	No      string `json:"no"`
+	UserId  int64  `json:"user_id"`
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
 }
@@ -394,33 +439,71 @@ type BusiGetDataDriveResp struct {
 }
 
 type BusiQueryStatus struct {
-	No   string `json:"sn"`
-	Type string `json:"type"`
+	UserId int64  `json:"user_id"`
+	No     string `json:"sn"`
+	Type   string `json:"type"`
 }
 
 type BusiQueryStatusResp struct {
 	No        string `json:"no"`
 	Status    string `json:"status"`
-	Duration  string `json:"duration"`
 	ErrorCode string `json:"err_code"`
 	ErrorMsg  string `json:"err_msg"`
 }
 
 /*
-	从设备获取文件的指令控制
+	获取业务指令，触发向机器发送获取文件指令
+	1、基础校验（B、查看是否空闲，A、参数是否正确）
+	2、插入MFILES 主表
+	3、向设备发送指令
 */
-func GetFileControl(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("==========>GetFileControl==============")
+
+func BusiGetFileCtl(w http.ResponseWriter, req *http.Request) {
+	PrintHead("GetFileCtl")
 
 	var busiFile BusiGetFile
+	var busiFileResp BusiGetFileResp
 	reqBuf, err := ioutil.ReadAll(req.Body)
-	err = json.Unmarshal(reqBuf, &busiFile)
-	if err != nil {
-		fmt.Println("Unmarshal error")
+	if err = json.Unmarshal(reqBuf, &busiFile); err != nil {
+		busiFileResp.ErrorCode = ERR_CODE_JSONERR
+		busiFileResp.ErrorMsg = err.Error()
+		Write_Response(busiFileResp, w, req)
 		return
 	}
-	fmt.Println(busiFile)
 	defer req.Body.Close()
+
+	currNode, err := getCurrNode(busiFile.Sn)
+	if err != nil {
+		busiFileResp.ErrorCode = ERR_CODE_TYPEERR
+		busiFileResp.ErrorMsg = ERROR_MAP[ERR_CODE_TYPEERR]
+		Write_Response(busiFileResp, w, req)
+		return
+	}
+
+	if currNode.Status == STATUS_DOING {
+		busiFileResp.ErrorCode = ERR_CODE_STATUSD
+		busiFileResp.ErrorMsg = ERROR_MAP[ERR_CODE_STATUSD]
+		Write_Response(busiFileResp, w, req)
+		return
+	}
+	var e mfiles.MFiles
+	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+	e.BatchNo = fmt.Sprintf("%d", time.Now().UnixNano())
+	e.ChipId = busiFile.Chip_id
+	e.Sn = busiFile.Sn
+	e.Type = busiFile.Type
+	e.FromDate = busiFile.From
+	e.CreateBy = busiFile.UserId
+	e.ToDate = busiFile.To
+	e.CmdType = CMDTYPE_GET
+	e.Frange = busiFile.Range
+	e.StartTime = time.Now().Format("2006-01-02 15:04:05")
+	if err := r.InsertEntity(e, nil); err != nil {
+		busiFileResp.ErrorCode = ERR_CODE_DBERROR
+		busiFileResp.ErrorMsg = err.Error()
+		Write_Response(busiFileResp, w, req)
+		return
+	}
 	var getFile GetFile
 	getFile.Method = GET_FILE
 	getFile.Chip_id = busiFile.Chip_id
@@ -430,34 +513,68 @@ func GetFileControl(w http.ResponseWriter, req *http.Request) {
 	getFile.Count = busiFile.Count
 	getFile.From = busiFile.From
 	getFile.To = busiFile.To
-	c, ok := GConnMap.Load(busiFile.Sn)
-	if ok {
-		fmt.Println("load ok....")
-	}
 	getBuf, _ := json.Marshal(getFile)
-	conn, ret := c.(*net.TCPConn)
-	if ret {
-		Send_Resp(conn, string(getBuf))
-	} else {
-	}
-	w.Write([]byte("ok"))
+	//发起指令
+	Send_Resp(currNode.CurrConn, string(getBuf))
+
+	currNode.BatchNo = e.BatchNo
+	currNode.Status = STATUS_DOING
+	GConnMap.Store(getFile.Sn, currNode)
+
+	busiFileResp.No = e.BatchNo
+	busiFileResp.ErrorCode = ERR_CODE_SUCCESS
+	busiFileResp.ErrorMsg = ERROR_MAP[ERR_CODE_SUCCESS]
+	Write_Response(busiFileResp, w, req)
 }
 
 /*
  下发文件的到设备的指令控制
 */
 
-func PushFileControl(w http.ResponseWriter, req *http.Request) {
+func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("============>PushFileControl===========>")
 	var pushFile BusiPushFile
+	var pushFileResp BusiPushFileResp
 	reqBuf, err := ioutil.ReadAll(req.Body)
 	err = json.Unmarshal(reqBuf, &pushFile)
 	if err != nil {
-		fmt.Println("Unmarshal error")
+		pushFileResp.ErrorCode = ERR_CODE_JSONERR
+		pushFileResp.ErrorMsg = err.Error()
+		Write_Response(pushFileResp, w, req)
 		return
 	}
-	fmt.Println(pushFile)
 	defer req.Body.Close()
+
+	currNode, err := getCurrNode(pushFile.Sn)
+	if err != nil {
+		pushFileResp.ErrorCode = ERR_CODE_TYPEERR
+		pushFileResp.ErrorMsg = ERROR_MAP[ERR_CODE_TYPEERR]
+		Write_Response(pushFileResp, w, req)
+		return
+	}
+
+	if currNode.Status == STATUS_DOING {
+		pushFileResp.ErrorCode = ERR_CODE_STATUSD
+		pushFileResp.ErrorMsg = ERROR_MAP[ERR_CODE_STATUSD]
+		Write_Response(pushFileResp, w, req)
+		return
+	}
+
+	var e mfiles.MFiles
+	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+	e.BatchNo = fmt.Sprintf("%d", time.Now().UnixNano())
+	e.ChipId = pushFile.Chip_id
+	e.Sn = pushFile.Sn
+	e.Type = pushFile.Type
+	e.CreateBy = pushFile.UserId
+	e.CmdType = CMDTYPE_PUSH
+	e.StartTime = time.Now().Format("2006-01-02 15:04:05")
+	if err := r.InsertEntity(e, nil); err != nil {
+		pushFileResp.ErrorCode = ERR_CODE_DBERROR
+		pushFileResp.ErrorMsg = err.Error()
+		Write_Response(pushFileResp, w, req)
+		return
+	}
 
 	var info PushFileInfo
 	info.Method = PUSH_FILE_INFO
@@ -466,23 +583,26 @@ func PushFileControl(w http.ResponseWriter, req *http.Request) {
 	info.Total_file = 1
 	info.Type = pushFile.Type
 	info.File = []File{{Name: pushFile.Name, Length: pushFile.Length, File_crc: 1000}}
-	c, ok := GConnMap.Load(info.Sn)
-	if ok {
-		fmt.Println("load ok....")
-	}
+
 	infoBuf, _ := json.Marshal(info)
-	conn, ret := c.(*net.TCPConn)
-	if ret {
-		Send_Resp(conn, string(infoBuf))
-	}
-	w.Write([]byte("ok"))
+	Send_Resp(currNode.CurrConn, string(infoBuf))
+
+	currNode.BatchNo = e.BatchNo
+	currNode.Status = STATUS_DOING
+	GConnMap.Store(pushFile.Sn, currNode)
+
+	pushFileResp.No = e.BatchNo
+	pushFileResp.ErrorCode = ERR_CODE_SUCCESS
+	pushFileResp.ErrorMsg = ERROR_MAP[ERR_CODE_SUCCESS]
+	Write_Response(pushFileResp, w, req)
+
 }
 
 /*
  下发文件的到设备的指令控制
 */
 
-func PushInfoControl(w http.ResponseWriter, req *http.Request) {
+func BusiPushInfoCtl(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("============>PushInfoControl===========>")
 	var busiInfo BusiPushInfo
 	reqBuf, err := ioutil.ReadAll(req.Body)
@@ -517,74 +637,124 @@ func PushInfoControl(w http.ResponseWriter, req *http.Request) {
 	从设备获取版本记录的指令控制
 */
 
-func GetVerListControl(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("hello")
+func BusiGetVerListCtl(w http.ResponseWriter, req *http.Request) {
+	PrintHead("GetColoPhone")
+
 	var busiPhon BusiGetColophon
+	var busiPhonResp BusiGetColophonResp
 	reqBuf, err := ioutil.ReadAll(req.Body)
 	err = json.Unmarshal(reqBuf, &busiPhon)
 	if err != nil {
-		fmt.Println("Unmarshal error")
+		busiPhonResp.ErrorCode = ERR_CODE_JSONERR
+		busiPhonResp.ErrorMsg = err.Error()
+		Write_Response(busiPhonResp, w, req)
+		return
+	}
+	defer req.Body.Close()
+
+	currNode, err := getCurrNode(busiPhon.Sn)
+	if err != nil {
+		busiPhonResp.ErrorCode = ERR_CODE_TYPEERR
+		busiPhonResp.ErrorMsg = ERROR_MAP[ERR_CODE_TYPEERR]
+		Write_Response(busiPhonResp, w, req)
+		return
+	}
+	if currNode.Status == STATUS_DOING {
+		busiPhonResp.ErrorCode = ERR_CODE_STATUSD
+		busiPhonResp.ErrorMsg = ERROR_MAP[ERR_CODE_STATUSD]
+		Write_Response(busiPhonResp, w, req)
 		return
 	}
 
-	fmt.Println(busiPhon)
-	defer req.Body.Close()
-	var getColoPhon GetColophon
+	var e mfiles.MFiles
+	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+	e.BatchNo = fmt.Sprintf("%d", time.Now().UnixNano())
+	e.ChipId = busiPhon.Chip_id
+	e.Sn = busiPhon.Sn
+	e.CmdType = CMDTYPE_VER
+	e.StartTime = time.Now().Format("2006-01-02 15:04:05")
+	if err := r.InsertEntity(e, nil); err != nil {
+		busiPhonResp.ErrorCode = ERR_CODE_DBERROR
+		busiPhonResp.ErrorMsg = err.Error()
+		Write_Response(busiPhonResp, w, req)
+		return
+	}
 
+	var getColoPhon GetColophon
 	getColoPhon.Method = GET_COLOPHON
 	getColoPhon.Chip_id = busiPhon.Chip_id
 	getColoPhon.Sn = busiPhon.Sn
-	c, ok := GConnMap.Load(busiPhon.Sn)
-	if ok {
-		fmt.Println("load ok....")
-	}
 	getBuf, _ := json.Marshal(getColoPhon)
-	conn, ret := c.(*net.TCPConn)
-	fmt.Println(conn)
-	if ret {
-		Send_Resp(conn, string(getBuf))
-	} else {
 
-	}
+	Send_Resp(currNode.CurrConn, string(getBuf))
+
+	currNode.BatchNo = e.BatchNo
+	currNode.Status = STATUS_DOING
+	GConnMap.Store(busiPhon.Sn, currNode)
+
+	busiPhonResp.No = e.BatchNo
+	busiPhonResp.ErrorCode = ERR_CODE_SUCCESS
+	busiPhonResp.ErrorMsg = ERROR_MAP[ERR_CODE_SUCCESS]
+	Write_Response(busiPhonResp, w, req)
+
 }
 
 /*
 	从设备获取已经安装芯片的指令控制
 */
 
-func GetDataDriveControl(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("==========>GetDataDriveControl==========>")
+func BusiGetDataDriveCtl(w http.ResponseWriter, req *http.Request) {
+	PrintHead("GET DATA DRIVE")
 	var busiDrive BusiGetDataDrive
+	var busiDriveResp BusiGetDataDriveResp
 	reqBuf, err := ioutil.ReadAll(req.Body)
 	err = json.Unmarshal(reqBuf, &busiDrive)
 	if err != nil {
-		fmt.Println("Unmarshal error")
+		busiDriveResp.ErrorCode = ERR_CODE_JSONERR
+		busiDriveResp.ErrorMsg = err.Error()
+		Write_Response(busiDriveResp, w, req)
 		return
 	}
-	fmt.Println(busiDrive)
+
 	defer req.Body.Close()
-	c, ok := GConnMap.Load(busiDrive.Sn)
-	if ok {
-		fmt.Println("load ok....")
+
+	currNode, err := getCurrNode(busiDrive.Sn)
+	if err != nil {
+		busiDriveResp.ErrorCode = ERR_CODE_TYPEERR
+		busiDriveResp.ErrorMsg = ERROR_MAP[ERR_CODE_TYPEERR]
+		Write_Response(busiDriveResp, w, req)
+		return
 	}
+	if currNode.Status == STATUS_DOING {
+		busiDriveResp.ErrorCode = ERR_CODE_STATUSD
+		busiDriveResp.ErrorMsg = ERROR_MAP[ERR_CODE_STATUSD]
+		Write_Response(busiDriveResp, w, req)
+		return
+	}
+
 	var dataDrive GetInstallDataDrive
 	dataDrive.Method = GET_INSTLL_DATADRIVE
 	dataDrive.Sn = busiDrive.Sn
 	dataDrive.Chip_id = busiDrive.Chip_id
 	getBuf, _ := json.Marshal(dataDrive)
-	conn, ret := c.(*net.TCPConn)
-	if ret {
-		Send_Resp(conn, string(getBuf))
-	} else {
 
-	}
+	Send_Resp(currNode.CurrConn, string(getBuf))
+
+	currNode.BatchNo = fmt.Sprintf("%d", time.Now().UnixNano())
+	currNode.Status = STATUS_DOING
+	GConnMap.Store(busiDrive.Sn, currNode)
+
+	busiDriveResp.No = currNode.BatchNo
+	busiDriveResp.ErrorCode = ERR_CODE_SUCCESS
+	busiDriveResp.ErrorMsg = ERROR_MAP[ERR_CODE_SUCCESS]
+	Write_Response(busiDriveResp, w, req)
 }
 
 /*
 	查询设备的指令状态
 */
 
-func QueryStatusControl(w http.ResponseWriter, req *http.Request) {
+func BusiQueryStatusCtl(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("QueryStatusControl")
 	var getFile GetFile
 	getFile.Method = GET_FILE
@@ -607,4 +777,30 @@ func QueryStatusControl(w http.ResponseWriter, req *http.Request) {
 	} else {
 
 	}
+}
+
+/*
+	HTTP 应答公共方法
+*/
+func Write_Response(response interface{}, w http.ResponseWriter, r *http.Request) {
+	json, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, string(json))
+}
+
+func getCurrNode(sn string) (*StoreInfo, error) {
+	currObj, ok := GConnMap.Load(sn)
+	if !ok {
+		log.Println("配置信息出错")
+		return nil, fmt.Errorf("%s", sn+"不存在或设备没有上线")
+	}
+	currNode, ret := currObj.(StoreInfo)
+	if !ret {
+		log.Println("配置信息出错")
+		return nil, fmt.Errorf("%s", "类型断言错误")
+	}
+	return &currNode, nil
 }

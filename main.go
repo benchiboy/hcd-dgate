@@ -19,6 +19,8 @@ import (
 	"hcd-dgate/service/device"
 	"hcd-dgate/service/dfile"
 
+	"hcd-dgate/service/mfile"
+
 	"log"
 	"os"
 	"sync"
@@ -54,8 +56,8 @@ func Send_Resp(conn *net.TCPConn, resp string) {
 	接收设备的心跳，完成功能如下：
 	1、更新当前设备连接的在线时间戳
 */
-func Cmd_HeartBeat(conn *net.TCPConn, heart Heartbeat) {
-	log.Println("Cmd_HeartBeat======>", heart)
+func CmdHeartBeat(conn *net.TCPConn, heart Heartbeat) {
+	log.Println("CmdHeartBeat======>", heart)
 	var heartResp HeartbeatResp
 	heartResp.Chip_id = heart.Chip_id
 	heartResp.Method = HEARTBEAT_RESP
@@ -74,7 +76,7 @@ func Cmd_HeartBeat(conn *net.TCPConn, heart Heartbeat) {
 	2、记录在线的时间戳，以便定时检测是否在线
 	3、更新数据库的在线状态
 */
-func Cmd_OnLine(conn *net.TCPConn, online Online) {
+func CmdOnLine(conn *net.TCPConn, online Online) {
 	PrintHead("Online")
 	var onlineResp OnlineResp
 	onlineResp.Method = online.Method
@@ -105,21 +107,27 @@ func Cmd_OnLine(conn *net.TCPConn, online Online) {
 		r.InsertEntity(e, nil)
 	}
 	//存储客服端的链接
-	GConnMap.Store(online.Devices[0].Sn, conn)
-	Send_Resp(conn, string(onlineBuf))
+	GConnMap.Store(online.Devices[0].Sn, StoreInfo{CurrConn: conn, SignInTime: time.Now()})
 
+	Send_Resp(conn, string(onlineBuf))
 	PrintTail("Online")
 }
 
-func Cmd_GetColoPhonResp(conn *net.TCPConn, coloPhon GetColophon) {
-	log.Println("Cmd_GetColoPhonResp======>", coloPhon)
-	var coloPhonResp GetColophonResp
-	coloPhonResp.Method = coloPhon.Method
-	coloPhonResp.Sn = coloPhon.Sn
-	coloPhonResp.Success = true
+func CmdGetColoPhonResp(conn *net.TCPConn, phonResp GetColophonResp) {
+	log.Println("CmdGetColoPhonResp======>", phonResp)
+
+	currNode, _ := getCurrNode(phonResp.Sn)
+	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+	var ne mfiles.MFiles
+	ne.EndTime = time.Now().Format("2006-01-02 15:04:05")
+	currNode.Status = STATUS_INIT
+	GConnMap.Store(phonResp.Sn, currNode)
+
+	r.UpdataEntity(currNode.BatchNo, ne, nil)
+
 }
 
-func Cmd_GetInstallDriveResp(conn *net.TCPConn, getDriveResp GetInstallDataDriveResp) {
+func CmdGetInstallDriveResp(conn *net.TCPConn, getDriveResp GetInstallDataDriveResp) {
 	PrintHead("GetInstallDrive", getDriveResp)
 	PrintTail("GetInstallDrive")
 }
@@ -128,7 +136,7 @@ func Cmd_GetInstallDriveResp(conn *net.TCPConn, getDriveResp GetInstallDataDrive
 	接收从设备上传芯片参数信息
 	1、做数据库记录
 */
-func Cmd_PostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive) {
+func CmdPostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive) {
 	PrintHead("PostDataDrive")
 	var driveResp PostInstallDataDriveResp
 	driveResp.Method = postInstDrive.Method
@@ -154,52 +162,78 @@ func Cmd_PostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive)
 		e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 		r.InsertEntity(e, nil)
 	}
-
 	Send_Resp(conn, string(respBuf))
+
+	currNode, _ := getCurrNode(postInstDrive.Sn)
+	currNode.Status = STATUS_INIT
+	GConnMap.Store(postInstDrive.Sn, currNode)
+
 	PrintTail("PostDataDrive")
 }
 
-func Cmd_GetFileResp(getFileResp GetFileResp) {
-	log.Println("Cmd_GetFileResp======>", getFileResp)
+/*
+	接收设备获取文件指令的应答
+	1、更新数据库的MFILE 表
+*/
+func CmdGetFileResp(fileResp GetFileResp) {
+	PrintHead("GetFileResp")
+
+	currNode, _ := getCurrNode(fileResp.Sn)
+	var e mfiles.MFiles
+	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+	e.TodoCount = fileResp.Total_file
+	r.UpdataEntity(currNode.BatchNo, e, nil)
+
+	PrintTail("GetFileResp")
 }
 
 /*
 	1
 */
-func Cmd_PostFileInfo(conn *net.TCPConn, posFileInfo PostFileInfo) {
-	PrintHead("PostFileInfo", posFileInfo)
+func CmdPostFileInfo(conn *net.TCPConn, postFileInfo PostFileInfo) {
+	PrintHead("PostFileInfo", postFileInfo)
+	//记录数据库
+	r := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
+	var e dfiles.DFiles
+	e.FileName = postFileInfo.File.Name
+	e.FileLength = postFileInfo.File.Length
+	e.FileCrc32 = postFileInfo.File.File_crc
+	e.FileType = postFileInfo.Type
+	e.FileIndex = postFileInfo.File_in_procesing
+	e.Sn = postFileInfo.Sn
+	currNode, _ := getCurrNode(e.Sn)
+	e.BatchNo = currNode.BatchNo
+	e.ChipId = postFileInfo.Chip_id
+	e.BeginTime = time.Now().Format("2006-01-02 15:04:05")
+	e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
+
+	currNode.FileIndex = postFileInfo.File_in_procesing
+	currNode.FileName = postFileInfo.File.Name
+	GConnMap.Store(postFileInfo.Sn, currNode)
+
+	if err := r.InsertEntity(e, nil); err != nil {
+		log.Println(err)
+	}
 	var infoResp PostFileInfoResp
-	infoResp.Method = posFileInfo.Method
-	infoResp.Sn = posFileInfo.Sn
+	infoResp.Method = postFileInfo.Method
+	infoResp.Sn = postFileInfo.Sn
 	infoResp.Success = true
-	infoResp.Chip_id = posFileInfo.Chip_id
+	infoResp.Chip_id = postFileInfo.Chip_id
 	infoResp.File_in_procesing = 1
-	infoResp.Total_file = posFileInfo.Total_file
+	infoResp.Total_file = postFileInfo.Total_file
 	infoBuf, err := json.Marshal(&infoResp)
 	if err != nil {
 		fmt.Println(err)
 	}
-	//记录数据库
-	r := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
-	var e dfiles.DFiles
-	e.FileName = posFileInfo.File.Name
-	e.FileLength = posFileInfo.File.Length
-	e.FileCrc32 = posFileInfo.File.File_crc
-	e.FileType = posFileInfo.Type
-	e.Sn = posFileInfo.Sn
-	e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
-	if err := r.InsertEntity(e, nil); err != nil {
-		log.Println(err)
-	}
 	Send_Resp(conn, string(infoBuf))
-	PrintTail("PostFileInfo", posFileInfo)
+	PrintTail("PostFileInfo", postFileInfo)
 }
 
 /*
 	接收设备上传的文件
 	1、
 */
-func Cmd_PostFile(conn *net.TCPConn, postFile PostFile) {
+func CmdPostFile(conn *net.TCPConn, postFile PostFile) {
 	PrintHead("PostFile")
 	fileBuf, err := hex.DecodeString(postFile.Fragment.Source)
 	if err != nil {
@@ -209,6 +243,49 @@ func Cmd_PostFile(conn *net.TCPConn, postFile PostFile) {
 	if postFile.Fragment.Checksum != crcCode {
 		log.Println("crc32 check error!")
 	}
+	currNode, _ := getCurrNode(postFile.Sn)
+	//文件开始时
+	var f *os.File
+	if postFile.Fragment.Index == 1 {
+		f, err := os.Create("./tmp/" + currNode.FileName)
+		if err != nil {
+			fmt.Println(err)
+		}
+		f.Write(fileBuf)
+	} else {
+		f, err := os.OpenFile("./tmp/"+currNode.FileName, os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			fmt.Println(err)
+		}
+		f.Write(fileBuf)
+	}
+
+	if postFile.Fragment.Eof == true {
+		if f != nil {
+			f.Close()
+		}
+		r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+		var search mfiles.Search
+		search.BatchNo = currNode.BatchNo
+		e, _ := r.Get(search)
+		var ne mfiles.MFiles
+		if e.TodoCount-e.DoneCount == 1 {
+			fmt.Println("=========>", e.TodoCount, e.DoneCount)
+			//获取文件任务完成
+			ne.EndTime = time.Now().Format("2006-01-02 15:04:05")
+			currNode.Status = STATUS_INIT
+			ne.Status = STATUS_SUCC
+			GConnMap.Store(postFile.Sn, currNode)
+		}
+		ne.DoneCount = e.DoneCount + 1
+		r.UpdataEntity(currNode.BatchNo, ne, nil)
+		//更新明细的结束时间
+		rr := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
+		var de dfiles.DFiles
+		de.EndTime = time.Now().Format("2006-01-02 15:04:05")
+		rr.UpdataEntityExt(currNode.BatchNo, currNode.FileIndex, de, nil)
+	}
+
 	var fResp PostFileResp
 	fResp.Method = postFile.Method
 	fResp.Sn = postFile.Sn
@@ -225,8 +302,9 @@ func Cmd_PostFile(conn *net.TCPConn, postFile PostFile) {
 /*
 	接收客户端发来的PUSHINFO文件确认
 */
-func Cmd_PushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
+func CmdPushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
 	PrintHead("PUSH_FILE_INFO_RESP", infoResp)
+
 	var pushFile PushFile
 	pushFile.Chip_id = infoResp.Chip_id
 	pushFile.Method = PUSH_FILE
@@ -240,6 +318,26 @@ func Cmd_PushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
 	if err != nil {
 		log.Println(err)
 	}
+
+	r := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
+	var e dfiles.DFiles
+	e.FileName = "ssssss"
+	e.FileLength = 10
+	e.FileCrc32 = pushFile.Fragment.Checksum
+	e.Sn = pushFile.Sn
+	currNode, _ := getCurrNode(e.Sn)
+	e.BatchNo = currNode.BatchNo
+	e.ChipId = pushFile.Chip_id
+	e.BeginTime = time.Now().Format("2006-01-02 15:04:05")
+	e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
+
+	currNode.FileIndex = 1
+	currNode.FileName = "1111"
+	GConnMap.Store(pushFile.Sn, currNode)
+	if err := r.InsertEntity(e, nil); err != nil {
+		log.Println(err)
+	}
+
 	Send_Resp(conn, string(fBuf))
 	PrintTail("PUSH_FILE_INFO_RESP")
 }
@@ -247,7 +345,7 @@ func Cmd_PushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
 /*
 	接收客户端发来的PUSHINFO文件确认
 */
-func Cmd_CheckUpdate(conn *net.TCPConn, upDate CheckUpdate) {
+func CmdCheckUpdate(conn *net.TCPConn, upDate CheckUpdate) {
 
 	PrintHead("CHECK_UPDATE")
 	var upResp CheckUpdateResp
@@ -268,16 +366,38 @@ func Cmd_CheckUpdate(conn *net.TCPConn, upDate CheckUpdate) {
 /*
 	接收客户端发来的PUSH文件确认
 */
-func Cmd_PushFileResp(conn *net.TCPConn, fileResp PushFileResp) {
-	log.Println("Cmd_PushFilResp======>", fileResp)
+func CmdPushFileResp(conn *net.TCPConn, fileResp PushFileResp) {
+	PrintHead("PushFileResp")
+	currNode, _ := getCurrNode(fileResp.Sn)
+	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+	var search mfiles.Search
+	search.BatchNo = currNode.BatchNo
+	e, _ := r.Get(search)
+	var ne mfiles.MFiles
+	if e.TodoCount-e.DoneCount == 1 {
+		fmt.Println("=========>", e.TodoCount, e.DoneCount)
+		//获取文件任务完成
+		ne.EndTime = time.Now().Format("2006-01-02 15:04:05")
+		currNode.Status = STATUS_INIT
+		ne.Status = STATUS_SUCC
+		GConnMap.Store(fileResp.Sn, currNode)
+	}
+	ne.DoneCount = e.DoneCount + 1
+	r.UpdataEntity(currNode.BatchNo, ne, nil)
+	//更新明细的结束时间
+	rr := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
+	var de dfiles.DFiles
+	de.EndTime = time.Now().Format("2006-01-02 15:04:05")
+	rr.UpdataEntityExt(currNode.BatchNo, currNode.FileIndex, de, nil)
 
+	PrintTail("PushFileResp")
 }
 
 /*
 	接收客户端发来的PUSH文件确认
 */
-func Cmd_PushInfoResp(conn *net.TCPConn, infoResp PushInfoResp) {
-	log.Println("Cmd_PushInfoResp======>", infoResp)
+func CmdPushInfoResp(conn *net.TCPConn, infoResp PushInfoResp) {
+	log.Println("CmdPushInfoResp======>", infoResp)
 
 }
 
@@ -290,38 +410,38 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) {
 	case HEARTBEAT:
 		var heart Heartbeat
 		json.Unmarshal(packBuf, &heart)
-		Cmd_HeartBeat(conn, heart)
+		CmdHeartBeat(conn, heart)
 	case ONLINE:
 		var online Online
 		if err := json.Unmarshal(packBuf, &online); err != nil {
 			log.Println(err)
 		}
-		Cmd_OnLine(conn, online)
+		CmdOnLine(conn, online)
 	case GET_COLOPHON_RESP:
-		var coloPhon GetColophon
-		if err := json.Unmarshal(packBuf, &coloPhon); err != nil {
+		var phonResp GetColophonResp
+		if err := json.Unmarshal(packBuf, &phonResp); err != nil {
 			log.Println(err)
 		}
-		Cmd_GetColoPhonResp(conn, coloPhon)
+		CmdGetColoPhonResp(conn, phonResp)
 	case GET_INSTLL_DATADRIVE_RESP:
 		var getInstDrive GetInstallDataDriveResp
 		if err := json.Unmarshal(packBuf, &getInstDrive); err != nil {
 			log.Println(err)
 		}
-		Cmd_GetInstallDriveResp(conn, getInstDrive)
+		CmdGetInstallDriveResp(conn, getInstDrive)
 	case POST_INSTLL_DATADRIVE:
 		var postInstDrive PostInstallDataDrive
 		if err := json.Unmarshal(packBuf, &postInstDrive); err != nil {
 			log.Println(err)
 		}
-		Cmd_PostInstallDrive(conn, postInstDrive)
+		CmdPostInstallDrive(conn, postInstDrive)
 	case GET_FILE_RESP:
 		var getFileResp GetFileResp
 		err := json.Unmarshal(packBuf, &getFileResp)
 		if err != nil {
 			log.Println(err)
 		}
-		Cmd_GetFileResp(getFileResp)
+		CmdGetFileResp(getFileResp)
 
 	case POST_FILE_INFO:
 		var postFileInfo PostFileInfo
@@ -329,33 +449,33 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) {
 		if err != nil {
 			log.Println(err)
 		}
-		Cmd_PostFileInfo(conn, postFileInfo)
+		CmdPostFileInfo(conn, postFileInfo)
 	case POST_FILE:
 		var postFile PostFile
 		json.Unmarshal(packBuf, &postFile)
-		Cmd_PostFile(conn, postFile)
+		CmdPostFile(conn, postFile)
 
 	case PUSH_FILE_INFO_RESP:
 		var infoResp PushFileInfoResp
 		json.Unmarshal(packBuf, &infoResp)
-		Cmd_PushFileInfoResp(conn, infoResp)
+		CmdPushFileInfoResp(conn, infoResp)
 
 	case PUSH_FILE_RESP:
 		var fileResp PushFileResp
 		json.Unmarshal(packBuf, &fileResp)
-		Cmd_PushFileResp(conn, fileResp)
+		CmdPushFileResp(conn, fileResp)
 
 	case PUSH_INFO_RESP:
 		var infoResp PushInfoResp
 		json.Unmarshal(packBuf, &infoResp)
-		Cmd_PushInfoResp(conn, infoResp)
+		CmdPushInfoResp(conn, infoResp)
 
 	case CHECK_UDATE:
 		var upDate CheckUpdate
 		if err := json.Unmarshal(packBuf, &upDate); err != nil {
 			log.Println(err)
 		}
-		Cmd_CheckUpdate(conn, upDate)
+		CmdCheckUpdate(conn, upDate)
 	}
 
 }
@@ -368,10 +488,10 @@ func tcpPipe(conn *net.TCPConn) {
 	}()
 
 	reader := bufio.NewReader(conn)
-	packBuf := make([]byte, 8000)
+	packBuf := make([]byte, 1024*1024*5)
 	var nSum int32
 	for {
-		readBuf := make([]byte, 1024)
+		readBuf := make([]byte, 1024*100)
 		var nLen int
 		nLen, err := reader.Read(readBuf)
 		log.Println("Recv Len==", nLen, string(readBuf[0:nLen]))
@@ -386,8 +506,8 @@ func tcpPipe(conn *net.TCPConn) {
 		}
 		for {
 			packLen := BytesToInt(packBuf[2:6])
-			log.Println("Packet Len===>", packLen)
 			if nSum >= packLen {
+				log.Println("接收到一个完整的包!")
 				ProcPacket(conn, packBuf[6:packLen])
 				nSum = nSum - packLen
 
@@ -396,6 +516,7 @@ func tcpPipe(conn *net.TCPConn) {
 					copy(packBuf, packBuf[packLen:])
 				}
 			} else {
+
 				break
 			}
 		}
@@ -404,12 +525,12 @@ func tcpPipe(conn *net.TCPConn) {
 
 func go_WebServer() {
 	log.Println("........HttpServer start.........")
-	http.HandleFunc("/dgate/busiGetFile", GetFileControl)
-	http.HandleFunc("/dgate/busiPushFile", PushFileControl)
-	http.HandleFunc("/dgate/busiGetVersions", GetVerListControl)
-	http.HandleFunc("/dgate/busiGetDataDrives", GetDataDriveControl)
-	http.HandleFunc("/dgate/busiPushInfo", PushInfoControl)
-	http.HandleFunc("/dgate/busiQueryStatus", QueryStatusControl)
+	http.HandleFunc("/dgate/busiGetFile", BusiGetFileCtl)
+	http.HandleFunc("/dgate/busiPushFile", BusiPushFileCtl)
+	http.HandleFunc("/dgate/busiGetVersions", BusiGetVerListCtl)
+	http.HandleFunc("/dgate/busiGetDataDrives", BusiGetDataDriveCtl)
+	http.HandleFunc("/dgate/busiPushInfo", BusiPushInfoCtl)
+	http.HandleFunc("/dgate/busiQueryStatus", BusiQueryStatusCtl)
 
 	http_srv = &http.Server{
 		Addr: ":7088",
@@ -464,5 +585,21 @@ func main() {
 		log.Println("A client connected : " + tcpConn.RemoteAddr().String())
 		go tcpPipe(tcpConn)
 	}
+
+	//	var e mfiles.MFiles
+	//	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+	//	e.BatchNo = fmt.Sprintf("%d", time.Now().Unix())
+	//	e.ChipId = "23232323"
+	//	e.Sn = "23232323"
+	//	e.Type = "3232323"
+	//	e.FromDate = "2019-12-12"
+	//	e.ToDate = "2019-12-12"
+	//	e.Frange = "232	32"
+	//	e.CmdType = "GETFILE"
+
+	//	if err := r.InsertEntity(e, nil); err != nil {
+
+	//		return
+	//	}
 
 }
