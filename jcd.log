@@ -252,3 +252,293 @@
 2019/07/07 17:49:02.897074 main.go:498: 	V0.1    
 2019/07/07 17:49:02.897170 main.go:452: ........HttpServer start.........
 2019/07/07 17:50:19.219429 main.go:480: config file == config-ci.json
+2019/07/08 16:05:50.447687 main.go:602: config file == config-ci.json
+2019/07/08 16:06:18.406458 main.go:602: config file == config-ci.json
+2019/07/08 16:06:37.387026 main.go:602: config file == config-ci.json
+2019/07/08 16:07:03.317082 main.go:602: config file == config-ci.json
+2019/07/08 16:18:45.251814 main.go:603: config file == config-ci.json
+2019/07/08 17:25:29.656501 main.go:603: config file == config-ci.json
+2019/07/08 22:58:48.459281 main.go:609: config file == config-ci.json
+2019/07/08 22:58:48.464276 main.go:624: <==========MicroPoint Gate Starting...==========>
+2019/07/08 22:58:48.464307 main.go:625: 	V0.1    
+2019/07/08 22:58:48.667459 Dbcomm.go:28: Database Connected successful!
+2019/07/08 22:58:48.667582 main.go:582: <==========HttpServer Starting...==========>
+2019/07/08 22:59:05.417077 main.go:639: has a new conn: [::1]:60715
+2019/07/08 22:59:12.763859 main.go:553: Recv Len== 5 ����
+2019/07/08 22:59:17.035084 main.go:553: Recv Len== 5 ����
+2019/07/08 22:59:17.035204 main.go:566: 接收到一个完整的包!
+2019/07/08 22:59:17.035238 main.go:538: disconnected :[::1]:60715
+2019/07/08 23:19:55.489721 main.go:624: config file == config-ci.json
+2019/07/08 23:19:55.491510 main.go:639: <==========MicroPoint Gate Starting...==========>
+2019/07/08 23:19:55.491623 main.go:640: 	V0.1    
+2019/07/08 23:19:55.700656 Dbcomm.go:28: Database Connected successful!
+2019/07/08 23:19:55.700802 main.go:597: <==========HttpServer Starting...==========>
+2019/07/08 23:35:19.168698 main.go:625: config file == config-ci.json
+2019/07/08 23:35:19.178202 main.go:640: <==========MicroPoint Gate Starting...==========>
+2019/07/08 23:35:19.178287 main.go:641: 	V0.1    
+2019/07/08 23:35:24.180188 main.go:625: config file == config-ci.json
+2019/07/08 23:35:24.180538 main.go:640: <==========MicroPoint Gate Starting...==========>
+2019/07/08 23:35:24.180553 main.go:641: 	V0.1    
+2019/07/08 23:35:30.575376 Dbcomm.go:28: Database Connected successful!
+2019/07/08 23:35:30.575525 main.go:598: <==========HttpServer Starting...==========>
+2019/07/08 23:39:25.029999 main.go:624: config file == config-ci.json
+2019/07/08 23:39:25.038562 main.go:639: <==========MicroPoint Gate Starting...==========>
+2019/07/08 23:39:25.038649 main.go:640: 	V0.1    
+2019/07/08 23:39:25.242152 Dbcomm.go:28: Database Connected successful!
+2019/07/08 23:39:25.242480 main.go:597: <==========HttpServer Starting...==========>
+2019/07/09 06:13:44.117391 main.go:634: config file == config-ci.json
+2019/07/09 06:13:44.117929 main.go:649: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:13:44.117948 main.go:650: 	V0.1    
+2019/07/09 06:13:44.319517 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:13:44.319668 main.go:606: <==========HttpServer Starting...==========>
+2019/07/09 06:14:01.373640 main.go:664: has a new conn: [::1]:62882
+2019/07/09 06:14:06.125293 main.go:577: Recv Len== 20 sdf232323232323232
+
+2019/07/09 06:14:10.468854 main.go:577: Recv Len== 7 23232
+
+2019/07/09 06:14:27.252865 main.go:577: Recv Len== 7 
+2019/07/09 06:14:27.252975 main.go:577: Recv Len== 5 
+2019/07/09 06:14:27.253483 main.go:577: Recv Len== 15 
+2019/07/09 06:14:27.253543 main.go:577: Recv Len== 2 
+2019/07/09 06:14:27.253597 main.go:577: Recv Len== 3 
+2019/07/09 06:14:27.253636 main.go:577: Recv Len== 2 
+2019/07/09 06:14:27.253675 main.go:577: Recv Len== 2 
+2019/07/09 06:14:27.253713 main.go:577: Recv Len== 2 
+2019/07/09 06:14:27.253753 main.go:577: Recv Len== 2 
+2019/07/09 06:14:27.253792 main.go:577: Recv Len== 2 
+2019/07/09 06:14:27.254227 main.go:577: Recv Len== 4 
+2019/07/09 06:14:27.254688 main.go:577: Recv Len== 21 
+2019/07/09 06:14:27.254770 main.go:577: Recv Len== 19 
+2019/07/09 06:14:27.254843 main.go:577: Recv Len== 1 
+2019/07/09 06:14:27.255008 main.go:577: Recv Len== 2 
+2019/07/09 06:14:27.255072 main.go:577: Recv Len== 5 
+2019/07/09 06:14:27.255169 main.go:577: Recv Len== 8 
+2019/07/09 06:14:27.255263 main.go:577: Recv Len== 5 
+2019/07/09 06:14:27.255346 main.go:577: Recv Len== 5 
+2019/07/09 06:14:27.255475 main.go:577: Recv Len== 9 
+2019/07/09 06:14:27.255648 main.go:577: Recv Len== 9 
+2019/07/09 06:14:27.255738 main.go:577: Recv Len== 7 
+2019/07/09 06:14:27.255817 main.go:577: Recv Len== 6 
+2019/07/09 06:14:27.255891 main.go:577: Recv Len== 5 
+2019/07/09 06:14:27.255965 main.go:577: Recv Len== 6 
+2019/07/09 06:14:27.256040 main.go:577: Recv Len== 5 
+2019/07/09 06:14:27.260612 main.go:577: Recv Len== 260 
+2019/07/09 06:14:27.260772 main.go:577: Recv Len== 7 
+2019/07/09 06:14:27.260826 main.go:577: Recv Len== 3 
+2019/07/09 06:14:27.260875 main.go:577: Recv Len== 1 
+2019/07/09 06:14:27.260907 main.go:577: Recv Len== 3 
+2019/07/09 06:14:27.260934 main.go:577: Recv Len== 2 
+2019/07/09 06:14:27.260960 main.go:577: Recv Len== 3 
+2019/07/09 06:14:27.260987 main.go:577: Recv Len== 3 
+2019/07/09 06:14:27.261015 main.go:577: Recv Len== 3 
+2019/07/09 06:14:27.261045 main.go:577: Recv Len== 4 
+2019/07/09 06:14:27.261072 main.go:577: Recv Len== 3 
+2019/07/09 06:14:27.261107 main.go:577: Recv Len== 3 
+2019/07/09 06:14:27.261183 main.go:577: Recv Len== 3 
+2019/07/09 06:14:27.261895 main.go:577: Recv Len== 30 
+2019/07/09 06:14:27.262537 main.go:577: Recv Len== 0 
+2019/07/09 06:14:27.262641 main.go:579: EOF
+2019/07/09 06:14:27.262660 main.go:562: disconnected :[::1]:62882
+2019/07/09 06:14:27.262737 util.go:49: ========》 [online]
+2019/07/09 06:14:27.262837 Devices.go:1077: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2019/07/09 06:14:27.359453 Devices.go:1099: Update ===> LastInsertId: 0
+2019/07/09 06:14:27.359502 Devices.go:1102: Update ===> RowsAffected: 0
+2019/07/09 06:14:27.359527 Devices.go:1105: Elapsed===> 96.746913ms
+2019/07/09 06:14:27.359606 util.go:53: 《======== [online]
+2019/07/09 06:15:33.669606 main.go:634: config file == config-ci.json
+2019/07/09 06:15:33.669923 main.go:649: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:15:33.669938 main.go:650: 	V0.1    
+2019/07/09 06:15:33.862284 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:15:33.862422 main.go:606: <==========HttpServer Starting...==========>
+2019/07/09 06:16:07.559315 main.go:664: has a new conn: [::1]:62920
+2019/07/09 06:16:09.014157 main.go:573: Recv Len== 3 1
+
+2019/07/09 06:16:09.014233 main.go:579: Error Packet
+2019/07/09 06:16:09.014257 main.go:558: disconnected :[::1]:62920
+2019/07/09 06:16:09.014421 util.go:49: ========》 [online]
+2019/07/09 06:16:09.014558 Devices.go:1077: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2019/07/09 06:16:09.113099 Devices.go:1099: Update ===> LastInsertId: 0
+2019/07/09 06:16:09.113150 Devices.go:1102: Update ===> RowsAffected: 0
+2019/07/09 06:16:09.113175 Devices.go:1105: Elapsed===> 98.632035ms
+2019/07/09 06:16:09.113246 util.go:53: 《======== [online]
+2019/07/09 06:17:44.397813 main.go:637: config file == config-ci.json
+2019/07/09 06:17:44.398173 main.go:652: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:17:44.398193 main.go:653: 	V0.1    
+2019/07/09 06:17:44.603913 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:17:44.604235 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:17:54.285552 main.go:667: has a new conn: [::1]:62972
+2019/07/09 06:17:56.951436 main.go:576: Recv Len== 7 23222
+
+2019/07/09 06:17:56.951499 main.go:582: Error Packet
+2019/07/09 06:17:56.951519 main.go:561: disconnected :[::1]:62972
+2019/07/09 06:17:56.951649 util.go:49: ========》 [online]
+2019/07/09 06:17:56.951723 Devices.go:1077: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2019/07/09 06:17:57.052374 Devices.go:1099: Update ===> LastInsertId: 0
+2019/07/09 06:17:57.052429 Devices.go:1102: Update ===> RowsAffected: 0
+2019/07/09 06:17:57.052451 Devices.go:1105: Elapsed===> 100.739125ms
+2019/07/09 06:17:57.052516 util.go:53: 《======== [online]
+2019/07/09 06:18:58.834552 main.go:637: config file == config-ci.json
+2019/07/09 06:18:58.834854 main.go:652: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:18:58.834869 main.go:653: 	V0.1    
+2019/07/09 06:18:59.032249 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:18:59.032453 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:19:01.834569 main.go:667: has a new conn: [::1]:63009
+2019/07/09 06:19:03.435389 main.go:576: Recv Len== 6 3232
+
+2019/07/09 06:19:03.435480 main.go:582: Error Packet
+2019/07/09 06:19:03.435567 main.go:561: disconnected :[::1]:63009
+2019/07/09 06:19:03.435746 util.go:49: ========》 [OffLine 1111111]
+2019/07/09 06:19:03.435830 Devices.go:1077: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2019/07/09 06:19:03.535350 Devices.go:1099: Update ===> LastInsertId: 0
+2019/07/09 06:19:03.535407 Devices.go:1102: Update ===> RowsAffected: 0
+2019/07/09 06:19:03.535434 Devices.go:1105: Elapsed===> 99.609757ms
+2019/07/09 06:19:03.535513 util.go:53: 《======== [OffLine]
+2019/07/09 06:20:38.588834 main.go:637: config file == config-ci.json
+2019/07/09 06:20:38.589157 main.go:652: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:20:38.589171 main.go:653: 	V0.1    
+2019/07/09 06:20:38.775310 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:20:38.775457 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:20:44.433633 main.go:637: config file == config-ci.json
+2019/07/09 06:20:44.434031 main.go:652: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:20:44.434051 main.go:653: 	V0.1    
+2019/07/09 06:20:44.632170 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:20:44.632345 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:21:00.382415 main.go:637: config file == config-ci.json
+2019/07/09 06:21:00.382726 main.go:652: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:21:00.382740 main.go:653: 	V0.1    
+2019/07/09 06:21:00.580359 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:21:00.580504 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:21:03.149355 main.go:666: has a new conn: [::1]:63058
+2019/07/09 06:21:04.287435 main.go:576: Recv Len== 6 2121
+
+2019/07/09 06:21:04.287490 main.go:582: Error Packet
+2019/07/09 06:21:04.287513 main.go:561: disconnected :[::1]:63058
+2019/07/09 06:21:04.287658 util.go:49: ========》 [OffLine ]
+2019/07/09 06:21:30.158528 main.go:637: config file == config-ci.json
+2019/07/09 06:21:30.160979 main.go:652: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:21:30.161504 main.go:653: 	V0.1    
+2019/07/09 06:21:30.358890 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:21:30.359031 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:26:37.409317 main.go:638: config file == config-ci.json
+2019/07/09 06:26:37.409721 main.go:653: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:26:37.409738 main.go:654: 	V0.1    
+2019/07/09 06:26:37.599115 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:26:37.599259 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:28:32.549273 main.go:638: config file == config-ci.json
+2019/07/09 06:28:32.549568 main.go:653: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:28:32.549583 main.go:654: 	V0.1    
+2019/07/09 06:28:32.735772 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:28:32.735939 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:30:26.849385 main.go:638: config file == config-ci.json
+2019/07/09 06:30:26.849730 main.go:653: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:30:26.849746 main.go:654: 	V0.1    
+2019/07/09 06:30:27.053425 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:30:27.053589 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:32:23.948266 main.go:638: config file == config-ci.json
+2019/07/09 06:32:23.948595 main.go:653: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:32:23.948611 main.go:654: 	V0.1    
+2019/07/09 06:32:24.132218 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:32:24.132395 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:32:41.787969 main.go:638: config file == config-ci.json
+2019/07/09 06:32:41.788345 main.go:653: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:32:41.788363 main.go:654: 	V0.1    
+2019/07/09 06:32:41.980277 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:32:41.980410 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:34:05.571944 main.go:638: config file == config-ci.json
+2019/07/09 06:34:05.572236 main.go:653: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:34:05.572248 main.go:654: 	V0.1    
+2019/07/09 06:34:05.775360 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:34:05.775524 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:34:07.124060 main.go:638: config file == config-ci.json
+2019/07/09 06:34:07.124612 main.go:653: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:34:07.124628 main.go:654: 	V0.1    
+2019/07/09 06:35:22.431841 Dbcomm.go:23: Ping database error: dial tcp 212.64.29.57:3306: connect: operation timed out
+2019/07/09 06:35:22.432002 main.go:609: <==========HttpServer Starting...==========>
+2019/07/09 06:37:13.729973 main.go:644: config file == config-ci.json
+2019/07/09 06:37:13.730307 main.go:659: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:37:13.730320 main.go:660: 	V0.1    
+2019/07/09 06:38:28.911791 Dbcomm.go:23: Ping database error: dial tcp 212.64.29.57:3306: connect: operation timed out
+2019/07/09 06:38:28.911955 main.go:615: <==========HttpServer Starting...==========>
+2019/07/09 06:38:34.118083 main.go:644: config file == config-ci.json
+2019/07/09 06:38:34.118470 main.go:659: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:38:34.118483 main.go:660: 	V0.1    
+2019/07/09 06:38:45.762337 main.go:644: config file == config-ci.json
+2019/07/09 06:38:45.762659 main.go:659: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:38:45.762671 main.go:660: 	V0.1    
+2019/07/09 06:39:11.563717 main.go:644: config file == config-ci.json
+2019/07/09 06:39:11.564160 main.go:659: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:39:11.564175 main.go:660: 	V0.1    
+2019/07/09 06:39:22.881108 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:39:22.881393 main.go:615: <==========HttpServer Starting...==========>
+2019/07/09 06:43:00.461972 main.go:643: config file == config-ci.json
+2019/07/09 06:43:00.462506 main.go:658: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:43:00.462522 main.go:659: 	V0.1    
+2019/07/09 06:43:00.652509 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:43:00.653127 main.go:614: <==========HttpServer Starting...==========>
+2019/07/09 06:43:32.618060 main.go:642: config file == config-ci.json
+2019/07/09 06:43:32.618355 main.go:657: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:43:32.618368 main.go:658: 	V0.1    
+2019/07/09 06:43:32.808467 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:43:32.808636 main.go:613: <==========HttpServer Starting...==========>
+2019/07/09 06:43:59.707241 main.go:642: config file == config-ci.json
+2019/07/09 06:43:59.707531 main.go:657: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:43:59.707542 main.go:658: 	V0.1    
+2019/07/09 06:43:59.902437 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:43:59.902602 main.go:613: <==========HttpServer Starting...==========>
+2019/07/09 06:44:14.447320 main.go:641: config file == config-ci.json
+2019/07/09 06:44:14.447913 main.go:656: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:44:14.447927 main.go:657: 	V0.1    
+2019/07/09 06:44:14.634578 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:44:14.634745 main.go:612: <==========HttpServer Starting...==========>
+2019/07/09 06:46:04.788310 main.go:641: config file == config-ci.json
+2019/07/09 06:46:04.789121 main.go:656: <==========MicroPoint Gate Starting...==========>
+2019/07/09 06:46:04.789137 main.go:657: 	V0.1    
+2019/07/09 06:46:04.978949 Dbcomm.go:28: Database Connected successful!
+2019/07/09 06:46:04.979097 main.go:612: <==========HttpServer Starting...==========>
+2019/07/09 11:52:07.563087 main.go:662: config file == config-ci.json
+2019/07/09 11:52:07.566115 main.go:677: <==========MicroPoint Gate Starting...==========>
+2019/07/09 11:52:07.566464 main.go:678: 	V0.1    
+2019/07/09 11:52:07.723690 Dbcomm.go:28: Database Connected successful!
+2019/07/09 11:52:07.723817 main.go:635: <==========HttpServer Starting...==========>
+2019/07/09 11:52:27.789459 main.go:662: config file == config-ci.json
+2019/07/09 11:52:27.790299 main.go:677: <==========MicroPoint Gate Starting...==========>
+2019/07/09 11:52:27.790320 main.go:678: 	V0.1    
+2019/07/09 11:52:27.934919 Dbcomm.go:28: Database Connected successful!
+2019/07/09 11:52:27.935078 main.go:635: <==========HttpServer Starting...==========>
+2019/07/09 11:53:15.491339 main.go:664: config file == config-ci.json
+2019/07/09 11:53:15.491896 main.go:679: <==========MicroPoint Gate Starting...==========>
+2019/07/09 11:53:15.491912 main.go:680: 	V0.1    
+2019/07/09 11:53:15.633957 Dbcomm.go:28: Database Connected successful!
+2019/07/09 11:53:15.634130 main.go:637: <==========HttpServer Starting...==========>
+2019/07/09 11:53:36.788889 main.go:664: config file == config-ci.json
+2019/07/09 11:53:36.789210 main.go:679: <==========MicroPoint Gate Starting...==========>
+2019/07/09 11:53:36.789222 main.go:680: 	V0.1    
+2019/07/09 11:53:36.932660 Dbcomm.go:28: Database Connected successful!
+2019/07/09 11:53:36.932824 main.go:637: <==========HttpServer Starting...==========>
+2019/07/09 11:55:57.558348 main.go:664: config file == config-ci.json
+2019/07/09 11:55:57.559158 main.go:679: <==========MicroPoint Gate Starting...==========>
+2019/07/09 11:55:57.559171 main.go:680: 	V0.1    
+2019/07/09 11:55:57.716312 Dbcomm.go:28: Database Connected successful!
+2019/07/09 11:55:57.716445 main.go:637: <==========HttpServer Starting...==========>
+2019/07/09 11:56:30.046604 main.go:664: config file == config-ci.json
+2019/07/09 11:56:30.047305 main.go:679: <==========MicroPoint Gate Starting...==========>
+2019/07/09 11:56:30.047323 main.go:680: 	V0.1    
+2019/07/09 11:56:30.192294 Dbcomm.go:28: Database Connected successful!
+2019/07/09 11:56:30.192427 main.go:637: <==========HttpServer Starting...==========>
+2019/07/09 11:56:40.303844 main.go:664: config file == config-ci.json
+2019/07/09 11:56:40.304163 main.go:679: <==========MicroPoint Gate Starting...==========>
+2019/07/09 11:56:40.304180 main.go:680: 	V0.1    
+2019/07/09 11:56:40.454754 Dbcomm.go:28: Database Connected successful!
+2019/07/09 11:56:40.454885 main.go:637: <==========HttpServer Starting...==========>
+2019/07/09 11:57:50.015001 main.go:664: config file == config-ci.json
+2019/07/09 11:57:50.015537 main.go:679: <==========MicroPoint Gate Starting...==========>
+2019/07/09 11:57:50.015557 main.go:680: 	V0.1    
+2019/07/09 11:57:50.159267 Dbcomm.go:28: Database Connected successful!
+2019/07/09 11:57:50.159406 main.go:637: <==========HttpServer Starting...==========>
+2019/07/09 12:57:05.832940 main.go:665: config file == config-ci.json
+2019/07/09 12:57:05.836622 main.go:680: <==========MicroPoint Gate Starting...==========>
+2019/07/09 12:57:57.978669 main.go:666: config file == config-ci.json
+2019/07/09 12:57:57.979391 main.go:681: <==========MicroPoint Gate Starting...==========>
+2019/07/09 12:57:57.979407 main.go:682: 	V0.1    
+2019/07/09 12:57:58.125368 Dbcomm.go:28: Database Connected successful!
+2019/07/09 12:57:58.125500 main.go:639: <==========HttpServer Starting...==========>

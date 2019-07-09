@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-func softwareCrc32(buf []byte, len int) int {
+func softwareCrc32(buf []byte, len int) int32 {
 	bytes := make([]byte, 0)
 	if len%4 != 0 {
 		totalLen := (4 - len%4) + len
@@ -42,7 +42,7 @@ func softwareCrc32(buf []byte, len int) int {
 		}
 		crc &= 0xFFFFFFFF
 	}
-	return crc
+	return int32(crc)
 }
 
 func PrintHead(a ...interface{}) {

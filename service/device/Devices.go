@@ -1056,6 +1056,58 @@ func (r DeviceList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx
 }
 
 /*
+	说明：根据更新主键及更新Map值更新数据表；
+	入参：keyNo:更新数据的关键条件，m:更新数据列的Map
+	出参：参数1：如果出错，返回错误对象；成功返回nil
+*/
+
+func (r DeviceList) UpdateMapEx(keyNo string, m map[string]interface{}, tr *sql.Tx) error {
+	l := time.Now()
+
+	var colNames string
+	valSlice := make([]interface{}, 0)
+	for k, v := range m {
+		colNames += k + "=?,"
+		valSlice = append(valSlice, v)
+	}
+	valSlice = append(valSlice, keyNo)
+	colNames = strings.TrimRight(colNames, ",")
+	updateSql := fmt.Sprintf("Update lk_device set %s where sn=?", colNames)
+	if r.Level == DEBUG {
+		log.Println(SQL_UPDATE, updateSql)
+	}
+	var stmt *sql.Stmt
+	var err error
+	if tr == nil {
+		stmt, err = r.DB.Prepare(updateSql)
+	} else {
+		stmt, err = tr.Prepare(updateSql)
+	}
+
+	if err != nil {
+		log.Println(SQL_ERROR, err.Error())
+		return err
+	}
+	ret, err := stmt.Exec(valSlice...)
+	if err != nil {
+		log.Println(SQL_UPDATE, "Update data error: %v\n", err)
+		return err
+	}
+	defer stmt.Close()
+
+	if LastInsertId, err := ret.LastInsertId(); nil == err {
+		log.Println(SQL_UPDATE, "LastInsertId:", LastInsertId)
+	}
+	if RowsAffected, err := ret.RowsAffected(); nil == err {
+		log.Println(SQL_UPDATE, "RowsAffected:", RowsAffected)
+	}
+	if r.Level == DEBUG {
+		log.Println(SQL_ELAPSED, time.Since(l))
+	}
+	return nil
+}
+
+/*
 	说明：根据主键删除一条数据；
 	入参：keyNo:要删除的主键值
 	出参：参数1：如果出错，返回错误对象；成功返回nil

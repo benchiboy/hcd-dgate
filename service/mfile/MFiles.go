@@ -335,7 +335,7 @@ func (r MFilesList) Get(s Search) (*MFiles, error) {
 		where += s.ExtraWhere
 	}
 
-	qrySql := fmt.Sprintf("Select id,batch_no,todo_count,done_count from lk_device_mfiles where 1=1 %s ", where)
+	qrySql := fmt.Sprintf("Select id,batch_no,todo_count,done_count,status from lk_device_mfiles where 1=1 %s ", where)
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
 	}
@@ -350,7 +350,7 @@ func (r MFilesList) Get(s Search) (*MFiles, error) {
 	if !rows.Next() {
 		return nil, fmt.Errorf("Not Finded Record")
 	} else {
-		err := rows.Scan(&p.Id, &p.BatchNo, &p.TodoCount, &p.DoneCount)
+		err := rows.Scan(&p.Id, &p.BatchNo, &p.TodoCount, &p.DoneCount, &p.Status)
 		if err != nil {
 			log.Println(SQL_ERROR, err.Error())
 			return nil, err

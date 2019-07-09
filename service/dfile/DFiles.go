@@ -66,7 +66,7 @@ type DFiles struct {
 	FileIndex   int    `json:"file_index"`
 	FileUrl     string `json:"file_url"`
 	RawFileUrls string `json:"raw_file_urls"`
-	FileCrc32   int    `json:"file_crc32"`
+	FileCrc32   int32  `json:"file_crc32"`
 	FileLength  int    `json:"file_length"`
 	CreateTime  string `json:"create_time"`
 	CreateBy    int64  `json:"create_by"`
