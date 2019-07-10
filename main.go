@@ -592,6 +592,7 @@ func tcpPipe(conn *net.TCPConn) {
 			sn, _ := snIf.(string)
 			OffLine(sn)
 		}
+		GConn2SnMap.Delete(conn)
 		conn.Close()
 	}()
 	reader := bufio.NewReader(conn)
@@ -679,7 +680,7 @@ func init() {
 
 func main() {
 	log.Println("<==========MicroPoint Gate Starting...==========>")
-	log.Println("	V0.1    ")
+	log.Println("	V0.2    ")
 	dbcomm.InitDB(dbUrl, ccdbUrl, idleConns, openConns)
 	go go_WebServer()
 	var tcpAddr *net.TCPAddr
