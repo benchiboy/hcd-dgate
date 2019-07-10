@@ -542,3 +542,33 @@
 2019/07/09 12:57:57.979407 main.go:682: 	V0.1    
 2019/07/09 12:57:58.125368 Dbcomm.go:28: Database Connected successful!
 2019/07/09 12:57:58.125500 main.go:639: <==========HttpServer Starting...==========>
+2019/07/09 21:19:23.069009 main.go:668: config file == config-ci.json
+2019/07/09 21:19:23.071487 main.go:683: <==========MicroPoint Gate Starting...==========>
+2019/07/09 21:19:23.071907 main.go:684: 	V0.1    
+2019/07/09 21:19:23.239362 Dbcomm.go:28: Database Connected successful!
+2019/07/09 21:19:23.239461 main.go:641: <==========HttpServer Starting...==========>
+2019/07/09 21:19:38.086283 main.go:665: config file == config-ci.json
+2019/07/09 21:19:38.086835 main.go:680: <==========MicroPoint Gate Starting...==========>
+2019/07/09 21:19:38.086854 main.go:681: 	V0.1    
+2019/07/09 21:19:38.270083 Dbcomm.go:28: Database Connected successful!
+2019/07/09 21:19:38.270215 main.go:638: <==========HttpServer Starting...==========>
+2019/07/09 21:19:47.626144 main.go:665: config file == config-ci.json
+2019/07/09 21:19:47.626473 main.go:680: <==========MicroPoint Gate Starting...==========>
+2019/07/09 21:19:47.626487 main.go:681: 	V0.1    
+2019/07/09 21:19:47.793694 Dbcomm.go:28: Database Connected successful!
+2019/07/09 21:19:47.793867 main.go:638: <==========HttpServer Starting...==========>
+2019/07/09 21:21:01.530882 main.go:666: config file == config-ci.json
+2019/07/09 21:21:01.531175 main.go:681: <==========MicroPoint Gate Starting...==========>
+2019/07/09 21:21:01.531187 main.go:682: 	V0.1    
+2019/07/09 21:21:01.687576 Dbcomm.go:28: Database Connected successful!
+2019/07/09 21:21:01.687751 main.go:639: <==========HttpServer Starting...==========>
+2019/07/09 21:21:19.598312 main.go:666: config file == config-ci.json
+2019/07/09 21:21:19.598697 main.go:681: <==========MicroPoint Gate Starting...==========>
+2019/07/09 21:21:19.598711 main.go:682: 	V0.1    
+2019/07/09 21:21:19.776009 Dbcomm.go:28: Database Connected successful!
+2019/07/09 21:21:19.776178 main.go:639: <==========HttpServer Starting...==========>
+2019/07/09 21:22:08.115868 main.go:666: config file == config-ci.json
+2019/07/09 21:22:08.116211 main.go:681: <==========MicroPoint Gate Starting...==========>
+2019/07/09 21:22:08.116227 main.go:682: 	V0.1    
+2019/07/09 21:22:08.276521 Dbcomm.go:30: Database Connected successful!
+2019/07/09 21:22:08.276687 main.go:639: <==========HttpServer Starting...==========>

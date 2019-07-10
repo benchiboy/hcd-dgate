@@ -570,9 +570,6 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) {
 */
 func OffLine(sn string) {
 	PrintHead(OFFLINE, sn)
-	if sn == "" {
-		return
-	}
 	r := device.New(dbcomm.GetDB(), device.DEBUG)
 	onlineMap := map[string]interface{}{UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05"),
 		IS_ONLINE: 2}
@@ -590,7 +587,10 @@ func tcpPipe(conn *net.TCPConn) {
 		snIf, ok := GConn2SnMap.Load(conn)
 		if ok {
 			sn, _ := snIf.(string)
-			OffLine(sn)
+			if sn != "" {
+				OffLine(sn)
+			}
+			GConn2SnMap.Delete(conn)
 		}
 		conn.Close()
 	}()
