@@ -1,15 +1,15 @@
-// HCD-D project doc.go
 
 /*
 HCD-D document
 */
 package main
 
-//fmt.Println(hex([]byte("F")))
-//fmt.Println(hex.EncodeToString([]byte("F")))
-
-
-//	fmt.Printf("%X", crc32.ChecksumIEEE([]byte(check_str)))
-//	io.WriteString(ieee, check_str)
-//s := ieee.Sum32()
-//fmt.Println(s)
+#ver 0.1
+#2019-07-09
+	在LINUX测试4000个客户端同时连接
+	验证了DB 连接池 SETMAXLIFETIME 的作用，这个需要进一步验证
+ver 0.2
+#2019-07-11
+	上线，下线只更新DEVICE_TIME
+	下线也插入历史表
+	修改得到渠道没插入主表的错误

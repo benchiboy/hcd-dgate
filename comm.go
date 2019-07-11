@@ -67,6 +67,9 @@ const CMDTYPE_INFO = "pushinfo"
 const CMDTYPE_VER = "getver"
 const CMDTYPE_DRIVE = "getdrive"
 
+const ACTION_ONLINE = "ON"
+const ACTION_OFFLINE = "OFF"
+
 const STATUS_INIT = "I"
 const STATUS_DOING = "D"
 
@@ -75,8 +78,9 @@ const STATUS_FAIL = "F"
 
 const HEAD_LEN = 6
 const UPDATE_TIME = "update_time"
+const DEVICE_TIME = "device_time"
 const IS_ONLINE = "is_online"
-
+const ACTION_TYPE = "action_type"
 const DEFAULT_PATH = "/data/app/hcd/tmp/"
 
 const UPDATE_USER = 9000000
@@ -796,6 +800,20 @@ func BusiGetDataDriveCtl(w http.ResponseWriter, req *http.Request) {
 		Write_Response(busiDriveResp, w, req, GET_INSTLL_DATADRIVE)
 		return
 	}
+	var e mfiles.MFiles
+	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+	e.BatchNo = fmt.Sprintf("%d", time.Now().UnixNano())
+	e.ChipId = busiDrive.Chip_id
+	e.Sn = busiDrive.Sn
+	e.CmdType = CMDTYPE_DRIVE
+	e.CreateBy = busiDrive.UserId
+	e.StartTime = time.Now().Format("2006-01-02 15:04:05")
+	if err := r.InsertEntity(e, nil); err != nil {
+		busiDriveResp.ErrorCode = ERR_CODE_DBERROR
+		busiDriveResp.ErrorMsg = err.Error()
+		Write_Response(busiDriveResp, w, req, GET_FILE)
+		return
+	}
 
 	var dataDrive GetInstallDataDrive
 	dataDrive.Method = GET_INSTLL_DATADRIVE
@@ -805,7 +823,7 @@ func BusiGetDataDriveCtl(w http.ResponseWriter, req *http.Request) {
 
 	Send_Resp(currNode.CurrConn, string(getBuf))
 	//记录状态
-	currNode.BatchNo = fmt.Sprintf("%d", time.Now().UnixNano())
+	currNode.BatchNo = e.BatchNo
 	currNode.Status = STATUS_DOING
 	GSn2ConnMap.Store(busiDrive.Sn, currNode)
 

@@ -13,6 +13,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 
 	"flag"
 	"hcd-dgate/service/chip"
@@ -109,8 +110,8 @@ func CmdOnLine(conn *net.TCPConn, online Online) {
 	var search device.Search
 	search.Sn = onlineResp.Sn
 	if e, err := r.Get(search); err == nil {
-		onlineMap := map[string]interface{}{UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05"),
-			IS_ONLINE: 1}
+		onlineMap := map[string]interface{}{
+			IS_ONLINE: 1, DEVICE_TIME: time.Now().Format("2006-01-02 15:04:05")}
 		err = r.UpdateMap(fmt.Sprintf("%d", e.Id), onlineMap, nil)
 		if err != nil {
 			log.Println("更新失败", err)
@@ -134,6 +135,7 @@ func CmdOnLine(conn *net.TCPConn, online Online) {
 	ne.HwVer = online.Devices[0].Hw_ver
 	ne.SwVer = online.Devices[0].Sw_ver
 	ne.RemoteIp = conn.RemoteAddr().String()
+	ne.ActionType = ACTION_ONLINE
 	ne.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 	if err := rr.InsertEntity(ne, nil); err != nil {
 		log.Println(err.Error())
@@ -205,6 +207,8 @@ func CmdPostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive) 
 	ne.UpdateBy = UPDATE_USER
 	ne.TodoCount = postInstDrive.Dd_cnt
 	ne.DoneCount = postInstDrive.Dd_cnt
+
+	ne.Status = STATUS_SUCC
 	rr.UpdataEntity(currNode.BatchNo, ne, nil)
 
 	var driveResp PostInstallDataDriveResp
@@ -246,22 +250,22 @@ func CmdPostFileInfo(conn *net.TCPConn, postFileInfo PostFileInfo) {
 	PrintHead(POST_FILE_INFO)
 	//记录数据库
 	r := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
+	currNode, _ := getCurrNode(postFileInfo.Sn)
 	var e dfiles.DFiles
-	e.FileName = postFileInfo.File.Name
-	e.FileUrl = DEFAULT_PATH + postFileInfo.File.Name
+	e.FileName = currNode.BatchNo + strings.Replace(postFileInfo.File.Name, "#", "_", 1)
+	e.FileUrl = DEFAULT_PATH + e.FileName
 	e.FileLength = postFileInfo.File.Length
 	e.FileCrc32 = int32(postFileInfo.File.File_crc)
 	e.FileType = postFileInfo.Type
 	e.FileIndex = postFileInfo.File_in_procesing
 	e.Sn = postFileInfo.Sn
-	currNode, _ := getCurrNode(e.Sn)
 	e.BatchNo = currNode.BatchNo
 	e.ChipId = postFileInfo.Chip_id
 	e.BeginTime = time.Now().Format("2006-01-02 15:04:05")
 	e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 
 	currNode.FileIndex = postFileInfo.File_in_procesing
-	currNode.FileName = postFileInfo.File.Name
+	currNode.FileName = e.FileName
 
 	GSn2ConnMap.Store(postFileInfo.Sn, currNode)
 
@@ -571,12 +575,23 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) {
 func OffLine(sn string) {
 	PrintHead(OFFLINE, sn)
 	r := device.New(dbcomm.GetDB(), device.DEBUG)
-	onlineMap := map[string]interface{}{UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05"),
+	onlineMap := map[string]interface{}{DEVICE_TIME: time.Now().Format("2006-01-02 15:04:05"),
 		IS_ONLINE: 2}
 	err := r.UpdateMapEx(sn, onlineMap, nil)
 	if err != nil {
 		log.Println("更新失败", err)
 	}
+
+	//插入设备在线历史
+	rr := onlinehis.New(dbcomm.GetDB(), onlinehis.DEBUG)
+	var ne onlinehis.OnlineHis
+	ne.Sn = sn
+	ne.ActionType = ACTION_OFFLINE
+	ne.DeviceTime = time.Now().Format("2006-01-02 15:04:05")
+	if err := rr.InsertEntity(ne, nil); err != nil {
+		log.Println(err.Error())
+	}
+
 	PrintTail(OFFLINE)
 }
 
@@ -592,6 +607,7 @@ func tcpPipe(conn *net.TCPConn) {
 			}
 			GConn2SnMap.Delete(conn)
 		}
+		GConn2SnMap.Delete(conn)
 		conn.Close()
 	}()
 	reader := bufio.NewReader(conn)
@@ -679,7 +695,7 @@ func init() {
 
 func main() {
 	log.Println("<==========MicroPoint Gate Starting...==========>")
-	log.Println("	V0.1    ")
+	log.Println("	V0.2    ")
 	dbcomm.InitDB(dbUrl, ccdbUrl, idleConns, openConns)
 	go go_WebServer()
 	var tcpAddr *net.TCPAddr

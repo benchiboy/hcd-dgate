@@ -2,7 +2,7 @@
 	"config":{
 		"DB_URL": "root:JJBO*&*HhKH33@tcp(212.64.29.57:3306)/weidian",
 		"LISTEN":8000,
-		"OPEN_CONNS":120,
-		"IDLE_CONNS":120
+		"OPEN_CONNS":50,
+		"IDLE_CONNS":50
 	}
 }

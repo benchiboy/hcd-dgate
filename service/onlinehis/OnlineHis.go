@@ -35,6 +35,7 @@ type Search struct {
 	Gate         string `json:"gate"`
 	RemoteIp     string `json:"remote_ip"`
 	CreateTime   string `json:"create_time"`
+	ActionType   string `json:"action_type"`
 	Version      int64  `json:"version"`
 	PageNo       int    `json:"page_no"`
 	PageSize     int    `json:"page_size"`
@@ -63,6 +64,7 @@ type OnlineHis struct {
 	Gate         string `json:"gate"`
 	RemoteIp     string `json:"remote_ip"`
 	CreateTime   string `json:"create_time"`
+	ActionType   string `json:"action_type"`
 	Version      int64  `json:"version"`
 }
 
@@ -597,6 +599,12 @@ func (r OnlineHisList) InsertEntity(p OnlineHis, tr *sql.Tx) error {
 		colNames += "create_time,"
 		colTags += "?,"
 		valSlice = append(valSlice, p.CreateTime)
+	}
+
+	if p.ActionType != "" {
+		colNames += "action_type,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.ActionType)
 	}
 
 	if p.Version != 0 {

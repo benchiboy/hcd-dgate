@@ -3,7 +3,7 @@ package chips
 import (
 	"database/sql"
 	"fmt"
-	"hcd-gate/service/pubtype"
+
 	"log"
 	"strings"
 	"time"
@@ -361,124 +361,6 @@ func (r *ChipsList) GetList(s Search) ([]Chips, error) {
 		log.Println(SQL_ELAPSED, time.Since(l))
 	}
 	return r.Chipss, nil
-}
-
-/*
-	说明：根据条件查询复核条件对象列表，支持分页查询
-	入参：s: 查询条件
-	出参：参数1：返回符合条件的对象列表, 参数2：如果错误返回错误对象
-*/
-
-func (r *ChipsList) GetListExt(s Search, fList []string) ([][]pubtype.Data, error) {
-	var where string
-	l := time.Now()
-
-	if s.Id != 0 {
-		where += " and id=" + fmt.Sprintf("%d", s.Id)
-	}
-
-	if s.Sn != "" {
-		where += " and sn='" + s.Sn + "'"
-	}
-
-	if s.ChipLot != "" {
-		where += " and chip_lot=" + "'"
-	}
-
-	if s.CheckItem != "" {
-		where += " and check_item='" + s.CheckItem + "'"
-	}
-
-	if s.SampleType != "" {
-		where += " and sample_type='" + s.SampleType + "'"
-	}
-
-	if s.ProductDate != "" {
-		where += " and product_date='" + s.ProductDate + "'"
-	}
-
-	if s.ActiveDate != "" {
-		where += " and active_date='" + s.ActiveDate + "'"
-	}
-
-	if s.ChipInstallDate != "" {
-		where += " and chip_install_date='" + s.ChipInstallDate + "'"
-	}
-
-	if s.CreateTime != "" {
-		where += " and create_time='" + s.CreateTime + "'"
-	}
-
-	if s.CreateBy != 0 {
-		where += " and create_by=" + fmt.Sprintf("%d", s.CreateBy)
-	}
-
-	if s.UpdateTime != "" {
-		where += " and update_time='" + s.UpdateTime + "'"
-	}
-
-	if s.UpdateBy != 0 {
-		where += " and update_by=" + fmt.Sprintf("%d", s.UpdateBy)
-	}
-
-	if s.ExtraWhere != "" {
-		where += s.ExtraWhere
-	}
-
-	colNames := ""
-	for _, v := range fList {
-		colNames += v + ","
-
-	}
-	colNames = strings.TrimRight(colNames, ",")
-
-	var qrySql string
-	if s.PageSize == 0 && s.PageNo == 0 {
-		qrySql = fmt.Sprintf("Select %s from lk_device_chips where 1=1 %s", colNames, where)
-	} else {
-		qrySql = fmt.Sprintf("Select %s from lk_device_chips where 1=1 %s Limit %d offset %d", colNames, where, s.PageSize, (s.PageNo-1)*s.PageSize)
-	}
-	if r.Level == DEBUG {
-		log.Println(SQL_SELECT, qrySql)
-	}
-	rows, err := r.DB.Query(qrySql)
-	if err != nil {
-		log.Println(SQL_ERROR, err.Error())
-		return nil, err
-	}
-	defer rows.Close()
-
-	Columns, _ := rows.Columns()
-	values := make([]sql.RawBytes, len(Columns))
-	scanArgs := make([]interface{}, len(values))
-	for i := range values {
-		scanArgs[i] = &values[i]
-	}
-
-	rowData := make([][]pubtype.Data, 0)
-	for rows.Next() {
-		err = rows.Scan(scanArgs...)
-		colData := make([]pubtype.Data, 0)
-		for k, _ := range values {
-			d := new(pubtype.Data)
-			d.FieldName = Columns[k]
-			d.FieldValue = string(values[k])
-			colData = append(colData, *d)
-		}
-		//extra flow_batch_id
-		d2 := new(pubtype.Data)
-		d2.FieldName = "flow_batch_id"
-		d2.FieldValue = string(values[0])
-		colData = append(colData, *d2)
-
-		rowData = append(rowData, colData)
-	}
-
-	log.Println(SQL_ELAPSED, "==========>>>>>>>>>>>", rowData)
-	if r.Level == DEBUG {
-		log.Println(SQL_ELAPSED, time.Since(l))
-	}
-	return rowData, nil
 }
 
 /*
