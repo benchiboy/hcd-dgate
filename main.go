@@ -21,6 +21,7 @@ import (
 	"hcd-dgate/service/device"
 	"hcd-dgate/service/dfile"
 	"hcd-dgate/service/onlinehis"
+	"hcd-dgate/service/ver"
 	"html/template"
 
 	"hcd-dgate/service/mfile"
@@ -140,6 +141,17 @@ func CmdOnLine(conn *net.TCPConn, online Online) {
 	if err := rr.InsertEntity(ne, nil); err != nil {
 		log.Println(err.Error())
 	}
+
+	//更新设备的版本信息
+
+	//	ne.Sn = online.Devices[0].Sn
+	//	ne.ChipId = online.Devices[0].Chip_id
+
+	//	ne.CreateTime = time.Now().Format("2006-01-02 15:04:05")
+	//	if err := rrr.(ne, nil); err != nil {
+	//		log.Println(err.Error())
+	//	}
+
 	//存储客服端的链接
 	GSn2ConnMap.Store(online.Devices[0].Sn, StoreInfo{CurrConn: conn, SignInTime: time.Now()})
 	GConn2SnMap.Store(conn, online.Devices[0].Sn)
@@ -161,8 +173,35 @@ func CmdGetColoPhonResp(conn *net.TCPConn, phonResp GetColophonResp) {
 	} else {
 		ne.Status = STATUS_FAIL
 	}
+
+	rr := onlinehis.New(dbcomm.GetDB(), onlinehis.DEBUG)
+	var search onlinehis.Search
+	search.Sn = phonResp.Sn
+	search.ActionType = ACTION_ONLINE
+
+	if e, err1 := rr.GetLast(search); err1 == nil {
+
+		fmt.Println("=======>", e, err1)
+		rrr := vers.New(dbcomm.GetDB(), vers.DEBUG)
+		var vinfo vers.Vers
+		vinfo.DeviceVer = e.DeviceVer
+		vinfo.SwVer = e.SwVer
+		vinfo.Sn = e.Sn
+		vinfo.HwVer = e.HwVer
+
+		var search vers.Search
+		search.Sn = e.Sn
+		if ee, err := rrr.Get(search); err == nil {
+			rrr.UpdataEntity(fmt.Sprintf("%d", ee.Id), vinfo, nil)
+		} else {
+			rrr.InsertEntity(vinfo, nil)
+		}
+	}
+
 	currNode.Status = STATUS_INIT
+
 	GSn2ConnMap.Store(phonResp.Sn, currNode)
+
 	r.UpdataEntity(currNode.BatchNo, ne, nil)
 
 	PrintTail(GET_COLOPHON_RESP)

@@ -39,14 +39,14 @@ type Search struct {
 	SortFld     string `json:"sort_fld"`
 }
 
-type versList struct {
+type VersList struct {
 	DB    *sql.DB
 	Level int
 	Total int    `json:"total"`
-	verss []vers `json:"vers"`
+	Verss []Vers `json:"Vers"`
 }
 
-type vers struct {
+type Vers struct {
 	Id          int64  `json:"id"`
 	Sn          string `json:"sn"`
 	DeviceVer   string `json:"device_ver"`
@@ -61,7 +61,7 @@ type vers struct {
 }
 
 type Form struct {
-	Form vers `json:"vers"`
+	Form Vers `json:"Vers"`
 }
 
 /*
@@ -70,12 +70,12 @@ type Form struct {
 	出参：实例对象
 */
 
-func New(db *sql.DB, level int) *versList {
+func New(db *sql.DB, level int) *VersList {
 	if db == nil {
 		log.Println(SQL_SELECT, "Database is nil")
 		return nil
 	}
-	return &versList{DB: db, Total: 0, verss: make([]vers, 0), Level: level}
+	return &VersList{DB: db, Total: 0, Verss: make([]Vers, 0), Level: level}
 }
 
 /*
@@ -84,7 +84,7 @@ func New(db *sql.DB, level int) *versList {
 	出参：实例对象
 */
 
-func NewUrl(url string, level int) *versList {
+func NewUrl(url string, level int) *VersList {
 	var err error
 	db, err := sql.Open("mysql", url)
 	if err != nil {
@@ -95,7 +95,7 @@ func NewUrl(url string, level int) *versList {
 		log.Println(SQL_SELECT, "Ping database error:", err)
 		return nil
 	}
-	return &versList{DB: db, Total: 0, verss: make([]vers, 0), Level: level}
+	return &VersList{DB: db, Total: 0, Verss: make([]Vers, 0), Level: level}
 }
 
 /*
@@ -104,7 +104,7 @@ func NewUrl(url string, level int) *versList {
 	出参：参数1：返回符合条件的总条件, 参数2：如果错误返回错误对象
 */
 
-func (r *versList) GetTotal(s Search) (int, error) {
+func (r *VersList) GetTotal(s Search) (int, error) {
 	var where string
 	l := time.Now()
 
@@ -182,7 +182,7 @@ func (r *versList) GetTotal(s Search) (int, error) {
 	出参：参数1：返回符合条件的对象, 参数2：如果错误返回错误对象
 */
 
-func (r versList) Get(s Search) (*vers, error) {
+func (r VersList) Get(s Search) (*Vers, error) {
 	var where string
 	l := time.Now()
 
@@ -233,8 +233,8 @@ func (r versList) Get(s Search) (*vers, error) {
 	if s.ExtraWhere != "" {
 		where += s.ExtraWhere
 	}
-
-	qrySql := fmt.Sprintf("Select id,sn,device_ver,hw_ver,sw_ver,install_date,up_note,create_time,create_by,update_time,update_by, from lk_device_ver where 1=1 %s ", where)
+	fmt.Println("=========>")
+	qrySql := fmt.Sprintf("Select id,sn from lk_device_ver where 1=1 %s ", where)
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
 	}
@@ -245,11 +245,11 @@ func (r versList) Get(s Search) (*vers, error) {
 	}
 	defer rows.Close()
 
-	var p vers
+	var p Vers
 	if !rows.Next() {
 		return nil, fmt.Errorf("Not Finded Record")
 	} else {
-		err := rows.Scan(&p.Id, &p.Sn, &p.DeviceVer, &p.HwVer, &p.SwVer, &p.InstallDate, &p.UpNote, &p.CreateTime, &p.CreateBy, &p.UpdateTime, &p.UpdateBy)
+		err := rows.Scan(&p.Id, &p.Sn)
 		if err != nil {
 			log.Println(SQL_ERROR, err.Error())
 			return nil, err
@@ -268,7 +268,7 @@ func (r versList) Get(s Search) (*vers, error) {
 	出参：参数1：返回符合条件的对象列表, 参数2：如果错误返回错误对象
 */
 
-func (r *versList) GetList(s Search) ([]vers, error) {
+func (r *VersList) GetList(s Search) ([]Vers, error) {
 	var where string
 	l := time.Now()
 
@@ -336,16 +336,16 @@ func (r *versList) GetList(s Search) ([]vers, error) {
 	}
 	defer rows.Close()
 
-	var p vers
+	var p Vers
 	for rows.Next() {
 		rows.Scan(&p.Id, &p.Sn, &p.DeviceVer, &p.HwVer, &p.SwVer, &p.InstallDate, &p.UpNote, &p.CreateTime, &p.CreateBy, &p.UpdateTime, &p.UpdateBy)
-		r.verss = append(r.verss, p)
+		r.Verss = append(r.Verss, p)
 	}
 	log.Println(SQL_ELAPSED, r)
 	if r.Level == DEBUG {
 		log.Println(SQL_ELAPSED, time.Since(l))
 	}
-	return r.verss, nil
+	return r.Verss, nil
 }
 
 /*
@@ -354,7 +354,7 @@ func (r *versList) GetList(s Search) ([]vers, error) {
 	出参：参数1：返回符合条件的对象, 参数2：如果错误返回错误对象
 */
 
-func (r *versList) GetExt(s Search) (map[string]string, error) {
+func (r *VersList) GetExt(s Search) (map[string]string, error) {
 	var where string
 	l := time.Now()
 
@@ -446,7 +446,7 @@ func (r *versList) GetExt(s Search) (map[string]string, error) {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r versList) Insert(p vers) error {
+func (r VersList) Insert(p Vers) error {
 	l := time.Now()
 	exeSql := fmt.Sprintf("Insert into  lk_device_ver(sn,device_ver,hw_ver,sw_ver,install_date,up_note,create_time,create_by,update_by,)  values(?,?,?,?,?,?,?,?,?,?,?,)")
 	if r.Level == DEBUG {
@@ -469,7 +469,7 @@ func (r versList) Insert(p vers) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r versList) InsertEntity(p vers, tr *sql.Tx) error {
+func (r VersList) InsertEntity(p Vers, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames, colTags string
 	valSlice := make([]interface{}, 0)
@@ -572,7 +572,7 @@ func (r versList) InsertEntity(p vers, tr *sql.Tx) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r versList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
+func (r VersList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames, colTags string
 	valSlice := make([]interface{}, 0)
@@ -627,7 +627,7 @@ func (r versList) InsertMap(m map[string]interface{}, tr *sql.Tx) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r versList) UpdataEntity(keyNo string, p vers, tr *sql.Tx) error {
+func (r VersList) UpdataEntity(keyNo string, p Vers, tr *sql.Tx) error {
 	l := time.Now()
 	var colNames string
 	valSlice := make([]interface{}, 0)
@@ -741,7 +741,7 @@ func (r versList) UpdataEntity(keyNo string, p vers, tr *sql.Tx) error {
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r versList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx) error {
+func (r VersList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx) error {
 	l := time.Now()
 
 	var colNames string
@@ -793,7 +793,7 @@ func (r versList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx) 
 	出参：参数1：如果出错，返回错误对象；成功返回nil
 */
 
-func (r versList) Delete(keyNo string, tr *sql.Tx) error {
+func (r VersList) Delete(keyNo string, tr *sql.Tx) error {
 	l := time.Now()
 	delSql := fmt.Sprintf("Delete from  lk_device_ver  where id=?")
 	if r.Level == DEBUG {

@@ -295,6 +295,109 @@ func (r OnlineHisList) Get(s Search) (*OnlineHis, error) {
 }
 
 /*
+	说明：根据主键查询符合条件的条数
+	入参：s: 查询条件
+	出参：参数1：返回符合条件的对象, 参数2：如果错误返回错误对象
+*/
+
+func (r OnlineHisList) GetLast(s Search) (*OnlineHis, error) {
+	var where string
+	l := time.Now()
+
+	if s.Id != 0 {
+		where += " and id=" + fmt.Sprintf("%d", s.Id)
+	}
+
+	if s.Sn != "" {
+		where += " and sn='" + s.Sn + "'"
+	}
+
+	if s.ChipId != "" {
+		where += " and chip_id='" + s.ChipId + "'"
+	}
+
+	if s.DeviceName != "" {
+		where += " and device_name='" + s.DeviceName + "'"
+	}
+
+	if s.DeviceSeries != "" {
+		where += " and device_series='" + s.DeviceSeries + "'"
+	}
+
+	if s.DeviceTime != "" {
+		where += " and device_time='" + s.DeviceTime + "'"
+	}
+
+	if s.DeviceVer != "" {
+		where += " and device_ver='" + s.DeviceVer + "'"
+	}
+
+	if s.HwVer != "" {
+		where += " and hw_ver='" + s.HwVer + "'"
+	}
+
+	if s.ActionType != "" {
+		where += " and action_type='" + s.ActionType + "'"
+	}
+
+	if s.Protocol != "" {
+		where += " and protocol='" + s.Protocol + "'"
+	}
+
+	if s.SwVer != "" {
+		where += " and sw_ver='" + s.SwVer + "'"
+	}
+
+	if s.Gate != "" {
+		where += " and gate='" + s.Gate + "'"
+	}
+
+	if s.RemoteIp != "" {
+		where += " and remote_ip='" + s.RemoteIp + "'"
+	}
+
+	if s.CreateTime != "" {
+		where += " and create_time='" + s.CreateTime + "'"
+	}
+
+	if s.Version != 0 {
+		where += " and version=" + fmt.Sprintf("%d", s.Version)
+	}
+
+	if s.ExtraWhere != "" {
+		where += s.ExtraWhere
+	}
+
+	qrySql := fmt.Sprintf("Select id,sn,device_ver,hw_ver,sw_ver from lk_online_his where 1=1 %s  order by id desc limit 1", where)
+	if r.Level == DEBUG {
+		log.Println(SQL_SELECT, qrySql)
+	}
+	rows, err := r.DB.Query(qrySql)
+	if err != nil {
+		log.Println(SQL_ERROR, err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var p OnlineHis
+	if !rows.Next() {
+		fmt.Println("Not Finded Record")
+		return nil, fmt.Errorf("Not Finded Record")
+	} else {
+		err := rows.Scan(&p.Id, &p.Sn, &p.DeviceVer, &p.HwVer, &p.SwVer)
+		if err != nil {
+			log.Println(SQL_ERROR, err.Error())
+			return nil, err
+		}
+	}
+	log.Println(SQL_ELAPSED, r)
+	if r.Level == DEBUG {
+		log.Println(SQL_ELAPSED, time.Since(l))
+	}
+	return &p, nil
+}
+
+/*
 	说明：根据条件查询复核条件对象列表，支持分页查询
 	入参：s: 查询条件
 	出参：参数1：返回符合条件的对象列表, 参数2：如果错误返回错误对象
