@@ -192,8 +192,10 @@ func CmdGetColoPhonResp(conn *net.TCPConn, phonResp GetColophonResp) {
 		var search vers.Search
 		search.Sn = e.Sn
 		if ee, err := rrr.Get(search); err == nil {
+			vinfo.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 			rrr.UpdataEntity(fmt.Sprintf("%d", ee.Id), vinfo, nil)
 		} else {
+			vinfo.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 			rrr.InsertEntity(vinfo, nil)
 		}
 	}
@@ -460,12 +462,13 @@ func CmdCheckUpdate(conn *net.TCPConn, upDate CheckUpdate) {
 	upResp.Method = CHECK_UDATE_RESP
 	upResp.Sn = upDate.Sn
 	upResp.Success = true
-	upResp.Type = "chip"
+	upResp.Type = upDate.Type
 	if upBuf, err := json.Marshal(&upResp); err != nil {
 		log.Println(err)
 	} else {
 		Send_Resp(conn, string(upBuf))
 	}
+
 	PrintTail(CHECK_UDATE)
 }
 
@@ -751,12 +754,4 @@ func main() {
 		go tcpPipe(tcpConn)
 	}
 
-	//	str := "4e554d4245522c4c4556454c2c524553554c542c444154452c4c4f542c4954454d2c514349442c5553455249440a"
-	//	buf, _ := hex.DecodeString(str)
-	//	d := softwareCrc32(buf, len(buf))
-	//	fmt.Println(string(buf), int32(d))
-
-	//	if 0X7E == 126 {
-	//		fmt.Println("OK")
-	//	}
 }

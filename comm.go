@@ -257,7 +257,7 @@ type GetFileResp struct {
 type File struct {
 	Name     string `json:"name"`
 	Length   int    `json:"length"`
-	File_crc int    `json:"file_crc"`
+	File_crc int32  `json:"file_crc"`
 }
 
 type PostFileInfo struct {
@@ -569,6 +569,13 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 		Write_Response(pushFileResp, w, req, PUSH_FILE_INFO)
 		return
 	}
+	if pushFile.Type != "chip" && pushFile.Type != "upgrade" && pushFile.Type != "config" {
+		pushFileResp.ErrorCode = ERR_CODE_TYPEERR
+		pushFileResp.ErrorMsg = "文件类型错误"
+		Write_Response(pushFileResp, w, req, PUSH_FILE_INFO)
+		return
+	}
+
 	//检查文件是否存在
 	stat, err := os.Stat(pushFile.Name)
 	if err != nil {
@@ -581,6 +588,8 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 	}
 	currNode.FileSize = stat.Size()
 	currNode.FileName = pushFile.Name
+	fileBuf, err := ioutil.ReadFile(pushFile.Name)
+	fileCrc32 := softwareCrc32(fileBuf, len(fileBuf))
 
 	if currNode.Status == STATUS_DOING {
 		pushFileResp.ErrorCode = ERR_CODE_STATUSD
@@ -611,7 +620,8 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 	info.Sn = pushFile.Sn
 	info.Total_file = 1
 	info.Type = pushFile.Type
-	info.File = []File{{Name: pushFile.Name, Length: pushFile.Length, File_crc: 1000}}
+	info.File_in_procesing = 1
+	info.File = []File{{Name: pushFile.Name, Length: int(currNode.FileSize), File_crc: fileCrc32}}
 
 	infoBuf, _ := json.Marshal(info)
 	Send_Resp(currNode.CurrConn, string(infoBuf))
@@ -633,6 +643,7 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 
 func BusiPushInfoCtl(w http.ResponseWriter, req *http.Request) {
 	PrintHead(PUSH_INFO)
+
 	var busiInfo BusiPushInfo
 	var busiInfoResp BusiPushInfoResp
 	reqBuf, err := ioutil.ReadAll(req.Body)
@@ -644,12 +655,25 @@ func BusiPushInfoCtl(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer req.Body.Close()
-
 	currNode, err := getCurrNode(busiInfo.Sn)
 	if err != nil {
 		busiInfoResp.ErrorCode = ERR_CODE_TYPEERR
 		busiInfoResp.ErrorMsg = err.Error()
 		Write_Response(busiInfoResp, w, req, PUSH_INFO)
+		return
+	}
+
+	if busiInfo.Type != "chip" && busiInfo.Type != "upgrade" && busiInfo.Type != "config" && busiInfo.Type != "private" {
+		busiInfoResp.ErrorCode = ERR_CODE_TYPEERR
+		busiInfoResp.ErrorMsg = "消息类型错误"
+		Write_Response(busiInfoResp, w, req, PUSH_FILE_INFO)
+		return
+	}
+
+	if busiInfo.Purpose != "update" && busiInfo.Purpose != "agreement" {
+		busiInfoResp.ErrorCode = ERR_CODE_TYPEERR
+		busiInfoResp.ErrorMsg = "消息目的类型错误"
+		Write_Response(busiInfoResp, w, req, PUSH_FILE_INFO)
 		return
 	}
 
@@ -687,9 +711,7 @@ func BusiPushInfoCtl(w http.ResponseWriter, req *http.Request) {
 	info.Info = busiInfo.Info
 
 	infoBuf, _ := json.Marshal(info)
-
 	Send_Resp(currNode.CurrConn, string(infoBuf))
-
 	currNode.BatchNo = e.BatchNo
 	currNode.Status = STATUS_DOING
 	GSn2ConnMap.Store(busiInfo.Sn, currNode)
