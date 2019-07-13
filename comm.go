@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"time"
 )
 
@@ -310,7 +311,7 @@ type PushFileInfo struct {
 	Type              string `json:"type"`
 	Total_file        int    `json:"total_file"`
 	File_in_procesing int    `json:"file_in_procesing"`
-	File              []File `json:"file"`
+	File              File   `json:"file"`
 }
 
 type PushFileInfoResp struct {
@@ -621,7 +622,7 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 	info.Total_file = 1
 	info.Type = pushFile.Type
 	info.File_in_procesing = 1
-	info.File = []File{{Name: pushFile.Name, Length: int(currNode.FileSize), File_crc: fileCrc32}}
+	info.File = File{Name: path.Base(pushFile.Name), Length: int(currNode.FileSize), File_crc: fileCrc32}
 
 	infoBuf, _ := json.Marshal(info)
 	Send_Resp(currNode.CurrConn, string(infoBuf))
