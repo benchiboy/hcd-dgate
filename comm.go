@@ -77,6 +77,9 @@ const STATUS_DOING = "D"
 const STATUS_SUCC = "S"
 const STATUS_FAIL = "F"
 
+const STATUS_ONLINE = 1
+const STATUS_OFFLINE = 2
+
 const HEAD_LEN = 6
 const UPDATE_TIME = "update_time"
 const DEVICE_TIME = "device_time"

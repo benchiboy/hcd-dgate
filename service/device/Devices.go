@@ -33,7 +33,7 @@ type Search struct {
 	DLong        string `json:"d_long"`
 	DLat         string `json:"d_lat"`
 	ImgUrl       string `json:"img_url"`
-	FcdClass     string `json:"fcd_class"`
+	FcdClass     string `json:"hcd_class"`
 	EnteringTime string `json:"entering_time"`
 	FactoryTime  string `json:"factory_time"`
 	IsOnline     int64  `json:"is_online"`
@@ -67,7 +67,7 @@ type Device struct {
 	DLong        string `json:"d_long"`
 	DLat         string `json:"d_lat"`
 	ImgUrl       string `json:"img_url"`
-	FcdClass     string `json:"fcd_class"`
+	FcdClass     string `json:"hcd_class"`
 	EnteringTime string `json:"entering_time"`
 	FactoryTime  string `json:"factory_time"`
 	IsOnline     int64  `json:"is_online"`
@@ -171,7 +171,7 @@ func (r *DeviceList) GetTotal(s Search) (int, error) {
 	}
 
 	if s.FcdClass != "" {
-		where += " and fcd_class='" + s.FcdClass + "'"
+		where += " and hcd_class='" + s.FcdClass + "'"
 	}
 
 	if s.EnteringTime != "" {
@@ -285,7 +285,7 @@ func (r DeviceList) Get(s Search) (*Device, error) {
 	}
 
 	if s.FcdClass != "" {
-		where += " and fcd_class='" + s.FcdClass + "'"
+		where += " and hcd_class='" + s.FcdClass + "'"
 	}
 
 	if s.EnteringTime != "" {
@@ -407,7 +407,7 @@ func (r *DeviceList) GetList(s Search) ([]Device, error) {
 	}
 
 	if s.FcdClass != "" {
-		where += " and fcd_class='" + s.FcdClass + "'"
+		where += " and hcd_class='" + s.FcdClass + "'"
 	}
 
 	if s.EnteringTime != "" {
@@ -448,9 +448,9 @@ func (r *DeviceList) GetList(s Search) ([]Device, error) {
 
 	var qrySql string
 	if s.PageSize == 0 && s.PageNo == 0 {
-		qrySql = fmt.Sprintf("Select id,sn,chip_id,product_type,product_no,device_time,region,hospital,d_long,d_lat,img_url,fcd_class,entering_time,factory_time,is_online,is_enable,create_time,create_by,update_time,update_by, from lk_device where 1=1 %s", where)
+		qrySql = fmt.Sprintf("Select id,sn,chip_id,product_type,product_no,device_time,region,hospital,d_long,d_lat,img_url,hcd_class,entering_time,factory_time,is_online,is_enable,create_time,create_by,update_time,update_by, from lk_device where 1=1 %s", where)
 	} else {
-		qrySql = fmt.Sprintf("Select id,sn,chip_id,product_type,product_no,device_time,region,hospital,d_long,d_lat,img_url,fcd_class,entering_time,factory_time,is_online,is_enable,create_time,create_by,update_time,update_by, from lk_device where 1=1 %s Limit %d offset %d", where, s.PageSize, (s.PageNo-1)*s.PageSize)
+		qrySql = fmt.Sprintf("Select id,sn,chip_id,product_type,product_no,device_time,region,hospital,d_long,d_lat,img_url,hcd_class,entering_time,factory_time,is_online,is_enable,create_time,create_by,update_time,update_by, from lk_device where 1=1 %s Limit %d offset %d", where, s.PageSize, (s.PageNo-1)*s.PageSize)
 	}
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
@@ -529,7 +529,7 @@ func (r *DeviceList) GetExt(s Search) (map[string]string, error) {
 	}
 
 	if s.FcdClass != "" {
-		where += " and fcd_class='" + s.FcdClass + "'"
+		where += " and hcd_class='" + s.FcdClass + "'"
 	}
 
 	if s.EnteringTime != "" {
@@ -564,7 +564,7 @@ func (r *DeviceList) GetExt(s Search) (map[string]string, error) {
 		where += " and update_by=" + fmt.Sprintf("%d", s.UpdateBy)
 	}
 
-	qrySql := fmt.Sprintf("Select id,sn,chip_id,product_type,product_no,device_time,region,hospital,d_long,d_lat,img_url,fcd_class,entering_time,factory_time,is_online,is_enable,create_time,create_by,update_time,update_by, from lk_device where 1=1 %s ", where)
+	qrySql := fmt.Sprintf("Select id,sn,chip_id,product_type,product_no,device_time,region,hospital,d_long,d_lat,img_url,hcd_class,entering_time,factory_time,is_online,is_enable,create_time,create_by,update_time,update_by, from lk_device where 1=1 %s ", where)
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
 	}
@@ -610,7 +610,7 @@ func (r *DeviceList) GetExt(s Search) (map[string]string, error) {
 
 func (r DeviceList) Insert(p Device) error {
 	l := time.Now()
-	exeSql := fmt.Sprintf("Insert into  lk_device(sn,chip_id,product_type,product_no,device_time,region,hospital,d_long,d_lat,img_url,fcd_class,entering_time,factory_time,is_online,is_enable,create_time,create_by,update_by,)  values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,)")
+	exeSql := fmt.Sprintf("Insert into  lk_device(sn,chip_id,product_type,product_no,device_time,region,hospital,d_long,d_lat,img_url,hcd_class,entering_time,factory_time,is_online,is_enable,create_time,create_by,update_by,)  values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,)")
 	if r.Level == DEBUG {
 		log.Println(SQL_INSERT, exeSql)
 	}
@@ -697,7 +697,7 @@ func (r DeviceList) InsertEntity(p Device, tr *sql.Tx) error {
 	}
 
 	if p.FcdClass != "" {
-		colNames += "fcd_class,"
+		colNames += "hcd_class,"
 		colTags += "?,"
 		valSlice = append(valSlice, p.FcdClass)
 	}
@@ -914,7 +914,7 @@ func (r DeviceList) UpdataEntity(keyNo string, p Device, tr *sql.Tx) error {
 	}
 
 	if p.FcdClass != "" {
-		colNames += "fcd_class=?,"
+		colNames += "hcd_class=?,"
 
 		valSlice = append(valSlice, p.FcdClass)
 	}
