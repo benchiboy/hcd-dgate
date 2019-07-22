@@ -45,6 +45,27 @@ var (
 	GConn2SnMap = &sync.Map{}
 )
 
+func SysConsoleDetail(w http.ResponseWriter, req *http.Request) {
+	var snDetail BusiSnDetail
+	var snDetailResp BusiSnDetailResp
+	reqBuf, err := ioutil.ReadAll(req.Body)
+	if err = json.Unmarshal(reqBuf, &snDetail); err != nil {
+		snDetailResp.ErrorCode = ERR_CODE_JSONERR
+		snDetailResp.ErrorMsg = err.Error()
+		Write_Response(snDetailResp, w, req, GET_FILE)
+		return
+	}
+	defer req.Body.Close()
+
+	snDetailResp.ErrorCode = ERR_CODE_SUCCESS
+	snDetailResp.ErrorMsg = ERROR_MAP[ERR_CODE_SUCCESS]
+	e, _ := GSn2ConnMap.Load(snDetail.Sn)
+	info, _ := e.(StoreInfo)
+	snDetailResp.Info = info
+	Write_Response(snDetailResp, w, req, "DETAIL")
+
+}
+
 func SysConsole(w http.ResponseWriter, req *http.Request) {
 	t, _ := template.ParseFiles("./html/index.html")
 	l := make([]string, 0)
@@ -644,6 +665,7 @@ func go_WebServer() {
 	http.HandleFunc("/dgate/busiGetDataDrives", BusiGetDataDriveCtl)
 	http.HandleFunc("/dgate/busiPushInfo", BusiPushInfoCtl)
 	http.HandleFunc("/dgate/busiQueryStatus", BusiQueryStatusCtl)
+	http.HandleFunc("/dgate/consoleDetail", SysConsoleDetail)
 	http.HandleFunc("/dgate/console", SysConsole)
 	http_srv = &http.Server{
 		Addr: ":7088",

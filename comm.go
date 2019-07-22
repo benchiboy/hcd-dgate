@@ -454,7 +454,7 @@ type BusiGetDataDriveResp struct {
 
 type BusiQueryStatus struct {
 	UserId int64  `json:"user_id"`
-	No     string `json:"sn"`
+	No     string `json:"no"`
 }
 
 type BusiQueryStatusResp struct {
@@ -462,6 +462,16 @@ type BusiQueryStatusResp struct {
 	Status    string `json:"status"`
 	ErrorCode string `json:"err_code"`
 	ErrorMsg  string `json:"err_msg"`
+}
+
+type BusiSnDetail struct {
+	Sn string `json:"sn"`
+}
+
+type BusiSnDetailResp struct {
+	ErrorCode string    `json:"err_code"`
+	ErrorMsg  string    `json:"err_msg"`
+	Info      StoreInfo `json:"detail"`
 }
 
 /*
