@@ -3,6 +3,7 @@ package dbcomm
 import (
 	"database/sql"
 	"log"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -25,6 +26,7 @@ func InitDB(dbUrl string, ccdbUrl string, idleConns int, openConns int) {
 	}
 	db.SetMaxIdleConns(idleConns)
 	db.SetMaxOpenConns(openConns)
+	db.SetConnMaxLifetime(time.Second * 2)
 	log.Println("Database Connected successful!")
 
 }

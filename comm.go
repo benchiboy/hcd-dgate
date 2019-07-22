@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"time"
 )
 
@@ -67,16 +68,23 @@ const CMDTYPE_INFO = "pushinfo"
 const CMDTYPE_VER = "getver"
 const CMDTYPE_DRIVE = "getdrive"
 
+const ACTION_ONLINE = "ON"
+const ACTION_OFFLINE = "OFF"
+
 const STATUS_INIT = "I"
 const STATUS_DOING = "D"
 
 const STATUS_SUCC = "S"
 const STATUS_FAIL = "F"
 
+const STATUS_ONLINE = 1
+const STATUS_OFFLINE = 2
+
 const HEAD_LEN = 6
 const UPDATE_TIME = "update_time"
+const DEVICE_TIME = "device_time"
 const IS_ONLINE = "is_online"
-
+const ACTION_TYPE = "action_type"
 const DEFAULT_PATH = "/data/app/hcd/tmp/"
 
 const UPDATE_USER = 9000000
@@ -253,7 +261,7 @@ type GetFileResp struct {
 type File struct {
 	Name     string `json:"name"`
 	Length   int    `json:"length"`
-	File_crc int    `json:"file_crc"`
+	File_crc int32  `json:"file_crc"`
 }
 
 type PostFileInfo struct {
@@ -306,7 +314,7 @@ type PushFileInfo struct {
 	Type              string `json:"type"`
 	Total_file        int    `json:"total_file"`
 	File_in_procesing int    `json:"file_in_procesing"`
-	File              []File `json:"file"`
+	File              File   `json:"file"`
 }
 
 type PushFileInfoResp struct {
@@ -575,6 +583,13 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 		Write_Response(pushFileResp, w, req, PUSH_FILE_INFO)
 		return
 	}
+	if pushFile.Type != "chip" && pushFile.Type != "upgrade" && pushFile.Type != "config" {
+		pushFileResp.ErrorCode = ERR_CODE_TYPEERR
+		pushFileResp.ErrorMsg = "文件类型错误"
+		Write_Response(pushFileResp, w, req, PUSH_FILE_INFO)
+		return
+	}
+
 	//检查文件是否存在
 	stat, err := os.Stat(pushFile.Name)
 	if err != nil {
@@ -587,6 +602,8 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 	}
 	currNode.FileSize = stat.Size()
 	currNode.FileName = pushFile.Name
+	fileBuf, err := ioutil.ReadFile(pushFile.Name)
+	fileCrc32 := softwareCrc32(fileBuf, len(fileBuf))
 
 	if currNode.Status == STATUS_DOING {
 		pushFileResp.ErrorCode = ERR_CODE_STATUSD
@@ -617,7 +634,8 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 	info.Sn = pushFile.Sn
 	info.Total_file = 1
 	info.Type = pushFile.Type
-	info.File = []File{{Name: pushFile.Name, Length: pushFile.Length, File_crc: 1000}}
+	info.File_in_procesing = 1
+	info.File = File{Name: path.Base(pushFile.Name), Length: int(currNode.FileSize), File_crc: fileCrc32}
 
 	infoBuf, _ := json.Marshal(info)
 	Send_Resp(currNode.CurrConn, string(infoBuf))
@@ -639,6 +657,7 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 
 func BusiPushInfoCtl(w http.ResponseWriter, req *http.Request) {
 	PrintHead(PUSH_INFO)
+
 	var busiInfo BusiPushInfo
 	var busiInfoResp BusiPushInfoResp
 	reqBuf, err := ioutil.ReadAll(req.Body)
@@ -650,12 +669,25 @@ func BusiPushInfoCtl(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer req.Body.Close()
-
 	currNode, err := getCurrNode(busiInfo.Sn)
 	if err != nil {
 		busiInfoResp.ErrorCode = ERR_CODE_TYPEERR
 		busiInfoResp.ErrorMsg = err.Error()
 		Write_Response(busiInfoResp, w, req, PUSH_INFO)
+		return
+	}
+
+	if busiInfo.Type != "chip" && busiInfo.Type != "upgrade" && busiInfo.Type != "config" && busiInfo.Type != "private" {
+		busiInfoResp.ErrorCode = ERR_CODE_TYPEERR
+		busiInfoResp.ErrorMsg = "消息类型错误"
+		Write_Response(busiInfoResp, w, req, PUSH_FILE_INFO)
+		return
+	}
+
+	if busiInfo.Purpose != "update" && busiInfo.Purpose != "agreement" {
+		busiInfoResp.ErrorCode = ERR_CODE_TYPEERR
+		busiInfoResp.ErrorMsg = "消息目的类型错误"
+		Write_Response(busiInfoResp, w, req, PUSH_FILE_INFO)
 		return
 	}
 
@@ -693,9 +725,7 @@ func BusiPushInfoCtl(w http.ResponseWriter, req *http.Request) {
 	info.Info = busiInfo.Info
 
 	infoBuf, _ := json.Marshal(info)
-
 	Send_Resp(currNode.CurrConn, string(infoBuf))
-
 	currNode.BatchNo = e.BatchNo
 	currNode.Status = STATUS_DOING
 	GSn2ConnMap.Store(busiInfo.Sn, currNode)
@@ -806,6 +836,20 @@ func BusiGetDataDriveCtl(w http.ResponseWriter, req *http.Request) {
 		Write_Response(busiDriveResp, w, req, GET_INSTLL_DATADRIVE)
 		return
 	}
+	var e mfiles.MFiles
+	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+	e.BatchNo = fmt.Sprintf("%d", time.Now().UnixNano())
+	e.ChipId = busiDrive.Chip_id
+	e.Sn = busiDrive.Sn
+	e.CmdType = CMDTYPE_DRIVE
+	e.CreateBy = busiDrive.UserId
+	e.StartTime = time.Now().Format("2006-01-02 15:04:05")
+	if err := r.InsertEntity(e, nil); err != nil {
+		busiDriveResp.ErrorCode = ERR_CODE_DBERROR
+		busiDriveResp.ErrorMsg = err.Error()
+		Write_Response(busiDriveResp, w, req, GET_FILE)
+		return
+	}
 
 	var dataDrive GetInstallDataDrive
 	dataDrive.Method = GET_INSTLL_DATADRIVE
@@ -815,7 +859,7 @@ func BusiGetDataDriveCtl(w http.ResponseWriter, req *http.Request) {
 
 	Send_Resp(currNode.CurrConn, string(getBuf))
 	//记录状态
-	currNode.BatchNo = fmt.Sprintf("%d", time.Now().UnixNano())
+	currNode.BatchNo = e.BatchNo
 	currNode.Status = STATUS_DOING
 	GSn2ConnMap.Store(busiDrive.Sn, currNode)
 
