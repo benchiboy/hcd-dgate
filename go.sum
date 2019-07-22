@@ -1,0 +1,6 @@
+github.com/go-sql-driver/mysql v1.4.1 h1:g24URVg0OFbNUTx9qqY1IRZ9D9z3iPyi5zKhQZpNwpA=
+github.com/go-sql-driver/mysql v1.4.1/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
+github.com/pantsing/goconf v0.0.0-20150322095841-9d780c39300f h1:ZHr9o9MJh63kvcfZBgW2y59mWJbDb4q4xgmuJOKB7xU=
+github.com/pantsing/goconf v0.0.0-20150322095841-9d780c39300f/go.mod h1:z5xTQQ+UPJF1NLkkS7pBHebNBkfeBxFbPoE+ysn9Cjw=
+gopkg.in/natefinch/lumberjack.v2 v2.0.0 h1:1Lc07Kr7qY4U2YPouBjpCLxpiyxIVoxqXgkXLknAOE8=
+gopkg.in/natefinch/lumberjack.v2 v2.0.0/go.mod h1:l0ndWWf7gzL7RNwBG7wST/UCcT4T24xpD6X8LsfU/+k=

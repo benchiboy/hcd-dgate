@@ -775,7 +775,7 @@ func tcpPipe(conn *net.TCPConn) {
 }
 
 func go_WebServer() {
-	log.Println("<==========HttpServer Starting...==========>")
+	PrintHead("WebServer")
 	http.HandleFunc("/dgate/busiGetFile", BusiGetFileCtl)
 	http.HandleFunc("/dgate/busiPushFile", BusiPushFileCtl)
 	http.HandleFunc("/dgate/busiGetVersions", BusiGetVerListCtl)
@@ -790,10 +790,11 @@ func go_WebServer() {
 	if err := http_srv.ListenAndServe(); err != nil {
 		log.Printf("listen: %s\n", err)
 	}
+	PrintTail("WebServer")
 }
 
 func init() {
-	log.Println("<==========System Params Init...==========>")
+	PrintHead("Init...")
 	log.SetFlags(log.Ldate | log.Lshortfile | log.Lmicroseconds)
 	log.SetOutput(io.MultiWriter(os.Stdout, &lumberjack.Logger{
 		Filename:   "jcd.log",
@@ -815,26 +816,14 @@ func init() {
 	c.Get("/config/CCDB_URL", &ccdbUrl)
 	c.Get("/config/OPEN_CONNS", &openConns)
 	c.Get("/config/IDLE_CONNS", &idleConns)
+	PrintTail("Init...")
 }
 
 func main() {
 	log.Println("<==========MicroPoint Gate Starting...==========>")
-	log.Println("	V0.4    ")
+	log.Println("<==========Version:", MainVer, "===================>")
 	dbcomm.InitDB(dbUrl, ccdbUrl, idleConns, openConns)
 
-	//	go func() {
-	//		sch := util.New_Schdule()
-
-	//		fmt.Println("WatchOffLine............")
-	//		sch.Add_TaskFunc(1001, "定时监测任务", false, "YYYY-MM-DD-W-HH-MI-01", func(taskId int) {
-	//			fmt.Println("WatchOffLine............")
-	//			WatchOffLine()
-	//		})
-	//		sch.Run()
-
-	//	}()
-
-	fmt.Println("======>Starting WebService......")
 	go go_WebServer()
 	var tcpAddr *net.TCPAddr
 	tcpAddr, _ = net.ResolveTCPAddr("tcp", ":8089")
