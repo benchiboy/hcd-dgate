@@ -356,8 +356,8 @@ type PushInfoResp struct {
 	Sn      string `json:"sn"`
 	Chip_id string `json:"chip_id"`
 	Type    string `json:"type"`
-	Purpose bool   `json:"purpose"`
-	Confirm string `json:"confirm"`
+	Purpose string `json:"purpose"`
+	Confirm bool   `json:"confirm"`
 	Success bool   `json:"success"`
 }
 
