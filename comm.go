@@ -457,7 +457,7 @@ type BusiGetDataDrive struct {
 type BusiGetDataDriveResp struct {
 	No        string `json:"no"`
 	ErrorCode string `json:"err_code"`
-	ErrorMsg  string `json:"err msg"`
+	ErrorMsg  string `json:"err_msg"`
 }
 
 type BusiQueryStatus struct {
@@ -523,9 +523,10 @@ func BusiGetFileCtl(w http.ResponseWriter, req *http.Request) {
 	e.ChipId = busiFile.Chip_id
 	e.Sn = busiFile.Sn
 	e.Type = busiFile.Type
-	e.FromDate = busiFile.From
+
+	e.FromDate = string([]byte(busiFile.From)[0:10])
 	e.CreateBy = busiFile.UserId
-	e.ToDate = busiFile.To
+	e.ToDate = string([]byte(busiFile.To)[0:10])
 	e.CmdType = CMDTYPE_GET
 	e.Frange = busiFile.Range
 	e.StartTime = time.Now().Format("2006-01-02 15:04:05")
@@ -542,8 +543,8 @@ func BusiGetFileCtl(w http.ResponseWriter, req *http.Request) {
 	getFile.Type = busiFile.Type
 	getFile.Range = busiFile.Range
 	getFile.Count = busiFile.Count
-	getFile.From = busiFile.From
-	getFile.To = busiFile.To
+	getFile.From = string([]byte(busiFile.From)[0:10])
+	getFile.To = string([]byte(busiFile.To)[0:10])
 	getBuf, _ := json.Marshal(getFile)
 	//发起指令
 	Send_Resp(currNode.CurrConn, string(getBuf))

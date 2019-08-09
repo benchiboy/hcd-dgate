@@ -276,7 +276,7 @@ func CmdPostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive) 
 	for _, v := range postInstDrive.Datadrive {
 		e.ChipLot = v.Lot
 		e.ChipInstallDate = v.Install_time
-		e.ActiveDate = v.Create_time
+		e.ProductDate = v.Create_time
 		e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 		r.InsertEntity(e, nil)
 	}
@@ -701,6 +701,25 @@ func OffLine(sn string) {
 		log.Println(err.Error())
 	}
 
+	//检查是否有未完成的工作，如果有设置为失败
+	rrr := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+	var search mfiles.Search
+	search.Sn = sn
+	search.Status = STATUS_INIT
+	e, err := rrr.Get(search)
+	if err == nil {
+		var mf mfiles.MFiles
+		if e.TodoCount > e.DoneCount {
+			mf.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
+			mf.UpdateBy = UPDATE_USER
+			mf.EndTime = mf.UpdateTime
+			mf.Status = STATUS_FAIL
+			mf.FailMsg = "网络中断错误"
+			rrr.UpdataEntity(e.BatchNo, mf, nil)
+		}
+	}
+	//更新明细的结束时间
+
 	PrintTail(OFFLINE)
 }
 
@@ -732,7 +751,7 @@ func tcpPipe(conn *net.TCPConn) {
 	packBuf := make([]byte, 1024*1024*5)
 	var nSum int32
 	for {
-		conn.SetReadDeadline(time.Now().Add(time.Second * 130))
+		conn.SetReadDeadline(time.Now().Add(time.Second * 180))
 		readBuf := make([]byte, 1024*100)
 		var nLen int
 		nLen, err := reader.Read(readBuf)
