@@ -44,3 +44,25 @@
 2019/08/09 16:24:23.858855 main.go:843: <==========Version: 0.4.20 ===================>
 2019/08/09 16:24:23.989926 Dbcomm.go:30: Database Connected successful!
 2019/08/09 16:24:23.990227 util.go:49: ========》 [WebServer]
+2019/08/09 18:19:59.430649 main.go:826: config file == config-ci.json
+2019/08/09 18:19:59.431652 util.go:53: 《======== [Init...]
+2019/08/09 18:19:59.432016 main.go:842: <==========MicroPoint Gate Starting...==========>
+2019/08/09 18:19:59.432033 main.go:843: <==========Version: 0.4.20 ===================>
+2019/08/09 18:19:59.586095 Dbcomm.go:30: Database Connected successful!
+2019/08/09 18:19:59.586357 util.go:49: ========》 [WebServer]
+2019/08/12 11:07:06.436295 main.go:826: config file == config-ci.json
+2019/08/12 11:07:06.438361 util.go:53: 《======== [Init...]
+2019/08/12 11:07:06.438659 main.go:842: <==========MicroPoint Gate Starting...==========>
+2019/08/12 11:07:06.438675 main.go:843: <==========Version: 0.4.20 ===================>
+2019/08/12 11:07:11.773202 Dbcomm.go:30: Database Connected successful!
+2019/08/12 11:07:11.773370 util.go:49: ========》 [WebServer]
+2019/08/28 18:01:58.800723 main.go:842: config file == config-ci.json
+2019/08/28 18:01:58.802255 util.go:53: 《======== [Init...]
+2019/08/28 18:01:58.802309 main.go:858: <==========MicroPoint Gate Starting...==========>
+2019/08/28 18:01:58.802331 main.go:859: <==========Version: 0.4.21 ===================>
+2019/08/28 18:02:39.054358 main.go:842: config file == config-ci.json
+2019/08/28 18:02:39.054799 util.go:53: 《======== [Init...]
+2019/08/28 18:02:39.054830 main.go:858: <==========MicroPoint Gate Starting...==========>
+2019/08/28 18:02:39.054844 main.go:859: <==========Version: 0.4.21 ===================>
+2019/08/28 18:02:39.254083 Dbcomm.go:30: Database Connected successful!
+2019/08/28 18:02:39.254479 util.go:49: ========》 [WebServer]

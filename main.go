@@ -406,7 +406,23 @@ func CmdPostFile(conn *net.TCPConn, postFile PostFile) {
 		}
 		f.Write(fileBuf)
 	}
-	if postFile.Fragment.Eof == true {
+	//增加类型断言处理，微点有些设备传的是布尔，有些设备传的是字符串
+	var eofTag = false
+	switch t := postFile.Fragment.Eof.(type) {
+	default:
+		fmt.Printf("unexpected type %T", t)
+		break
+	case string:
+		if t == "true" {
+			eofTag = true
+		}
+	case bool:
+		if t {
+			eofTag = true
+		}
+	}
+
+	if eofTag == true {
 		if f != nil {
 			f.Close()
 		}

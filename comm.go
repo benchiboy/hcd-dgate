@@ -165,10 +165,10 @@ type Command struct {
 	在线命令定义
 */
 type Online struct {
-	Method  string   `json:"method"`
-	Gate    string   `json:"gate"`
-	Ip      string   `json:"ip"`
-	Dev_cnt int      `json:"dev_cnt"`
+	Method string `json:"method"`
+	Gate   string `json:"gate"`
+	Ip     string `json:"ip"`
+	//Dev_cnt int      `json:"dev_cnt"`
 	Devices []Device `json:"devices"`
 }
 
@@ -285,11 +285,11 @@ type PostFileInfoResp struct {
 }
 
 type Fragment struct {
-	Index    int    `json:"index"`
-	Eof      bool   `json:"eof"`
-	Checksum int32  `json:"checksum"`
-	Length   int    `json:"length"`
-	Source   string `json:"source"`
+	Index    int         `json:"index"`
+	Eof      interface{} `json:"eof"`
+	Checksum int32       `json:"checksum"`
+	Length   int         `json:"length"`
+	Source   string      `json:"source"`
 }
 
 type PostFile struct {
