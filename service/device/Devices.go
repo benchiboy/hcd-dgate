@@ -448,7 +448,7 @@ func (r *DeviceList) GetList(s Search) ([]Device, error) {
 
 	var qrySql string
 	if s.PageSize == 0 && s.PageNo == 0 {
-		qrySql = fmt.Sprintf("Select id,sn,chip_id,product_type,product_no,device_time,region,hospital,d_long,d_lat,img_url,hcd_class,entering_time,factory_time,is_online,is_enable,create_time,create_by,update_time,update_by, from lk_device where 1=1 %s", where)
+		qrySql = fmt.Sprintf("Select id,sn,chip_id,product_type,product_no,device_time,region,hospital,d_long,d_lat,img_url,hcd_class,entering_time,factory_time,is_online,is_enable,create_time,create_by,update_time,update_by from lk_device where 1=1 %s", where)
 	} else {
 		qrySql = fmt.Sprintf("Select id,sn,chip_id,product_type,product_no,device_time,region,hospital,d_long,d_lat,img_url,hcd_class,entering_time,factory_time,is_online,is_enable,create_time,create_by,update_time,update_by, from lk_device where 1=1 %s Limit %d offset %d", where, s.PageSize, (s.PageNo-1)*s.PageSize)
 	}
@@ -468,6 +468,128 @@ func (r *DeviceList) GetList(s Search) ([]Device, error) {
 		r.Devices = append(r.Devices, p)
 	}
 	log.Println(SQL_ELAPSED, r)
+	if r.Level == DEBUG {
+		log.Println(SQL_ELAPSED, time.Since(l))
+	}
+	return r.Devices, nil
+}
+
+/*
+	说明：根据条件查询复核条件对象列表，支持分页查询
+	入参：s: 查询条件
+	出参：参数1：返回符合条件的对象列表, 参数2：如果错误返回错误对象
+*/
+
+func (r *DeviceList) GetListEx(s Search) ([]Device, error) {
+	var where string
+	l := time.Now()
+
+	if s.Id != 0 {
+		where += " and id=" + fmt.Sprintf("%d", s.Id)
+	}
+
+	if s.Sn != "" {
+		where += " and sn='" + s.Sn + "'"
+	}
+
+	if s.ChipId != "" {
+		where += " and chip_id='" + s.ChipId + "'"
+	}
+
+	if s.ProductType != "" {
+		where += " and product_type='" + s.ProductType + "'"
+	}
+
+	if s.ProductNo != "" {
+		where += " and product_no='" + s.ProductNo + "'"
+	}
+
+	if s.DeviceTime != "" {
+		where += " and device_time='" + s.DeviceTime + "'"
+	}
+
+	if s.Region != "" {
+		where += " and region='" + s.Region + "'"
+	}
+
+	if s.Hospital != "" {
+		where += " and hospital='" + s.Hospital + "'"
+	}
+
+	if s.DLong != "" {
+		where += " and d_long='" + s.DLong + "'"
+	}
+
+	if s.DLat != "" {
+		where += " and d_lat='" + s.DLat + "'"
+	}
+
+	if s.ImgUrl != "" {
+		where += " and img_url='" + s.ImgUrl + "'"
+	}
+
+	if s.FcdClass != "" {
+		where += " and hcd_class='" + s.FcdClass + "'"
+	}
+
+	if s.EnteringTime != "" {
+		where += " and entering_time='" + s.EnteringTime + "'"
+	}
+
+	if s.FactoryTime != "" {
+		where += " and factory_time='" + s.FactoryTime + "'"
+	}
+
+	if s.IsOnline != 0 {
+		where += " and is_online=" + fmt.Sprintf("%d", s.IsOnline)
+	}
+
+	if s.IsEnable != 0 {
+		where += " and is_enable=" + fmt.Sprintf("%d", s.IsEnable)
+	}
+
+	if s.CreateTime != "" {
+		where += " and create_time='" + s.CreateTime + "'"
+	}
+
+	if s.CreateBy != 0 {
+		where += " and create_by=" + fmt.Sprintf("%d", s.CreateBy)
+	}
+
+	if s.UpdateTime != "" {
+		where += " and update_time='" + s.UpdateTime + "'"
+	}
+
+	if s.UpdateBy != 0 {
+		where += " and update_by=" + fmt.Sprintf("%d", s.UpdateBy)
+	}
+
+	if s.ExtraWhere != "" {
+		where += s.ExtraWhere
+	}
+
+	var qrySql string
+	if s.PageSize == 0 && s.PageNo == 0 {
+		qrySql = fmt.Sprintf("Select id,sn,update_time from lk_device where 1=1 %s", where)
+	} else {
+		qrySql = fmt.Sprintf("Select id,sn,update_time from lk_device where 1=1 %s Limit %d offset %d", where, s.PageSize, (s.PageNo-1)*s.PageSize)
+	}
+	if r.Level == DEBUG {
+		log.Println(SQL_SELECT, qrySql)
+	}
+	rows, err := r.DB.Query(qrySql)
+	if err != nil {
+		log.Println(SQL_ERROR, err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	var p Device
+	for rows.Next() {
+		rows.Scan(&p.Id, &p.Sn, &p.UpdateTime)
+		r.Devices = append(r.Devices, p)
+	}
+	log.Println(SQL_ELAPSED, "===>", len(r.Devices))
 	if r.Level == DEBUG {
 		log.Println(SQL_ELAPSED, time.Since(l))
 	}

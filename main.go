@@ -100,6 +100,8 @@ func Send_Resp(conn *net.TCPConn, resp string) error {
 /*
 	接收设备的心跳，完成功能如下：
 	1、更新当前设备连接的在线时间戳
+	2、更新数据表的心跳最新时间
+
 */
 func CmdHeartBeat(conn *net.TCPConn, heart Heartbeat) {
 	PrintHead(HEARTBEAT)
@@ -114,6 +116,17 @@ func CmdHeartBeat(conn *net.TCPConn, heart Heartbeat) {
 	}
 	currNode, _ := getCurrNode(heart.Sn)
 	currNode.SignInTime = time.Now()
+
+	//更新设备的最新心跳
+	r := device.New(dbcomm.GetDB(), device.DEBUG)
+
+	onlineMap := map[string]interface{}{
+		UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05")}
+	err = r.UpdateMapEx(heart.Sn, onlineMap, nil)
+	if err != nil {
+		log.Println("更新心跳失败", err)
+	}
+
 	GSn2ConnMap.Store(heart.Sn, currNode)
 	Send_Resp(conn, string(heartBuf))
 	PrintTail(HEARTBEAT)
@@ -740,6 +753,40 @@ func OffLine(sn string) {
 }
 
 /*
+	程序重启时，初始化设备状态
+    逻辑：如果设备超过5分钟没有心跳，则视为下线状态
+
+*/
+func InitStatus() {
+	PrintHead(INIT_STATUS)
+	r := device.New(dbcomm.GetDB(), device.DEBUG)
+	var search device.Search
+	if dl, err := r.GetListEx(search); err == nil {
+		for k, v := range dl {
+			log.Println(k, v.Sn, v.UpdateTime)
+			if v.UpdateTime == "" {
+				continue
+			}
+			utime, _ := time.ParseInLocation("2006-01-02 15:04:05", v.UpdateTime, time.Local)
+			duration := time.Now().Sub(utime)
+			if duration.Minutes() < 5.00 {
+				continue
+			}
+			onlineMap := map[string]interface{}{DEVICE_TIME: time.Now().Format("2006-01-02 15:04:05"),
+				IS_ONLINE: STATUS_OFFLINE}
+			err = r.UpdateMapEx(v.Sn, onlineMap, nil)
+			if err != nil {
+				log.Println("设备下线更新失败", err)
+			} else {
+				log.Println(v.Sn, "虚假在线，更新为下线状态")
+			}
+		}
+	}
+
+	PrintTail(INIT_STATUS)
+}
+
+/*
 	处理TCP部分，是网关程序的核心模块
 	1、接收设备发送的各个指令包
 	2、按协议进行解析，根据命令进行处理
@@ -764,7 +811,7 @@ func tcpPipe(conn *net.TCPConn) {
 	}()
 
 	reader := bufio.NewReader(conn)
-	packBuf := make([]byte, 1024*1024*5)
+	packBuf := make([]byte, 1024*1024*2)
 	var nSum int32
 	for {
 		conn.SetReadDeadline(time.Now().Add(time.Second * 180))
@@ -791,6 +838,7 @@ func tcpPipe(conn *net.TCPConn) {
 		}
 		for {
 			packLen := BytesToInt(packBuf[2:6])
+			log.Println("包的长度==》", packLen)
 			if nSum >= packLen {
 				log.Println("接收到一个完整的包!", packBuf[0], packBuf[1])
 				if err := ProcPacket(conn, packBuf[6:packLen]); err != nil {
@@ -857,7 +905,11 @@ func init() {
 func main() {
 	log.Println("<==========MicroPoint Gate Starting...==========>")
 	log.Println("<==========Version:", MainVer, "===================>")
+
 	dbcomm.InitDB(dbUrl, ccdbUrl, idleConns, openConns)
+	log.Println("<==========Init Device Online Status==========>")
+
+	InitStatus()
 
 	go go_WebServer()
 	var tcpAddr *net.TCPAddr

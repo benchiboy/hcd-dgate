@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+const INIT_STATUS = "init_status"
+
 const ONLINE = "online"
 const ONLINE_RESP = "online"
 
@@ -672,6 +674,7 @@ func BusiPushInfoCtl(w http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 	currNode, err := getCurrNode(busiInfo.Sn)
 	if err != nil {
+		log.Println("getCurrNode====>")
 		busiInfoResp.ErrorCode = ERR_CODE_TYPEERR
 		busiInfoResp.ErrorMsg = err.Error()
 		Write_Response(busiInfoResp, w, req, PUSH_INFO)
@@ -688,11 +691,13 @@ func BusiPushInfoCtl(w http.ResponseWriter, req *http.Request) {
 	if busiInfo.Purpose != "update" && busiInfo.Purpose != "agreement" {
 		busiInfoResp.ErrorCode = ERR_CODE_TYPEERR
 		busiInfoResp.ErrorMsg = "消息目的类型错误"
+		log.Println("update====>")
 		Write_Response(busiInfoResp, w, req, PUSH_FILE_INFO)
 		return
 	}
 
 	if currNode.Status == STATUS_DOING {
+		log.Println("STATUS_DOING====>", STATUS_DOING)
 		busiInfoResp.ErrorCode = ERR_CODE_STATUSD
 		busiInfoResp.ErrorMsg = ERROR_MAP[ERR_CODE_STATUSD]
 		Write_Response(busiInfoResp, w, req, PUSH_INFO)
