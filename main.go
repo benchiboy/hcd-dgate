@@ -795,18 +795,23 @@ func InitStatus() {
 func tcpPipe(conn *net.TCPConn) {
 	ipStr := conn.RemoteAddr().String()
 	defer func() {
-		log.Println("Disconnect===>:" + ipStr)
+		log.Println("Disconnect===>:"+ipStr, "Conn:", conn)
 		snIf, ok := GConn2SnMap.Load(conn)
 		if ok {
-			sn, _ := snIf.(string)
+			sn, ok := snIf.(string)
+			if !ok {
+				log.Println("Assertion is  error")
+			}
 			if sn != "" {
 				OffLine(sn)
-				//删除SN对应的缓存
 				GSn2ConnMap.Delete(sn)
 			}
-			GConn2SnMap.Delete(conn)
+			if conn != nil {
+				GConn2SnMap.Delete(conn)
+			}
+		} else {
+			log.Println("GConn2SnMap.Load Error....")
 		}
-		GConn2SnMap.Delete(conn)
 		conn.Close()
 	}()
 
@@ -912,17 +917,30 @@ func main() {
 	InitStatus()
 
 	go go_WebServer()
+
+	go func() {
+		for {
+			i := 0
+			GConn2SnMap.Range(func(k, v interface{}) bool {
+				i++
+				return true
+			})
+			log.Println("当前在线总数============>:", i)
+			time.Sleep(time.Second * 10)
+		}
+	}()
+
 	var tcpAddr *net.TCPAddr
 	tcpAddr, _ = net.ResolveTCPAddr("tcp", ":8089")
 	tcpListener, _ := net.ListenTCP("tcp", tcpAddr)
 	defer tcpListener.Close()
 	for {
 		tcpConn, err := tcpListener.AcceptTCP()
-		GConn2SnMap.Store(tcpConn, "")
 		if err != nil {
 			continue
 		}
 		log.Println("Has A New Connection===>:" + tcpConn.RemoteAddr().String())
+		GConn2SnMap.Store(tcpConn, "")
 		go tcpPipe(tcpConn)
 	}
 
