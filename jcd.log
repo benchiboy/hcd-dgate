@@ -34471,3 +34471,177 @@
 2019/11/18 15:14:52.933119 main.go:781: 37 虚假在线，更新为下线状态
 2019/11/18 15:14:52.933136 main.go:766: 7 25 2019-07-09 14:40:22
 2019/11/18 15:14:52.933158 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:25:56.363944 main.go:901: config file == config-ci.json
+2020/02/27 17:25:56.365000 util.go:53: 《======== [Init...]
+2020/02/27 17:25:56.365047 main.go:917: <==========MicroPoint Gate Starting...==========>
+2020/02/27 17:25:56.365070 main.go:918: <==========Version: 0.4.26 ===================>
+2020/02/27 17:25:56.802214 Dbcomm.go:30: Database Connected successful!
+2020/02/27 17:25:56.802388 main.go:921: <==========Init Device Online Status==========>
+2020/02/27 17:25:56.802482 util.go:49: ========》 [init_status]
+2020/02/27 17:25:56.802617 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/02/27 17:25:56.919228 Devices.go:592: Elapsed===> ===> 664
+2020/02/27 17:25:56.919335 Devices.go:594: Elapsed===> 116.78296ms
+2020/02/27 17:25:56.919387 main.go:772: 0 011401K0600005 2019-12-06 09:23:25
+2020/02/27 17:25:56.919482 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:25:57.136084 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:25:57.136206 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:25:57.136239 Devices.go:1227: Elapsed===> 216.779236ms
+2020/02/27 17:25:57.136430 main.go:787: 011401K0600005 虚假在线，更新为下线状态
+2020/02/27 17:25:57.136551 main.go:772: 1 D43D7E1C2E52 2019-10-22 07:54:50
+2020/02/27 17:25:57.136607 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:25:57.251813 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:25:57.251905 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:25:57.251936 Devices.go:1227: Elapsed===> 115.330552ms
+2020/02/27 17:25:57.251995 main.go:787: D43D7E1C2E52 虚假在线，更新为下线状态
+2020/02/27 17:25:57.252044 main.go:772: 2 002324488FB7 2019-10-30 06:14:26
+2020/02/27 17:25:57.252087 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:25:57.370091 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:25:57.370223 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:25:57.370726 Devices.go:1227: Elapsed===> 118.63908ms
+2020/02/27 17:25:57.371005 main.go:787: 002324488FB7 虚假在线，更新为下线状态
+2020/02/27 17:25:57.371048 main.go:772: 3 011401K0600048 2019-12-06 09:23:43
+2020/02/27 17:25:57.371137 Devices.go:1199: Update ===> Update lk_device set is_online=?,device_time=? where sn=?
+2020/02/27 17:25:57.484800 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:25:57.484876 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:25:57.484940 Devices.go:1227: Elapsed===> 113.847748ms
+2020/02/27 17:25:57.484998 main.go:787: 011401K0600048 虚假在线，更新为下线状态
+2020/02/27 17:25:57.485026 main.go:772: 4 011401J0900036 2019-09-06 14:36:48
+2020/02/27 17:25:57.485072 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:25:57.602866 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:25:57.602940 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:25:57.602972 Devices.go:1227: Elapsed===> 117.901824ms
+2020/02/27 17:25:57.603040 main.go:787: 011401J0900036 虚假在线，更新为下线状态
+2020/02/27 17:25:57.603113 main.go:772: 5 011401K0600002 2019-12-06 09:24:13
+2020/02/27 17:25:57.603145 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:25:57.721169 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:25:57.721293 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:25:57.721344 Devices.go:1227: Elapsed===> 118.198561ms
+2020/02/27 17:25:57.721505 main.go:787: 011401K0600002 虚假在线，更新为下线状态
+2020/02/27 17:25:57.721586 main.go:772: 6 011401K0600030 2019-12-06 09:23:42
+2020/02/27 17:25:57.721784 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:25:57.842769 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:25:57.843016 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:25:57.843080 Devices.go:1227: Elapsed===> 121.297404ms
+2020/02/27 17:25:57.843599 main.go:787: 011401K0600030 虚假在线，更新为下线状态
+2020/02/27 17:25:57.843650 main.go:772: 7 98541B753361 2019-12-01 21:20:17
+2020/02/27 17:25:57.843698 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:25:57.973992 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:25:57.974059 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:25:57.974079 Devices.go:1227: Elapsed===> 130.386345ms
+2020/02/27 17:25:57.974270 main.go:787: 98541B753361 虚假在线，更新为下线状态
+2020/02/27 17:25:57.974312 main.go:772: 8 011401J0700046 2019-09-06 14:34:35
+2020/02/27 17:25:57.974426 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:25:58.085959 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:25:58.086028 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:25:58.086053 Devices.go:1227: Elapsed===> 111.701508ms
+2020/02/27 17:25:58.086101 main.go:787: 011401J0700046 虚假在线，更新为下线状态
+2020/02/27 17:25:58.086180 main.go:772: 9 ABCDEFG123123 2019-09-06 14:34:35
+2020/02/27 17:25:58.086211 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:25:58.199557 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:25:58.199621 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:25:58.199693 Devices.go:1227: Elapsed===> 113.479185ms
+2020/02/27 17:25:58.199771 main.go:787: ABCDEFG123123 虚假在线，更新为下线状态
+2020/02/27 17:25:58.199802 main.go:772: 10 011401K0600029 2019-12-02 13:58:50
+2020/02/27 17:25:58.199847 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:25:58.316322 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:25:58.316388 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:25:58.316435 Devices.go:1227: Elapsed===> 116.562805ms
+2020/02/27 17:25:58.316525 main.go:787: 011401K0600029 虚假在线，更新为下线状态
+2020/02/27 17:25:58.316555 main.go:772: 11 30B49E9B18DF 2019-12-06 09:23:07
+2020/02/27 17:25:58.316613 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:14.040933 main.go:901: config file == config-ci.json
+2020/02/27 17:27:14.042296 util.go:53: 《======== [Init...]
+2020/02/27 17:27:14.042375 main.go:917: <==========MicroPoint Gate Starting...==========>
+2020/02/27 17:27:14.042408 main.go:918: <==========Version: 0.4.26 ===================>
+2020/02/27 17:27:14.244230 Dbcomm.go:30: Database Connected successful!
+2020/02/27 17:27:14.244489 main.go:921: <==========Init Device Online Status==========>
+2020/02/27 17:27:14.244535 util.go:49: ========》 [init_status]
+2020/02/27 17:27:14.244584 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/02/27 17:27:14.350074 Devices.go:592: Elapsed===> ===> 664
+2020/02/27 17:27:14.350163 Devices.go:594: Elapsed===> 105.575997ms
+2020/02/27 17:27:14.350215 main.go:772: 0 011401K0600005 2019-12-06 09:23:25
+2020/02/27 17:27:14.350288 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:14.464635 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:14.464703 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:14.464767 Devices.go:1227: Elapsed===> 114.493023ms
+2020/02/27 17:27:14.464851 main.go:787: 011401K0600005 虚假在线，更新为下线状态
+2020/02/27 17:27:14.464889 main.go:772: 1 D43D7E1C2E52 2019-10-22 07:54:50
+2020/02/27 17:27:14.464972 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:14.567371 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:14.567545 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:14.567575 Devices.go:1227: Elapsed===> 102.604584ms
+2020/02/27 17:27:14.568866 main.go:787: D43D7E1C2E52 虚假在线，更新为下线状态
+2020/02/27 17:27:14.568928 main.go:772: 2 002324488FB7 2019-10-30 06:14:26
+2020/02/27 17:27:14.568994 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:14.690189 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:14.690300 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:14.690331 Devices.go:1227: Elapsed===> 121.355487ms
+2020/02/27 17:27:14.690455 main.go:787: 002324488FB7 虚假在线，更新为下线状态
+2020/02/27 17:27:14.690489 main.go:772: 3 011401K0600048 2019-12-06 09:23:43
+2020/02/27 17:27:14.690544 Devices.go:1199: Update ===> Update lk_device set is_online=?,device_time=? where sn=?
+2020/02/27 17:27:14.798816 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:14.798912 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:14.798933 Devices.go:1227: Elapsed===> 108.415823ms
+2020/02/27 17:27:14.798981 main.go:787: 011401K0600048 虚假在线，更新为下线状态
+2020/02/27 17:27:14.799041 main.go:772: 4 011401J0900036 2019-09-06 14:36:48
+2020/02/27 17:27:14.799067 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:14.910864 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:14.910929 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:14.910953 Devices.go:1227: Elapsed===> 111.884181ms
+2020/02/27 17:27:14.911053 main.go:787: 011401J0900036 虚假在线，更新为下线状态
+2020/02/27 17:27:14.911081 main.go:772: 5 011401K0600002 2019-12-06 09:24:13
+2020/02/27 17:27:14.911121 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:15.026661 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:15.027274 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:15.027366 Devices.go:1227: Elapsed===> 116.244721ms
+2020/02/27 17:27:15.027547 main.go:787: 011401K0600002 虚假在线，更新为下线状态
+2020/02/27 17:27:15.027603 main.go:772: 6 011401K0600030 2019-12-06 09:23:42
+2020/02/27 17:27:15.027628 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:15.136738 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:15.137707 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:15.137746 Devices.go:1227: Elapsed===> 110.117053ms
+2020/02/27 17:27:15.138136 main.go:787: 011401K0600030 虚假在线，更新为下线状态
+2020/02/27 17:27:15.138185 main.go:772: 7 98541B753361 2019-12-01 21:20:17
+2020/02/27 17:27:15.138263 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:15.239839 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:15.239951 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:15.239977 Devices.go:1227: Elapsed===> 101.749726ms
+2020/02/27 17:27:15.240027 main.go:787: 98541B753361 虚假在线，更新为下线状态
+2020/02/27 17:27:15.240089 main.go:772: 8 011401J0700046 2019-09-06 14:34:35
+2020/02/27 17:27:15.240117 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:15.343831 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:15.345007 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:15.345119 Devices.go:1227: Elapsed===> 104.997498ms
+2020/02/27 17:27:15.345214 main.go:787: 011401J0700046 虚假在线，更新为下线状态
+2020/02/27 17:27:15.345240 main.go:772: 9 ABCDEFG123123 2019-09-06 14:34:35
+2020/02/27 17:27:15.345444 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:15.455601 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:15.455796 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:15.455849 Devices.go:1227: Elapsed===> 110.412298ms
+2020/02/27 17:27:15.455924 main.go:787: ABCDEFG123123 虚假在线，更新为下线状态
+2020/02/27 17:27:15.455990 main.go:772: 10 011401K0600029 2019-12-02 13:58:50
+2020/02/27 17:27:15.456055 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:15.572214 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:15.572378 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:15.572417 Devices.go:1227: Elapsed===> 116.362846ms
+2020/02/27 17:27:15.572507 main.go:787: 011401K0600029 虚假在线，更新为下线状态
+2020/02/27 17:27:15.572536 main.go:772: 11 30B49E9B18DF 2019-12-06 09:23:07
+2020/02/27 17:27:15.572570 Devices.go:1199: Update ===> Update lk_device set is_online=?,device_time=? where sn=?
+2020/02/27 17:27:15.681376 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:15.681456 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:15.681482 Devices.go:1227: Elapsed===> 108.913531ms
+2020/02/27 17:27:15.681543 main.go:787: 30B49E9B18DF 虚假在线，更新为下线状态
+2020/02/27 17:27:15.681591 main.go:772: 12 011401K0600008 2019-12-02 13:59:21
+2020/02/27 17:27:15.681626 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:15.787581 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:15.787654 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:15.787681 Devices.go:1227: Elapsed===> 106.055383ms
+2020/02/27 17:27:15.787729 main.go:787: 011401K0600008 虚假在线，更新为下线状态
+2020/02/27 17:27:15.787778 main.go:772: 13 448A5B87B391 2019-12-06 09:23:52
+2020/02/27 17:27:15.787813 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?
+2020/02/27 17:27:15.896921 Devices.go:1221: Update ===> LastInsertId: 0
+2020/02/27 17:27:15.897038 Devices.go:1224: Update ===> RowsAffected: 1
+2020/02/27 17:27:15.897390 Devices.go:1227: Elapsed===> 109.568332ms
+2020/02/27 17:27:15.897501 main.go:787: 448A5B87B391 虚假在线，更新为下线状态
+2020/02/27 17:27:15.897575 main.go:772: 14 54E1AD0E6B82 2019-12-06 09:24:00
+2020/02/27 17:27:15.897612 Devices.go:1199: Update ===> Update lk_device set device_time=?,is_online=? where sn=?

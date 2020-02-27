@@ -17,3 +17,6 @@ ver 0.2
 987193711
 
 */
+
+//-Send Command---> 204 ~^S^@^@^@<CC>{"method":"push_file_info","sn":"001D099BEDDA","chip_id":"BJ4233245","type":"up
+//grade","total_file":1,"file_in_procesing":1,"file":{"name":"DMSV1.0.04k.zip","length":75457071,"file_crc":-1374992681}} <nil>

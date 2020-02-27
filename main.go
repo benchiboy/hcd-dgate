@@ -87,13 +87,22 @@ func Send_Resp(conn *net.TCPConn, resp string) error {
 	head[0] = 0x7E
 	head[1] = 0x13
 	packLenBytes := IntToBytes(len(resp) + 6)
+
+	log.Println("Msg len:==Package total Len===>", len(resp), packLenBytes)
+
 	copy(head[2:], packLenBytes)
 	head = append(head, []byte(resp)...)
+
 	n, err := conn.Write([]byte(head))
 	if err != nil {
+		log.Println(err)
 		conn.Close()
 	}
-	log.Println("---Send Command--->", n, string([]byte(head)), err)
+	if len(head) > 512 {
+		log.Println("---Send Command--->", n, err)
+	} else {
+		log.Println("---Send Command--->", n, string([]byte(head)), err)
+	}
 	return err
 }
 
@@ -506,6 +515,8 @@ func CmdPushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
 	e.FileLength = int(currNode.FileSize)
 	e.FileCrc32 = pushFile.Fragment.Checksum
 	e.Sn = pushFile.Sn
+
+	log.Println("收到下发文件确认,下发文件===>", len(pushFile.Fragment.Source))
 
 	e.BatchNo = currNode.BatchNo
 	e.ChipId = pushFile.Chip_id
