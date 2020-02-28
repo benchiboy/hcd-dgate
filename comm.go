@@ -88,6 +88,7 @@ const DEVICE_TIME = "device_time"
 const IS_ONLINE = "is_online"
 const ACTION_TYPE = "action_type"
 const DEFAULT_PATH = "/data/app/hcd/tmp/"
+const FILE_BLOCK_SIZE = 1024 * 80
 
 const UPDATE_USER = 9000000
 
@@ -139,6 +140,8 @@ type StoreInfo struct {
 	FileName   string
 	FileSize   int64
 	FileCrc32  int
+	FileOffset int64
+	ReadSize   int64
 }
 
 /*
@@ -605,6 +608,7 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 	}
 	currNode.FileSize = stat.Size()
 	currNode.FileName = pushFile.Name
+	currNode.FileOffset = 0
 	fileBuf, err := ioutil.ReadFile(pushFile.Name)
 	fileCrc32 := softwareCrc32(fileBuf, len(fileBuf))
 

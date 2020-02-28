@@ -88,22 +88,30 @@ func Send_Resp(conn *net.TCPConn, resp string) error {
 	head[1] = 0x13
 	packLenBytes := IntToBytes(len(resp) + 6)
 
-	log.Println("Msg len:==Package total Len===>", len(resp), packLenBytes)
-
+	log.Println("MsgLen:==Package Head Len===>", len(resp), packLenBytes)
 	copy(head[2:], packLenBytes)
 	head = append(head, []byte(resp)...)
 
-	n, err := conn.Write([]byte(head))
-	if err != nil {
-		log.Println(err)
-		conn.Close()
+	var err error
+	var sendLen int
+	totalLen := len(head)
+	nSum := 0
+	for totalLen > 0 {
+		sendLen, err = conn.Write([]byte(head)[nSum:])
+		if err != nil {
+			log.Println("Send_Resp Error:", err)
+			conn.Close()
+			return err
+		}
+		if totalLen > 512 {
+			log.Println("SendPush_File", sendLen, totalLen, nSum)
+		} else {
+			log.Println("Send Len And Msg===>", string(head))
+		}
+		nSum += sendLen
+		totalLen = totalLen - sendLen
 	}
-	if len(head) > 512 {
-		log.Println("---Send Command--->", n, err)
-	} else {
-		log.Println("---Send Command--->", n, string([]byte(head)), err)
-	}
-	return err
+	return nil
 }
 
 /*
@@ -490,45 +498,24 @@ func CmdPostFile(conn *net.TCPConn, postFile PostFile) {
 */
 func CmdPushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
 	PrintHead(PUSH_FILE_INFO_RESP)
+	log.Println("========>收到下发文件确认,下发文件======>")
 
 	currNode, _ := getCurrNode(infoResp.Sn)
-	var pushFile PushFile
-	pushFile.Chip_id = infoResp.Chip_id
-	pushFile.Method = PUSH_FILE
-	pushFile.Sn = infoResp.Sn
-	pushFile.Fragment.Index = 1
-	pushFile.Fragment.Length = int(currNode.FileSize)
-	pushFile.Fragment.Eof = true
+	_, crcCode := pubPushFile(conn, infoResp.Sn, infoResp.Chip_id)
 
-	fileBuf, err := ioutil.ReadFile(currNode.FileName)
-	if err != nil {
-		log.Println(err)
-	}
-
-	pushFile.Fragment.Source = hex.EncodeToString(fileBuf)
-	crc32 := softwareCrc32(fileBuf, len(fileBuf))
-	pushFile.Fragment.Checksum = crc32
-	fBuf, _ := json.Marshal(&pushFile)
 	r := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
 	var e dfiles.DFiles
 	e.FileName = currNode.FileName
 	e.FileLength = int(currNode.FileSize)
-	e.FileCrc32 = pushFile.Fragment.Checksum
-	e.Sn = pushFile.Sn
-
-	log.Println("收到下发文件确认,下发文件===>", len(pushFile.Fragment.Source))
-
+	e.FileCrc32 = crcCode
+	e.Sn = infoResp.Sn
 	e.BatchNo = currNode.BatchNo
-	e.ChipId = pushFile.Chip_id
+	e.ChipId = infoResp.Chip_id
 	e.BeginTime = time.Now().Format("2006-01-02 15:04:05")
 	e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
-
-	currNode.FileIndex = 1
-	GSn2ConnMap.Store(pushFile.Sn, currNode)
 	if err := r.InsertEntity(e, nil); err != nil {
 		log.Println(err)
 	}
-	Send_Resp(conn, string(fBuf))
 
 	PrintTail(PUSH_FILE_INFO_RESP)
 }
@@ -554,35 +541,72 @@ func CmdCheckUpdate(conn *net.TCPConn, upDate CheckUpdate) {
 	PrintTail(CHECK_UDATE)
 }
 
+func pubPushFile(conn *net.TCPConn, sn string, chipId string) (error, int32) {
+	var pushFile PushFile
+	currNode, _ := getCurrNode(sn)
+	if currNode.FileSize <= currNode.FileOffset+FILE_BLOCK_SIZE {
+		pushFile.Fragment.Eof = true
+		log.Println("File Is Eof===>", sn, currNode.FileOffset, currNode.FileIndex, currNode.FileSize)
+		currNode.ReadSize = currNode.FileSize - currNode.FileOffset
+	} else {
+		log.Println("File OffSet===>", sn, currNode.FileOffset, currNode.FileIndex)
+		pushFile.Fragment.Eof = false
+		currNode.ReadSize = FILE_BLOCK_SIZE
+	}
+	pushFile.Fragment.Length = int(currNode.ReadSize)
+	pushFile.Chip_id = chipId
+	pushFile.Method = PUSH_FILE
+	pushFile.Sn = sn
+	pushFile.Fragment.Index = currNode.FileIndex
+	fileBuf, err := ioutil.ReadFile(currNode.FileName)
+	if err != nil {
+		log.Println(err)
+		return err, 0
+	}
+	pushFile.Fragment.Source = hex.EncodeToString(fileBuf[currNode.FileOffset : currNode.FileOffset+currNode.ReadSize])
+	crc32 := softwareCrc32(fileBuf, len(fileBuf))
+	pushFile.Fragment.Checksum = crc32
+	fBuf, _ := json.Marshal(&pushFile)
+	err = Send_Resp(conn, string(fBuf))
+
+	GSn2ConnMap.Store(sn, currNode)
+	return err, crc32
+
+}
+
 /*
 	接收客户端发来的PUSH文件确认
 */
 func CmdPushFileResp(conn *net.TCPConn, fileResp PushFileResp) {
 	PrintHead(PUSH_FILE_RESP)
-
 	currNode, _ := getCurrNode(fileResp.Sn)
-	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
-	var e mfiles.MFiles
-	e.EndTime = time.Now().Format("2006-01-02 15:04:05")
 	if fileResp.Success {
-		e.Status = STATUS_SUCC
-	} else {
-		e.Status = STATUS_FAIL
+		if currNode.FileOffset == currNode.FileSize {
+			r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+			var e mfiles.MFiles
+			e.UpdateBy = UPDATE_USER
+			e.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
+			r.UpdataEntity(currNode.BatchNo, e, nil)
+			//更新明细的结束时间
+			rr := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
+			var de dfiles.DFiles
+			de.EndTime = time.Now().Format("2006-01-02 15:04:05")
+			de.UpdateTime = de.EndTime
+			de.UpdateBy = UPDATE_USER
+			rr.UpdataEntity(currNode.BatchNo, de, nil)
+
+			currNode.FileIndex = 1
+			currNode.FileOffset = 0
+			currNode.ReadSize = 0
+			currNode.Status = STATUS_INIT
+			GSn2ConnMap.Store(fileResp.Sn, currNode)
+
+		} else {
+			currNode.FileOffset += currNode.ReadSize
+			currNode.FileIndex += 1
+			pubPushFile(conn, fileResp.Sn, fileResp.Chip_id)
+		}
 	}
-	e.UpdateBy = UPDATE_USER
-	e.UpdateTime = e.EndTime
-	r.UpdataEntity(currNode.BatchNo, e, nil)
-
-	currNode.Status = STATUS_INIT
-	GSn2ConnMap.Store(fileResp.Sn, currNode)
-	//更新明细的结束时间
-	rr := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
-	var de dfiles.DFiles
-	de.EndTime = time.Now().Format("2006-01-02 15:04:05")
-	de.UpdateTime = de.EndTime
-	de.UpdateBy = UPDATE_USER
-	rr.UpdataEntity(currNode.BatchNo, de, nil)
-
 	PrintTail(PUSH_FILE_RESP)
 }
 
