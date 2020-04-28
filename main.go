@@ -183,7 +183,7 @@ func CmdOnLine(conn *net.TCPConn, online Online) {
 		e.DeviceTime = time.Now().Format("2006-01-02 15:04:05")
 		e.Sn = online.Devices[0].Sn
 		e.IsEnable = 1
-		e.FcdClass = "A"
+		e.FcdClass = "C"
 		e.ChipId = online.Devices[0].Chip_id
 		e.ProductType = online.Devices[0].Device_series
 		e.ProductNo = online.Devices[0].Device_name
@@ -498,7 +498,8 @@ func CmdPostFile(conn *net.TCPConn, postFile PostFile) {
 */
 func CmdPushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
 	PrintHead(PUSH_FILE_INFO_RESP)
-	log.Println("========>收到下发文件确认,下发文件======>")
+
+	log.Println("Push File Info OK...")
 
 	currNode, _ := getCurrNode(infoResp.Sn)
 	_, crcCode := pubPushFile(conn, infoResp.Sn, infoResp.Chip_id)
@@ -542,16 +543,19 @@ func CmdCheckUpdate(conn *net.TCPConn, upDate CheckUpdate) {
 }
 
 func pubPushFile(conn *net.TCPConn, sn string, chipId string) (error, int32) {
+
 	var pushFile PushFile
 	currNode, _ := getCurrNode(sn)
+
 	if currNode.FileSize <= currNode.FileOffset+FILE_BLOCK_SIZE {
 		pushFile.Fragment.Eof = true
-		log.Println("File Is Eof===>", sn, currNode.FileOffset, currNode.FileIndex, currNode.FileSize)
 		currNode.ReadSize = currNode.FileSize - currNode.FileOffset
+		log.Println("File eof block will happen!===>", sn, currNode.FileOffset, currNode.ReadSize)
+
 	} else {
-		log.Println("File OffSet===>", sn, currNode.FileOffset, currNode.FileIndex)
 		pushFile.Fragment.Eof = false
 		currNode.ReadSize = FILE_BLOCK_SIZE
+		log.Println("FileOffSet===>", sn, currNode.FileOffset, currNode.ReadSize, currNode.FileIndex)
 	}
 	pushFile.Fragment.Length = int(currNode.ReadSize)
 	pushFile.Chip_id = chipId
@@ -581,7 +585,14 @@ func CmdPushFileResp(conn *net.TCPConn, fileResp PushFileResp) {
 	PrintHead(PUSH_FILE_RESP)
 	currNode, _ := getCurrNode(fileResp.Sn)
 	if fileResp.Success {
+		log.Println("Recv Push File Resp===>")
+
+		currNode.FileOffset += currNode.ReadSize
+		currNode.FileIndex += 1
+		GSn2ConnMap.Store(fileResp.Sn, currNode)
+
 		if currNode.FileOffset == currNode.FileSize {
+			log.Println("File Eof==>", currNode.FileOffset, currNode.FileSize)
 			r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
 			var e mfiles.MFiles
 			e.UpdateBy = UPDATE_USER
@@ -594,16 +605,7 @@ func CmdPushFileResp(conn *net.TCPConn, fileResp PushFileResp) {
 			de.UpdateTime = de.EndTime
 			de.UpdateBy = UPDATE_USER
 			rr.UpdataEntity(currNode.BatchNo, de, nil)
-
-			currNode.FileIndex = 1
-			currNode.FileOffset = 0
-			currNode.ReadSize = 0
-			currNode.Status = STATUS_INIT
-			GSn2ConnMap.Store(fileResp.Sn, currNode)
-
 		} else {
-			currNode.FileOffset += currNode.ReadSize
-			currNode.FileIndex += 1
 			pubPushFile(conn, fileResp.Sn, fileResp.Chip_id)
 		}
 	}
@@ -847,6 +849,7 @@ func tcpPipe(conn *net.TCPConn) {
 		} else {
 			log.Println("GConn2SnMap.Load Error....")
 		}
+		log.Println("")
 		conn.Close()
 	}()
 

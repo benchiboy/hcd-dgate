@@ -609,6 +609,8 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 	currNode.FileSize = stat.Size()
 	currNode.FileName = pushFile.Name
 	currNode.FileOffset = 0
+	currNode.FileIndex = 1
+	currNode.ReadSize = 0
 	fileBuf, err := ioutil.ReadFile(pushFile.Name)
 	fileCrc32 := softwareCrc32(fileBuf, len(fileBuf))
 
