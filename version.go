@@ -1,3 +1,3 @@
 package main
 
-const MainVer = "0.5.0"
+const MainVer = "0.8.0"

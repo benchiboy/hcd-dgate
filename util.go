@@ -45,10 +45,14 @@ func softwareCrc32(buf []byte, len int) int32 {
 	return int32(crc)
 }
 
-func PrintHead(a ...interface{}) {
-	log.Println("========》", a)
+func PrintHead(threadId int, a ...interface{}) {
+	log.Println("========》[Thread-", threadId, "]", a)
 }
 
-func PrintTail(a ...interface{}) {
-	log.Println("《========", a)
+func PrintTail(threadId int, a ...interface{}) {
+	log.Println("《========[Thread-", threadId, "]", a)
+}
+
+func PrintLog(threadId int, a ...interface{}) {
+	log.Println("--->[Thread-", threadId, "]", a)
 }

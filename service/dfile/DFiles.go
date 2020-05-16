@@ -1094,6 +1094,158 @@ func (r DFilesList) UpdataEntityExt(batchNo string, indexNo int, p DFiles, tr *s
 }
 
 /*
+	说明：插入对象到数据表中，这个方法会判读对象的各个属性，如果属性不为空，才加入插入列中；
+	入参：p:插入的对象
+	出参：参数1：如果出错，返回错误对象；成功返回nil
+*/
+
+func (r DFilesList) UpdataEntity2(batchNo string, p DFiles, tr *sql.Tx) error {
+	l := time.Now()
+	var colNames string
+	valSlice := make([]interface{}, 0)
+
+	if p.Id != 0 {
+		colNames += "id=?,"
+		valSlice = append(valSlice, p.Id)
+	}
+
+	if p.BatchNo != "" {
+		colNames += "batch_no=?,"
+
+		valSlice = append(valSlice, p.BatchNo)
+	}
+
+	if p.Sn != "" {
+		colNames += "sn=?,"
+
+		valSlice = append(valSlice, p.Sn)
+	}
+
+	if p.ChipId != "" {
+		colNames += "chip_id=?,"
+
+		valSlice = append(valSlice, p.ChipId)
+	}
+
+	if p.FileType != "" {
+		colNames += "file_type=?,"
+
+		valSlice = append(valSlice, p.FileType)
+	}
+
+	if p.BeginTime != "" {
+		colNames += "begin_time=?,"
+
+		valSlice = append(valSlice, p.BeginTime)
+	}
+
+	if p.EndTime != "" {
+		colNames += "end_time=?,"
+
+		valSlice = append(valSlice, p.EndTime)
+	}
+
+	if p.FileName != "" {
+		colNames += "file_name=?,"
+
+		valSlice = append(valSlice, p.FileName)
+	}
+
+	if p.FileIndex != 0 {
+		colNames += "file_index=?,"
+		valSlice = append(valSlice, p.FileIndex)
+	}
+
+	if p.FileUrl != "" {
+		colNames += "file_url=?,"
+
+		valSlice = append(valSlice, p.FileUrl)
+	}
+
+	if p.RawFileUrls != "" {
+		colNames += "raw_file_urls=?,"
+
+		valSlice = append(valSlice, p.RawFileUrls)
+	}
+
+	if p.FileCrc32 != 0 {
+		colNames += "file_crc32=?,"
+		valSlice = append(valSlice, p.FileCrc32)
+	}
+
+	if p.FileLength != 0 {
+		colNames += "file_length=?,"
+		valSlice = append(valSlice, p.FileLength)
+	}
+
+	if p.CreateTime != "" {
+		colNames += "create_time=?,"
+
+		valSlice = append(valSlice, p.CreateTime)
+	}
+
+	if p.CreateBy != 0 {
+		colNames += "create_by=?,"
+		valSlice = append(valSlice, p.CreateBy)
+	}
+
+	if p.UpdateTime != "" {
+		colNames += "update_time=?,"
+
+		valSlice = append(valSlice, p.UpdateTime)
+	}
+
+	if p.UpdateBy != 0 {
+		colNames += "update_by=?,"
+		valSlice = append(valSlice, p.UpdateBy)
+	}
+
+	if p.Version != 0 {
+		colNames += "version=?,"
+		valSlice = append(valSlice, p.Version)
+	}
+
+	colNames = strings.TrimRight(colNames, ",")
+	valSlice = append(valSlice, batchNo)
+
+	exeSql := fmt.Sprintf("update  lk_device_dfiles  set %s  where batch_no=? ", colNames)
+	if r.Level == DEBUG {
+		log.Println(SQL_INSERT, exeSql)
+	}
+
+	var stmt *sql.Stmt
+	var err error
+	if tr == nil {
+		stmt, err = r.DB.Prepare(exeSql)
+	} else {
+		stmt, err = tr.Prepare(exeSql)
+	}
+
+	if err != nil {
+		log.Println(SQL_ERROR, err.Error())
+		return err
+	}
+	defer stmt.Close()
+
+	ret, err := stmt.Exec(valSlice...)
+	if err != nil {
+		log.Println(SQL_INSERT, "Update data error: %v\n", err)
+		return err
+	}
+	if LastInsertId, err := ret.LastInsertId(); nil == err {
+		log.Println(SQL_INSERT, "LastInsertId:", LastInsertId)
+	}
+	if RowsAffected, err := ret.RowsAffected(); nil == err {
+		log.Println(SQL_INSERT, "RowsAffected:", RowsAffected)
+	}
+
+	if r.Level == DEBUG {
+		log.Println(SQL_ELAPSED, time.Since(l))
+	}
+	return nil
+}
+
+/*
 	说明：根据更新主键及更新Map值更新数据表；
 	入参：keyNo:更新数据的关键条件，m:更新数据列的Map
 	出参：参数1：如果出错，返回错误对象；成功返回nil

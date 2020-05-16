@@ -1166,10 +1166,14 @@ func (r DeviceList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx
 	defer stmt.Close()
 
 	if LastInsertId, err := ret.LastInsertId(); nil == err {
-		log.Println(SQL_UPDATE, "LastInsertId:", LastInsertId)
+		if r.Level == DEBUG {
+			log.Println(SQL_UPDATE, "LastInsertId:", LastInsertId)
+		}
 	}
 	if RowsAffected, err := ret.RowsAffected(); nil == err {
-		log.Println(SQL_UPDATE, "RowsAffected:", RowsAffected)
+		if r.Level == DEBUG {
+			log.Println(SQL_UPDATE, "RowsAffected:", RowsAffected)
+		}
 	}
 	if r.Level == DEBUG {
 		log.Println(SQL_ELAPSED, time.Since(l))
@@ -1218,10 +1222,14 @@ func (r DeviceList) UpdateMapEx(keyNo string, m map[string]interface{}, tr *sql.
 	defer stmt.Close()
 
 	if LastInsertId, err := ret.LastInsertId(); nil == err {
-		log.Println(SQL_UPDATE, "LastInsertId:", LastInsertId)
+		if r.Level == DEBUG {
+			log.Println(SQL_UPDATE, "LastInsertId:", LastInsertId)
+		}
 	}
 	if RowsAffected, err := ret.RowsAffected(); nil == err {
-		log.Println(SQL_UPDATE, "RowsAffected:", RowsAffected)
+		if r.Level == DEBUG {
+			log.Println(SQL_UPDATE, "RowsAffected:", RowsAffected)
+		}
 	}
 	if r.Level == DEBUG {
 		log.Println(SQL_ELAPSED, time.Since(l))

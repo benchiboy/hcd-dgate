@@ -25,6 +25,7 @@ import (
 
 	//	"hcd-dgate/util"
 	"html/template"
+	"math/rand"
 
 	"hcd-dgate/service/mfile"
 
@@ -39,14 +40,15 @@ import (
 )
 
 var (
-	http_srv    *http.Server
-	dbUrl       string
-	ccdbUrl     string
-	listenPort  int
-	idleConns   int
-	openConns   int
-	GSn2ConnMap = &sync.Map{}
-	GConn2SnMap = &sync.Map{}
+	http_srv      *http.Server
+	dbUrl         string
+	ccdbUrl       string
+	listenPort    int
+	idleConns     int
+	openConns     int
+	GSn2ConnMap   = &sync.Map{}
+	GConn2SnMap   = &sync.Map{}
+	GConn2TimeMap = &sync.Map{}
 )
 
 func SysConsoleDetail(w http.ResponseWriter, req *http.Request) {
@@ -82,13 +84,18 @@ func SysConsole(w http.ResponseWriter, req *http.Request) {
 	t.Execute(w, l)
 }
 
-func Send_Resp(conn *net.TCPConn, resp string) error {
+func Send_Resp(threadId int, conn *net.TCPConn, resp string) error {
 	head := make([]byte, 6)
 	head[0] = 0x7E
 	head[1] = 0x13
 	packLenBytes := IntToBytes(len(resp) + 6)
 
-	log.Println("MsgLen:==Package Head Len===>", len(resp), packLenBytes)
+	if conn == nil {
+		PrintLog(threadId, "Conn is Null")
+		return fmt.Errorf("Conn is null")
+	}
+
+	//PrintLog(threadId, "MsgLen:==Package Head Len===>", len(resp), packLenBytes)
 	copy(head[2:], packLenBytes)
 	head = append(head, []byte(resp)...)
 
@@ -99,15 +106,15 @@ func Send_Resp(conn *net.TCPConn, resp string) error {
 	for totalLen > 0 {
 		sendLen, err = conn.Write([]byte(head)[nSum:])
 		if err != nil {
-			log.Println("Send_Resp Error:", err)
+			PrintLog(threadId, "Send_Resp Error:", err)
 			conn.Close()
 			return err
 		}
-		if totalLen > 512 {
-			log.Println("SendPush_File", sendLen, totalLen, nSum)
-		} else {
-			log.Println("Send Len And Msg===>", string(head))
-		}
+		//		if totalLen > 256 {
+		//			//PrintLog(threadId, "SendPush_File", sendLen, totalLen, nSum)
+		//		} else {
+		//			//PrintLog(threadId, "Send Len And Msg===>", string(head))
+		//		}
 		nSum += sendLen
 		totalLen = totalLen - sendLen
 	}
@@ -120,8 +127,9 @@ func Send_Resp(conn *net.TCPConn, resp string) error {
 	2、更新数据表的心跳最新时间
 
 */
-func CmdHeartBeat(conn *net.TCPConn, heart Heartbeat) {
-	PrintHead(HEARTBEAT)
+func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
+	PrintHead(threadId, HEARTBEAT)
+	//PrintLog(threadId, "Remote Ip===>", conn.RemoteAddr().String())
 	var heartResp HeartbeatResp
 	heartResp.Chip_id = heart.Chip_id
 	heartResp.Method = HEARTBEAT_RESP
@@ -129,24 +137,27 @@ func CmdHeartBeat(conn *net.TCPConn, heart Heartbeat) {
 	heartResp.Success = true
 	heartBuf, err := json.Marshal(&heartResp)
 	if err != nil {
-		log.Println(err)
+		PrintLog(threadId, err)
 	}
-	currNode, _ := getCurrNode(heart.Sn)
+	currNode, _ := getCurrNode(threadId, heart.Sn)
 	currNode.SignInTime = time.Now()
 
 	//更新设备的最新心跳
-	r := device.New(dbcomm.GetDB(), device.DEBUG)
-
+	r := device.New(dbcomm.GetDB(), device.INFO)
 	onlineMap := map[string]interface{}{
-		UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05")}
+		UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05"), IS_ONLINE: STATUS_ONLINE}
 	err = r.UpdateMapEx(heart.Sn, onlineMap, nil)
 	if err != nil {
-		log.Println("更新心跳失败", err)
+		PrintLog(threadId, "更新心跳失败", err)
 	}
-
 	GSn2ConnMap.Store(heart.Sn, currNode)
-	Send_Resp(conn, string(heartBuf))
-	PrintTail(HEARTBEAT)
+	GConn2SnMap.Store(conn, heart.Sn)
+
+	GConn2TimeMap.Store(conn, time.Now())
+	PrintLog(threadId, conn.RemoteAddr().String())
+
+	Send_Resp(threadId, conn, string(heartBuf))
+	PrintTail(threadId, HEARTBEAT)
 }
 
 /*
@@ -155,8 +166,8 @@ func CmdHeartBeat(conn *net.TCPConn, heart Heartbeat) {
 	2、记录在线的时间戳，以便定时检测是否在线
 	3、更新数据库的在线状态
 */
-func CmdOnLine(conn *net.TCPConn, online Online) {
-	PrintHead(ONLINE)
+func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
+	PrintHead(threadId, ONLINE)
 	var onlineResp OnlineResp
 	onlineResp.Method = online.Method
 	onlineResp.Sn = online.Devices[0].Sn
@@ -207,19 +218,26 @@ func CmdOnLine(conn *net.TCPConn, online Online) {
 	if err := rr.InsertEntity(ne, nil); err != nil {
 		log.Println(err.Error())
 	}
-	//存储客服端的链接
-	GSn2ConnMap.Store(online.Devices[0].Sn, StoreInfo{CurrConn: conn, SignInTime: time.Now()})
-	GConn2SnMap.Store(conn, online.Devices[0].Sn)
-	Send_Resp(conn, string(onlineBuf))
 
-	PrintTail(ONLINE)
+	if _, ok := GSn2ConnMap.Load(online.Devices[0].Sn); ok {
+		PrintLog(threadId, online.Devices[0].Sn+"已经存在MAP中")
+	}
+
+	//存储客服端的链接
+	GConn2SnMap.Store(conn, online.Devices[0].Sn)
+	GSn2ConnMap.Store(online.Devices[0].Sn, StoreInfo{CurrConn: conn, SignInTime: time.Now()})
+	GConn2TimeMap.Store(conn, time.Now())
+
+	Send_Resp(threadId, conn, string(onlineBuf))
+
+	PrintTail(threadId, ONLINE)
 
 }
 
-func CmdGetColoPhonResp(conn *net.TCPConn, phonResp GetColophonResp) {
-	PrintHead(GET_COLOPHON_RESP)
+func CmdGetColoPhonResp(threadId int, conn *net.TCPConn, phonResp GetColophonResp) {
+	PrintHead(threadId, GET_COLOPHON_RESP)
 
-	currNode, _ := getCurrNode(phonResp.Sn)
+	currNode, _ := getCurrNode(threadId, phonResp.Sn)
 	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
 	var ne mfiles.MFiles
 	ne.EndTime = time.Now().Format("2006-01-02 15:04:05")
@@ -237,8 +255,6 @@ func CmdGetColoPhonResp(conn *net.TCPConn, phonResp GetColophonResp) {
 	search.ActionType = ACTION_ONLINE
 
 	if e, err1 := rr.GetLast(search); err1 == nil {
-
-		fmt.Println("=======>", e, err1)
 		rrr := vers.New(dbcomm.GetDB(), vers.DEBUG)
 		var vinfo vers.Vers
 		vinfo.DeviceVer = e.DeviceVer
@@ -258,41 +274,42 @@ func CmdGetColoPhonResp(conn *net.TCPConn, phonResp GetColophonResp) {
 	}
 
 	currNode.Status = STATUS_INIT
-
 	GSn2ConnMap.Store(phonResp.Sn, currNode)
-
 	r.UpdataEntity(currNode.BatchNo, ne, nil)
 
-	PrintTail(GET_COLOPHON_RESP)
+	PrintTail(threadId, GET_COLOPHON_RESP)
 }
 
-func CmdGetInstallDriveResp(conn *net.TCPConn, getDriveResp GetInstallDataDriveResp) {
-	PrintHead(GET_INSTLL_DATADRIVE_RESP)
-	log.Println(getDriveResp)
+func CmdGetInstallDriveResp(threadId int, conn *net.TCPConn, getDriveResp GetInstallDataDriveResp) {
+	PrintHead(threadId, GET_INSTLL_DATADRIVE_RESP)
+	PrintLog(threadId, getDriveResp)
 
-	currNode, _ := getCurrNode(getDriveResp.Sn)
+	currNode, _ := getCurrNode(threadId, getDriveResp.Sn)
 	rr := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
 	var ne mfiles.MFiles
-	if !getDriveResp.Success || getDriveResp.Total_cnt == 0 {
+
+	if getDriveResp.Success {
 		ne.Status = STATUS_SUCC
-		ne.TodoCount = 0
-		ne.EndTime = time.Now().Format("2006-01-02 15:04:05")
-		ne.UpdateTime = ne.EndTime
-
-		currNode.Status = STATUS_INIT
-		GSn2ConnMap.Store(getDriveResp.Sn, currNode)
-		rr.UpdataEntity(currNode.BatchNo, ne, nil)
+	} else {
+		ne.Status = STATUS_FAIL
 	}
+	ne.TodoCount = getDriveResp.Total_cnt
+	ne.EndTime = time.Now().Format("2006-01-02 15:04:05")
+	ne.UpdateTime = ne.EndTime
 
-	PrintTail(GET_INSTLL_DATADRIVE_RESP)
+	currNode.Status = STATUS_INIT
+	GSn2ConnMap.Store(getDriveResp.Sn, currNode)
+	rr.UpdataEntity(currNode.BatchNo, ne, nil)
+
+	PrintTail(threadId, GET_INSTLL_DATADRIVE_RESP)
 }
 
 /*
 	接收从设备上传芯片参数信息
 	1、做数据库记录
 */
-func CmdPostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive) {
-	PrintHead(POST_INSTLL_DATADRIVE)
+func CmdPostInstallDrive(threadId int, conn *net.TCPConn, postInstDrive PostInstallDataDrive) {
+	PrintHead(threadId, POST_INSTLL_DATADRIVE)
 	//记录数据库
 	r := chips.New(dbcomm.GetDB(), chips.DEBUG)
 	var search chips.Search
@@ -300,7 +317,7 @@ func CmdPostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive) 
 	if err := r.Delete(search.Sn, nil); err != nil {
 		log.Println(err)
 	}
-	currNode, _ := getCurrNode(postInstDrive.Sn)
+	currNode, _ := getCurrNode(threadId, postInstDrive.Sn)
 	var e chips.Chips
 	e.Sn = postInstDrive.Sn
 	for _, v := range postInstDrive.Datadrive {
@@ -327,21 +344,21 @@ func CmdPostInstallDrive(conn *net.TCPConn, postInstDrive PostInstallDataDrive) 
 	driveResp.Success = true
 	respBuf, _ := json.Marshal(&driveResp)
 
-	Send_Resp(conn, string(respBuf))
+	Send_Resp(threadId, conn, string(respBuf))
 
 	currNode.Status = STATUS_INIT
 	GSn2ConnMap.Store(postInstDrive.Sn, currNode)
 
-	PrintTail(POST_INSTLL_DATADRIVE_RESP)
+	PrintTail(threadId, POST_INSTLL_DATADRIVE_RESP)
 }
 
 /*
 	接收设备获取文件指令的应答
 	1、更新数据库的MFILE 表
 */
-func CmdGetFileResp(fileResp GetFileResp) {
-	PrintHead(GET_FILE_RESP)
-	currNode, _ := getCurrNode(fileResp.Sn)
+func CmdGetFileResp(threadId int, fileResp GetFileResp) {
+	PrintHead(threadId, GET_FILE_RESP)
+	currNode, _ := getCurrNode(threadId, fileResp.Sn)
 	var e mfiles.MFiles
 	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
 
@@ -358,20 +375,29 @@ func CmdGetFileResp(fileResp GetFileResp) {
 	e.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 	r.UpdataEntity(currNode.BatchNo, e, nil)
 
-	PrintTail(GET_FILE_RESP)
+	PrintTail(threadId, GET_FILE_RESP)
 }
 
 /*
 	1
 */
-func CmdPostFileInfo(conn *net.TCPConn, postFileInfo PostFileInfo) {
-	PrintHead(POST_FILE_INFO)
+func CmdPostFileInfo(threadId int, conn *net.TCPConn, postFileInfo PostFileInfo) {
+	PrintHead(threadId, POST_FILE_INFO)
 	//记录数据库
 	r := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
-	currNode, _ := getCurrNode(postFileInfo.Sn)
+	currNode, _ := getCurrNode(threadId, postFileInfo.Sn)
 	var e dfiles.DFiles
 	e.FileName = currNode.BatchNo + strings.Replace(postFileInfo.File.Name, "#", "_", 1)
-	e.FileUrl = DEFAULT_PATH + e.FileName
+
+	newPath := DEFAULT_PATH + time.Now().Format("2006-01-02") + "/"
+	if !PathIsExist(newPath) {
+		err := os.Mkdir(newPath, os.ModePerm)
+		if err != nil {
+			PrintLog(threadId, "Mkdir===>", err)
+		}
+	}
+
+	e.FileUrl = newPath + e.FileName
 	e.FileLength = postFileInfo.File.Length
 	e.FileCrc32 = int32(postFileInfo.File.File_crc)
 	e.FileType = postFileInfo.Type
@@ -383,9 +409,11 @@ func CmdPostFileInfo(conn *net.TCPConn, postFileInfo PostFileInfo) {
 	e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 
 	currNode.FileIndex = postFileInfo.File_in_procesing
-	currNode.FileName = e.FileName
+	currNode.FileName = newPath + e.FileName
 
 	GSn2ConnMap.Store(postFileInfo.Sn, currNode)
+
+	GConn2TimeMap.Store(conn, time.Now())
 
 	if err := r.InsertEntity(e, nil); err != nil {
 		log.Println(err)
@@ -401,36 +429,40 @@ func CmdPostFileInfo(conn *net.TCPConn, postFileInfo PostFileInfo) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	Send_Resp(conn, string(infoBuf))
+	Send_Resp(threadId, conn, string(infoBuf))
 
-	PrintTail(POST_FILE_INFO, postFileInfo)
+	PrintTail(threadId, POST_FILE_INFO, postFileInfo)
 }
 
 /*
 	接收设备上传的文件
 	1、
 */
-func CmdPostFile(conn *net.TCPConn, postFile PostFile) {
-	PrintHead(POST_FILE)
-	currNode, _ := getCurrNode(postFile.Sn)
+func CmdPostFile(threadId int, conn *net.TCPConn, postFile PostFile) {
+	PrintHead(threadId, POST_FILE)
+	currNode, _ := getCurrNode(threadId, postFile.Sn)
 	fileBuf, err := hex.DecodeString(postFile.Fragment.Source)
 	if err != nil {
-		log.Println(err)
+		log.Println("POST_ERROR" + err.Error())
 	}
 	crcCode := softwareCrc32([]byte(fileBuf), len(fileBuf))
 	if postFile.Fragment.Checksum != int32(crcCode) {
 		log.Println("crc32 check error!" + currNode.FileName)
 	}
+	currNode.SignInTime = time.Now()
+
+	GConn2TimeMap.Store(conn, time.Now())
+
 	//文件开始时
 	var f *os.File
 	if postFile.Fragment.Index == 1 {
-		f, err := os.Create(DEFAULT_PATH + currNode.FileName)
+		f, err := os.Create(currNode.FileName)
 		if err != nil {
 			fmt.Println(err)
 		}
 		f.Write(fileBuf)
 	} else {
-		f, err := os.OpenFile(DEFAULT_PATH+currNode.FileName, os.O_WRONLY|os.O_APPEND, 0666)
+		f, err := os.OpenFile(currNode.FileName, os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -461,17 +493,16 @@ func CmdPostFile(conn *net.TCPConn, postFile PostFile) {
 		search.BatchNo = currNode.BatchNo
 		e, _ := r.Get(search)
 		var ne mfiles.MFiles
-		if e.TodoCount-e.DoneCount == 1 {
-			//获取文件任务完成
-			ne.EndTime = time.Now().Format("2006-01-02 15:04:05")
-			currNode.Status = STATUS_INIT
-			ne.Status = STATUS_SUCC
-			GSn2ConnMap.Store(postFile.Sn, currNode)
-		}
+		ne.EndTime = time.Now().Format("2006-01-02 15:04:05")
+		ne.Status = STATUS_SUCC
 		ne.DoneCount = e.DoneCount + 1
 		ne.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 		ne.UpdateBy = UPDATE_USER
 		r.UpdataEntity(currNode.BatchNo, ne, nil)
+
+		currNode.Status = STATUS_INIT
+		GSn2ConnMap.Store(postFile.Sn, currNode)
+
 		//更新明细的结束时间
 		rr := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
 		var de dfiles.DFiles
@@ -479,6 +510,8 @@ func CmdPostFile(conn *net.TCPConn, postFile PostFile) {
 		de.UpdateTime = de.EndTime
 		de.UpdateBy = UPDATE_USER
 		rr.UpdataEntityExt(currNode.BatchNo, currNode.FileIndex, de, nil)
+
+		PrintLog(threadId, postFile.Sn+"文件传输完毕,共:", ne.DoneCount)
 	}
 	var fResp PostFileResp
 	fResp.Method = postFile.Method
@@ -488,21 +521,19 @@ func CmdPostFile(conn *net.TCPConn, postFile PostFile) {
 	if fBuf, err := json.Marshal(&fResp); err != nil {
 		log.Println(err)
 	} else {
-		Send_Resp(conn, string(fBuf))
+		Send_Resp(threadId, conn, string(fBuf))
 	}
-	PrintTail(POST_FILE)
+	PrintTail(threadId, POST_FILE)
 }
 
 /*
 	接收客户端发来的PUSHINFO文件确认
 */
-func CmdPushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
-	PrintHead(PUSH_FILE_INFO_RESP)
+func CmdPushFileInfoResp(threadId int, conn *net.TCPConn, infoResp PushFileInfoResp) {
+	PrintHead(threadId, PUSH_FILE_INFO_RESP)
 
-	log.Println("Push File Info OK...")
-
-	currNode, _ := getCurrNode(infoResp.Sn)
-	_, crcCode := pubPushFile(conn, infoResp.Sn, infoResp.Chip_id)
+	currNode, _ := getCurrNode(threadId, infoResp.Sn)
+	_, crcCode := pubPushFile(threadId, conn, infoResp.Sn, infoResp.Chip_id)
 
 	r := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
 	var e dfiles.DFiles
@@ -518,14 +549,14 @@ func CmdPushFileInfoResp(conn *net.TCPConn, infoResp PushFileInfoResp) {
 		log.Println(err)
 	}
 
-	PrintTail(PUSH_FILE_INFO_RESP)
+	PrintTail(threadId, PUSH_FILE_INFO_RESP)
 }
 
 /*
 	接收客户端发来的PUSHINFO文件确认
 */
-func CmdCheckUpdate(conn *net.TCPConn, upDate CheckUpdate) {
-	PrintHead(CHECK_UDATE)
+func CmdCheckUpdate(threadId int, conn *net.TCPConn, upDate CheckUpdate) {
+	PrintHead(threadId, CHECK_UDATE)
 
 	var upResp CheckUpdateResp
 	upResp.Chip_id = upDate.Chip_id
@@ -536,16 +567,16 @@ func CmdCheckUpdate(conn *net.TCPConn, upDate CheckUpdate) {
 	if upBuf, err := json.Marshal(&upResp); err != nil {
 		log.Println(err)
 	} else {
-		Send_Resp(conn, string(upBuf))
+		Send_Resp(threadId, conn, string(upBuf))
 	}
 
-	PrintTail(CHECK_UDATE)
+	PrintTail(threadId, CHECK_UDATE)
 }
 
-func pubPushFile(conn *net.TCPConn, sn string, chipId string) (error, int32) {
+func pubPushFile(theadId int, conn *net.TCPConn, sn string, chipId string) (error, int32) {
 
 	var pushFile PushFile
-	currNode, _ := getCurrNode(sn)
+	currNode, _ := getCurrNode(theadId, sn)
 
 	if currNode.FileSize <= currNode.FileOffset+FILE_BLOCK_SIZE {
 		pushFile.Fragment.Eof = true
@@ -571,7 +602,7 @@ func pubPushFile(conn *net.TCPConn, sn string, chipId string) (error, int32) {
 	crc32 := softwareCrc32(fileBuf, len(fileBuf))
 	pushFile.Fragment.Checksum = crc32
 	fBuf, _ := json.Marshal(&pushFile)
-	err = Send_Resp(conn, string(fBuf))
+	err = Send_Resp(theadId, conn, string(fBuf))
 
 	GSn2ConnMap.Store(sn, currNode)
 	return err, crc32
@@ -581,21 +612,27 @@ func pubPushFile(conn *net.TCPConn, sn string, chipId string) (error, int32) {
 /*
 	接收客户端发来的PUSH文件确认
 */
-func CmdPushFileResp(conn *net.TCPConn, fileResp PushFileResp) {
-	PrintHead(PUSH_FILE_RESP)
-	currNode, _ := getCurrNode(fileResp.Sn)
+func CmdPushFileResp(threadId int, conn *net.TCPConn, fileResp PushFileResp) {
+	PrintHead(threadId, PUSH_FILE_RESP)
+	currNode, _ := getCurrNode(threadId, fileResp.Sn)
 	if fileResp.Success {
-		log.Println("Recv Push File Resp===>")
 
+		currNode.SignInTime = time.Now()
 		currNode.FileOffset += currNode.ReadSize
 		currNode.FileIndex += 1
 		GSn2ConnMap.Store(fileResp.Sn, currNode)
 
 		if currNode.FileOffset == currNode.FileSize {
-			log.Println("File Eof==>", currNode.FileOffset, currNode.FileSize)
+			PrintLog(threadId, "文件结束...", currNode.FileOffset, currNode.FileSize)
+
+			currNode.Status = STATUS_INIT
+			GSn2ConnMap.Store(fileResp.Sn, currNode)
+
 			r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
 			var e mfiles.MFiles
 			e.UpdateBy = UPDATE_USER
+			e.Status = STATUS_SUCC
+			e.EndTime = time.Now().Format("2006-01-02 15:04:05")
 			e.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 			r.UpdataEntity(currNode.BatchNo, e, nil)
 			//更新明细的结束时间
@@ -604,12 +641,13 @@ func CmdPushFileResp(conn *net.TCPConn, fileResp PushFileResp) {
 			de.EndTime = time.Now().Format("2006-01-02 15:04:05")
 			de.UpdateTime = de.EndTime
 			de.UpdateBy = UPDATE_USER
-			rr.UpdataEntity(currNode.BatchNo, de, nil)
+			rr.UpdataEntity2(currNode.BatchNo, de, nil)
+
 		} else {
-			pubPushFile(conn, fileResp.Sn, fileResp.Chip_id)
+			pubPushFile(threadId, conn, fileResp.Sn, fileResp.Chip_id)
 		}
 	}
-	PrintTail(PUSH_FILE_RESP)
+	PrintTail(threadId, PUSH_FILE_RESP)
 }
 
 /*
@@ -617,9 +655,10 @@ func CmdPushFileResp(conn *net.TCPConn, fileResp PushFileResp) {
 	1、确认后，根据结果更新数据表
 	2、刷新缓存的结果状态
 */
-func CmdPushInfoResp(conn *net.TCPConn, infoResp PushInfoResp) {
-	PrintHead(PUSH_INFO_RESP)
-	currNode, _ := getCurrNode(infoResp.Sn)
+func CmdPushInfoResp(threadId int, conn *net.TCPConn, infoResp PushInfoResp) {
+	PrintHead(threadId, PUSH_INFO_RESP)
+
+	currNode, _ := getCurrNode(threadId, infoResp.Sn)
 	currNode.Status = STATUS_INIT
 	GSn2ConnMap.Store(infoResp.Sn, currNode)
 	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
@@ -634,13 +673,13 @@ func CmdPushInfoResp(conn *net.TCPConn, infoResp PushInfoResp) {
 	e.UpdateBy = UPDATE_USER
 	r.UpdataEntity(currNode.BatchNo, e, nil)
 
-	PrintTail(PUSH_INFO_RESP)
+	PrintTail(threadId, PUSH_INFO_RESP)
 }
 
 /*
 	处理设备的各个指令，根据指令调用各自的函数进行处理
 */
-func ProcPacket(conn *net.TCPConn, packBuf []byte) error {
+func ProcPacket(threadId int, conn *net.TCPConn, packBuf []byte) error {
 	var command Command
 	if err := json.Unmarshal(packBuf, &command); err != nil {
 		log.Println(err)
@@ -652,35 +691,35 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) error {
 			log.Println(err)
 			return err
 		}
-		CmdHeartBeat(conn, heart)
+		CmdHeartBeat(threadId, conn, heart)
 	case ONLINE:
 		var online Online
 		if err := json.Unmarshal(packBuf, &online); err != nil {
 			log.Println(err)
 			return err
 		}
-		CmdOnLine(conn, online)
+		CmdOnLine(threadId, conn, online)
 	case GET_COLOPHON_RESP:
 		var phonResp GetColophonResp
 		if err := json.Unmarshal(packBuf, &phonResp); err != nil {
 			log.Println(err)
 			return err
 		}
-		CmdGetColoPhonResp(conn, phonResp)
+		CmdGetColoPhonResp(threadId, conn, phonResp)
 	case GET_INSTLL_DATADRIVE_RESP:
 		var getInstDrive GetInstallDataDriveResp
 		if err := json.Unmarshal(packBuf, &getInstDrive); err != nil {
 			log.Println(err)
 			return err
 		}
-		CmdGetInstallDriveResp(conn, getInstDrive)
+		CmdGetInstallDriveResp(threadId, conn, getInstDrive)
 	case POST_INSTLL_DATADRIVE:
 		var postInstDrive PostInstallDataDrive
 		if err := json.Unmarshal(packBuf, &postInstDrive); err != nil {
 			log.Println(err)
 			return err
 		}
-		CmdPostInstallDrive(conn, postInstDrive)
+		CmdPostInstallDrive(threadId, conn, postInstDrive)
 	case GET_FILE_RESP:
 		var getFileResp GetFileResp
 		err := json.Unmarshal(packBuf, &getFileResp)
@@ -688,7 +727,7 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) error {
 			log.Println(err)
 			return err
 		}
-		CmdGetFileResp(getFileResp)
+		CmdGetFileResp(threadId, getFileResp)
 
 	case POST_FILE_INFO:
 		var postFileInfo PostFileInfo
@@ -697,7 +736,7 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) error {
 			log.Println(err)
 			return err
 		}
-		CmdPostFileInfo(conn, postFileInfo)
+		CmdPostFileInfo(threadId, conn, postFileInfo)
 	case POST_FILE:
 		var postFile PostFile
 		err := json.Unmarshal(packBuf, &postFile)
@@ -705,7 +744,7 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) error {
 			log.Println(err)
 			return err
 		}
-		CmdPostFile(conn, postFile)
+		CmdPostFile(threadId, conn, postFile)
 
 	case PUSH_FILE_INFO_RESP:
 		var infoResp PushFileInfoResp
@@ -713,7 +752,7 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) error {
 			log.Println(err)
 			return err
 		}
-		CmdPushFileInfoResp(conn, infoResp)
+		CmdPushFileInfoResp(threadId, conn, infoResp)
 
 	case PUSH_FILE_RESP:
 		var fileResp PushFileResp
@@ -721,7 +760,7 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) error {
 			log.Println(err)
 			return err
 		}
-		CmdPushFileResp(conn, fileResp)
+		CmdPushFileResp(threadId, conn, fileResp)
 
 	case PUSH_INFO_RESP:
 		var infoResp PushInfoResp
@@ -729,7 +768,7 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) error {
 			log.Panicln(err)
 			return err
 		}
-		CmdPushInfoResp(conn, infoResp)
+		CmdPushInfoResp(threadId, conn, infoResp)
 
 	case CHECK_UDATE:
 		var upDate CheckUpdate
@@ -737,24 +776,46 @@ func ProcPacket(conn *net.TCPConn, packBuf []byte) error {
 			log.Println(err)
 			return err
 		}
-		CmdCheckUpdate(conn, upDate)
+		CmdCheckUpdate(threadId, conn, upDate)
 	}
 	return nil
+}
+
+/*
+	返回在线数量
+*/
+func getOnlineCount() (int, int, int) {
+	i := 0
+	j := 0
+	t := 0
+	GConn2SnMap.Range(func(k, v interface{}) bool {
+		i++
+		return true
+	})
+	GSn2ConnMap.Range(func(k, v interface{}) bool {
+		j++
+		return true
+	})
+	GConn2TimeMap.Range(func(k, v interface{}) bool {
+		t++
+		return true
+	})
+	return i, j, t
 }
 
 /*
 	网络端口，更新设备为线下
 
 */
-func OffLine(sn string) {
-	PrintHead(OFFLINE, sn)
+func OffLine(threadId int, sn string) {
+	PrintHead(threadId, OFFLINE, sn)
 
 	r := device.New(dbcomm.GetDB(), device.DEBUG)
 	onlineMap := map[string]interface{}{DEVICE_TIME: time.Now().Format("2006-01-02 15:04:05"),
 		IS_ONLINE: STATUS_OFFLINE}
 	err := r.UpdateMapEx(sn, onlineMap, nil)
 	if err != nil {
-		log.Println("设备下线更新失败", err)
+		PrintLog(threadId, "设备下线更新失败", err)
 	}
 
 	//插入设备在线历史
@@ -764,7 +825,7 @@ func OffLine(sn string) {
 	ne.ActionType = ACTION_OFFLINE
 	ne.DeviceTime = time.Now().Format("2006-01-02 15:04:05")
 	if err := rr.InsertEntity(ne, nil); err != nil {
-		log.Println(err.Error())
+		PrintLog(threadId, err.Error())
 	}
 
 	//检查是否有未完成的工作，如果有设置为失败
@@ -786,7 +847,7 @@ func OffLine(sn string) {
 	}
 	//更新明细的结束时间
 
-	PrintTail(OFFLINE)
+	PrintTail(threadId, OFFLINE)
 }
 
 /*
@@ -795,32 +856,22 @@ func OffLine(sn string) {
 
 */
 func InitStatus() {
-	PrintHead(INIT_STATUS)
+	PrintHead(MAIN_THREAD, INIT_STATUS)
 	r := device.New(dbcomm.GetDB(), device.DEBUG)
 	var search device.Search
 	if dl, err := r.GetListEx(search); err == nil {
-		for k, v := range dl {
-			log.Println(k, v.Sn, v.UpdateTime)
-			if v.UpdateTime == "" {
-				continue
-			}
-			utime, _ := time.ParseInLocation("2006-01-02 15:04:05", v.UpdateTime, time.Local)
-			duration := time.Now().Sub(utime)
-			if duration.Minutes() < 5.00 {
-				continue
-			}
-			onlineMap := map[string]interface{}{DEVICE_TIME: time.Now().Format("2006-01-02 15:04:05"),
+		for _, v := range dl {
+			onlineMap := map[string]interface{}{UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05"),
 				IS_ONLINE: STATUS_OFFLINE}
 			err = r.UpdateMapEx(v.Sn, onlineMap, nil)
 			if err != nil {
-				log.Println("设备下线更新失败", err)
+				PrintLog(MAIN_THREAD, "设备下线更新失败", err)
 			} else {
-				log.Println(v.Sn, "虚假在线，更新为下线状态")
+				PrintLog(MAIN_THREAD, v.Sn, "程序重启,设备复位！")
 			}
 		}
 	}
-
-	PrintTail(INIT_STATUS)
+	PrintTail(MAIN_THREAD, INIT_STATUS)
 }
 
 /*
@@ -829,29 +880,34 @@ func InitStatus() {
 	2、按协议进行解析，根据命令进行处理
 	3、如果出现超时或网络断开，进行清理处理
 */
-func tcpPipe(conn *net.TCPConn) {
+func tcpPipe(threadId int, conn *net.TCPConn) {
 	ipStr := conn.RemoteAddr().String()
-	defer func() {
-		log.Println("Disconnect===>:"+ipStr, "Conn:", conn)
-		snIf, ok := GConn2SnMap.Load(conn)
+	defer func(threadId int) {
+		PrintLog(threadId, "Disconnect===>:"+ipStr, "Conn:", conn)
+		snIf, _ := GConn2SnMap.Load(conn)
+		sn, ok := snIf.(string)
 		if ok {
-			sn, ok := snIf.(string)
-			if !ok {
-				log.Println("Assertion is  error")
+			i, j, k := getOnlineCount()
+			PrintLog(threadId, "断线之前在线数量:CONN", i, "SN:", j, "CONN2", k, sn)
+			OffLine(threadId, sn)
+			vv, _ := GSn2ConnMap.Load(sn)
+			if node, ok := vv.(StoreInfo); ok == true {
+				if node.CurrConn != conn {
+					PrintLog(threadId, "连接句柄不匹配,说明SN有新的连接进来覆盖了旧的...")
+					GConn2SnMap.Delete(conn)
+				} else {
+					GConn2SnMap.Delete(conn)
+					GSn2ConnMap.Delete(sn)
+					GConn2TimeMap.Delete(conn)
+				}
 			}
-			if sn != "" {
-				OffLine(sn)
-				GSn2ConnMap.Delete(sn)
-			}
-			if conn != nil {
-				GConn2SnMap.Delete(conn)
-			}
+			i, j, k = getOnlineCount()
+			PrintLog(threadId, "断线之后在线数量:CONN", i, "SN:", j, "CONN2", k, sn)
 		} else {
-			log.Println("GConn2SnMap.Load Error....")
+			PrintLog(threadId, "非法的连接,断言错误...")
 		}
-		log.Println("")
-		conn.Close()
-	}()
+		PrintLog(threadId, "Close Result==>", conn.Close())
+	}(threadId)
 
 	reader := bufio.NewReader(conn)
 	packBuf := make([]byte, 1024*1024*2)
@@ -861,16 +917,20 @@ func tcpPipe(conn *net.TCPConn) {
 		readBuf := make([]byte, 1024*100)
 		var nLen int
 		nLen, err := reader.Read(readBuf)
-		log.Println("Recv Len==", nLen, string(readBuf[0:nLen]))
+		// if nLen < 256 {
+		// 	PrintLog(threadId, "Recv Len==", nLen, string(readBuf[0:nLen]))
+		// } else {
+		// 	PrintLog(threadId, "Recv Len==", nLen)
+		// }
 		if err != nil || nLen <= 0 {
-			log.Println(err)
+			PrintLog(threadId, err)
 			return
 		}
 		//cancel timeout
 		conn.SetReadDeadline(time.Time{})
 		if nSum == 0 {
 			if int(readBuf[0]) != 0x7E {
-				log.Println("Error Packet And Close Connection...")
+				PrintLog(threadId, "Error Packet And Close Connection...")
 				return
 			}
 		}
@@ -881,15 +941,18 @@ func tcpPipe(conn *net.TCPConn) {
 		}
 		for {
 			packLen := BytesToInt(packBuf[2:6])
-			log.Println("包的长度==》", packLen)
+			//PrintLog(threadId, "解析包的长度==》", packLen)
+			if packLen < 6 {
+				PrintLog(threadId, "解析到一个错误的包!")
+				return
+			}
 			if nSum >= packLen {
-				log.Println("接收到一个完整的包!", packBuf[0], packBuf[1])
-				if err := ProcPacket(conn, packBuf[6:packLen]); err != nil {
+				if err := ProcPacket(threadId, conn, packBuf[6:packLen]); err != nil {
 					conn.Close()
 					return
 				}
 				nSum = nSum - packLen
-				log.Println("nSum===>", nSum)
+				//PrintLog(threadId, "nSum===>", nSum)
 				if nSum > 0 {
 					copy(packBuf, packBuf[packLen:])
 				}
@@ -901,7 +964,7 @@ func tcpPipe(conn *net.TCPConn) {
 }
 
 func go_WebServer() {
-	PrintHead("WebServer")
+	PrintHead(HTTP_THREAD, "WebServer")
 	http.HandleFunc("/dgate/busiGetFile", BusiGetFileCtl)
 	http.HandleFunc("/dgate/busiPushFile", BusiPushFileCtl)
 	http.HandleFunc("/dgate/busiGetVersions", BusiGetVerListCtl)
@@ -916,11 +979,11 @@ func go_WebServer() {
 	if err := http_srv.ListenAndServe(); err != nil {
 		log.Printf("listen: %s\n", err)
 	}
-	PrintTail("WebServer")
+	PrintTail(0, "WebServer")
 }
 
 func init() {
-	PrintHead("Init...")
+	PrintHead(MAIN_THREAD, "Init...")
 	log.SetFlags(log.Ldate | log.Lshortfile | log.Lmicroseconds)
 	log.SetOutput(io.MultiWriter(os.Stdout, &lumberjack.Logger{
 		Filename:   "jcd.log",
@@ -942,16 +1005,13 @@ func init() {
 	c.Get("/config/CCDB_URL", &ccdbUrl)
 	c.Get("/config/OPEN_CONNS", &openConns)
 	c.Get("/config/IDLE_CONNS", &idleConns)
-	PrintTail("Init...")
+	PrintTail(MAIN_THREAD, "Init...")
 }
 
 func main() {
-	log.Println("<==========MicroPoint Gate Starting...==========>")
-	log.Println("<==========Version:", MainVer, "===================>")
-
+	PrintLog(MAIN_THREAD, "<==========MicroPoint Gate Starting...==========>")
+	PrintLog(MAIN_THREAD, "<==========Version:", MainVer, "===================>")
 	dbcomm.InitDB(dbUrl, ccdbUrl, idleConns, openConns)
-	log.Println("<==========Init Device Online Status==========>")
-
 	InitStatus()
 
 	go go_WebServer()
@@ -963,11 +1023,38 @@ func main() {
 				i++
 				return true
 			})
-			log.Println("当前在线总数============>:", i)
+			j := 0
+			GSn2ConnMap.Range(func(k, v interface{}) bool {
+				if value, ok := v.(StoreInfo); ok == true {
+					duration := time.Now().Sub(value.SignInTime)
+					sn, _ := k.(string)
+					if duration.Minutes() > 6.00 {
+						//r := device.New(dbcomm.GetDB(), device.DEBUG)
+						PrintLog(MONITOR_THREAD, "发现超时设备", duration.Minutes(), sn)
+						// onlineMap := map[string]interface{}{DEVICE_TIME: time.Now().Format("2006-01-02 15:04:05"),
+						// 	IS_ONLINE: STATUS_OFFLINE}
+						// r.UpdateMapEx(sn, onlineMap, nil)
+					}
+				}
+				j++
+				return true
+			})
+			t := 0
+			GConn2TimeMap.Range(func(k, v interface{}) bool {
+				if value, ok := v.(time.Time); ok == true {
+					duration := time.Now().Sub(value)
+					sn, _ := k.(string)
+					if duration.Minutes() > 4.00 {
+						PrintLog(MONITOR_THREAD, "发现超时设备", duration.Minutes(), sn)
+					}
+				}
+				t++
+				return true
+			})
+			PrintLog(MONITOR_THREAD, "当前在线总数============>CONN:", i, "SN", j, "CONN2", t)
 			time.Sleep(time.Second * 10)
 		}
 	}()
-
 	var tcpAddr *net.TCPAddr
 	tcpAddr, _ = net.ResolveTCPAddr("tcp", ":8089")
 	tcpListener, _ := net.ListenTCP("tcp", tcpAddr)
@@ -975,11 +1062,12 @@ func main() {
 	for {
 		tcpConn, err := tcpListener.AcceptTCP()
 		if err != nil {
+			PrintLog(MAIN_THREAD, "Accept==>", err)
 			continue
 		}
-		log.Println("Has A New Connection===>:" + tcpConn.RemoteAddr().String())
-		GConn2SnMap.Store(tcpConn, "")
-		go tcpPipe(tcpConn)
+		PrintLog(MAIN_THREAD, tcpConn.RemoteAddr().String())
+		rand.Seed(time.Now().UnixNano())
+		go tcpPipe(rand.Intn(20000), tcpConn)
 	}
 
 }
