@@ -128,8 +128,8 @@ func Send_Resp(threadId int, conn *net.TCPConn, resp string) error {
 
 */
 func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
-	PrintHead(threadId, HEARTBEAT)
-	//PrintLog(threadId, "Remote Ip===>", conn.RemoteAddr().String())
+	//PrintHead(threadId, HEARTBEAT)
+	PrintLog(threadId, heart.Sn, "Remote Ip===>", conn.RemoteAddr().String())
 	var heartResp HeartbeatResp
 	heartResp.Chip_id = heart.Chip_id
 	heartResp.Method = HEARTBEAT_RESP
@@ -139,25 +139,25 @@ func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 	if err != nil {
 		PrintLog(threadId, err)
 	}
-	currNode, _ := getCurrNode(threadId, heart.Sn)
-	currNode.SignInTime = time.Now()
-
-	//更新设备的最新心跳
-	r := device.New(dbcomm.GetDB(), device.INFO)
-	onlineMap := map[string]interface{}{
-		UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05"), IS_ONLINE: STATUS_ONLINE}
-	err = r.UpdateMapEx(heart.Sn, onlineMap, nil)
+	currNode, err := getCurrNode(threadId, heart.Sn)
 	if err != nil {
-		PrintLog(threadId, "更新心跳失败", err)
+		PrintLog(threadId, heart.Sn+"未在线收到心跳包")
+		r := device.New(dbcomm.GetDB(), device.INFO)
+		onlineMap := map[string]interface{}{
+			UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05"), IS_ONLINE: STATUS_ONLINE}
+		err = r.UpdateMapEx(heart.Sn, onlineMap, nil)
+		if err != nil {
+			PrintLog(threadId, "更新心跳失败", err)
+		}
+	} else {
+		currNode.SignInTime = time.Now()
+		currNode.CurrConn = conn
 	}
 	GSn2ConnMap.Store(heart.Sn, currNode)
 	GConn2SnMap.Store(conn, heart.Sn)
-
 	GConn2TimeMap.Store(conn, time.Now())
-	PrintLog(threadId, conn.RemoteAddr().String())
-
 	Send_Resp(threadId, conn, string(heartBuf))
-	PrintTail(threadId, HEARTBEAT)
+	//PrintTail(threadId, HEARTBEAT)
 }
 
 /*
@@ -846,7 +846,6 @@ func OffLine(threadId int, sn string) {
 		}
 	}
 	//更新明细的结束时间
-
 	PrintTail(threadId, OFFLINE)
 }
 
@@ -889,22 +888,25 @@ func tcpPipe(threadId int, conn *net.TCPConn) {
 		if ok {
 			i, j, k := getOnlineCount()
 			PrintLog(threadId, "断线之前在线数量:CONN", i, "SN:", j, "CONN2", k, sn)
-			OffLine(threadId, sn)
 			vv, _ := GSn2ConnMap.Load(sn)
 			if node, ok := vv.(StoreInfo); ok == true {
-				if node.CurrConn != conn {
-					PrintLog(threadId, "连接句柄不匹配,说明SN有新的连接进来覆盖了旧的...")
-					GConn2SnMap.Delete(conn)
-				} else {
-					GConn2SnMap.Delete(conn)
+				if node.CurrConn == conn {
+					PrintLog(threadId, "连接句柄匹配", node.CurrConn, conn)
 					GSn2ConnMap.Delete(sn)
-					GConn2TimeMap.Delete(conn)
+					OffLine(threadId, sn)
+				} else {
+					PrintLog(threadId, "连接句柄不匹配", node.CurrConn, conn)
 				}
+			} else {
+				PrintLog(threadId, "GSn2ConnMap 非法的连接,断言错误.")
 			}
+			GConn2SnMap.Delete(conn)
+			GConn2TimeMap.Delete(conn)
+
 			i, j, k = getOnlineCount()
 			PrintLog(threadId, "断线之后在线数量:CONN", i, "SN:", j, "CONN2", k, sn)
 		} else {
-			PrintLog(threadId, "非法的连接,断言错误...")
+			PrintLog(threadId, "GConn2SnMap非法的连接,断言错误...")
 		}
 		PrintLog(threadId, "Close Result==>", conn.Close())
 	}(threadId)
@@ -922,8 +924,8 @@ func tcpPipe(threadId int, conn *net.TCPConn) {
 		// } else {
 		// 	PrintLog(threadId, "Recv Len==", nLen)
 		// }
-		if err != nil || nLen <= 0 {
-			PrintLog(threadId, err)
+		if err != nil || nLen < 0 {
+			PrintLog(threadId, err.Error())
 			return
 		}
 		//cancel timeout
