@@ -142,6 +142,7 @@ type StoreInfo struct {
 	BatchNo    string
 	Status     string
 	FileIndex  int
+	FileTotal  int
 	FileName   string
 	FileSize   int64
 	FileCrc32  int
@@ -500,7 +501,7 @@ type BusiSnDetailResp struct {
 */
 
 func BusiGetFileCtl(w http.ResponseWriter, req *http.Request) {
-	PrintHead(HTTP_THREAD, GET_FILE)
+	PrintHead(HTTP_THREAD, BUSI_PREFIX+GET_FILE)
 
 	var busiFile BusiGetFile
 	var busiFileResp BusiGetFileResp
@@ -584,7 +585,7 @@ func BusiGetFileCtl(w http.ResponseWriter, req *http.Request) {
 */
 
 func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
-	PrintHead(HTTP_THREAD, PUSH_FILE_INFO)
+	PrintHead(HTTP_THREAD, BUSI_PREFIX+PUSH_FILE_INFO)
 
 	var pushFile BusiPushFile
 	var pushFileResp BusiPushFileResp
@@ -687,7 +688,7 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 */
 
 func BusiPushInfoCtl(w http.ResponseWriter, req *http.Request) {
-	PrintHead(HTTP_THREAD, PUSH_INFO)
+	PrintHead(HTTP_THREAD, BUSI_PREFIX+PUSH_INFO)
 
 	var busiInfo BusiPushInfo
 	var busiInfoResp BusiPushInfoResp

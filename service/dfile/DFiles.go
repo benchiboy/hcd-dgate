@@ -929,10 +929,14 @@ func (r DFilesList) UpdataEntity(keyNo string, p DFiles, tr *sql.Tx) error {
 		return err
 	}
 	if LastInsertId, err := ret.LastInsertId(); nil == err {
-		log.Println(SQL_INSERT, "LastInsertId:", LastInsertId)
+		if r.Level == DEBUG {
+			log.Println(SQL_INSERT, "LastInsertId:", LastInsertId)
+		}
 	}
 	if RowsAffected, err := ret.RowsAffected(); nil == err {
-		log.Println(SQL_INSERT, "RowsAffected:", RowsAffected)
+		if r.Level == DEBUG {
+			log.Println(SQL_INSERT, "RowsAffected:", RowsAffected)
+		}
 	}
 
 	if r.Level == DEBUG {
@@ -1081,10 +1085,14 @@ func (r DFilesList) UpdataEntityExt(batchNo string, indexNo int, p DFiles, tr *s
 		return err
 	}
 	if LastInsertId, err := ret.LastInsertId(); nil == err {
-		log.Println(SQL_INSERT, "LastInsertId:", LastInsertId)
+		if r.Level == DEBUG {
+			log.Println(SQL_INSERT, "LastInsertId:", LastInsertId)
+		}
 	}
 	if RowsAffected, err := ret.RowsAffected(); nil == err {
-		log.Println(SQL_INSERT, "RowsAffected:", RowsAffected)
+		if r.Level == DEBUG {
+			log.Println(SQL_INSERT, "RowsAffected:", RowsAffected)
+		}
 	}
 
 	if r.Level == DEBUG {
@@ -1218,6 +1226,7 @@ func (r DFilesList) UpdataEntity2(batchNo string, p DFiles, tr *sql.Tx) error {
 	if tr == nil {
 		stmt, err = r.DB.Prepare(exeSql)
 	} else {
+
 		stmt, err = tr.Prepare(exeSql)
 	}
 
@@ -1229,11 +1238,14 @@ func (r DFilesList) UpdataEntity2(batchNo string, p DFiles, tr *sql.Tx) error {
 
 	ret, err := stmt.Exec(valSlice...)
 	if err != nil {
+
 		log.Println(SQL_INSERT, "Update data error: %v\n", err)
 		return err
 	}
 	if LastInsertId, err := ret.LastInsertId(); nil == err {
-		log.Println(SQL_INSERT, "LastInsertId:", LastInsertId)
+		if r.Level == DEBUG {
+			log.Println(SQL_INSERT, "LastInsertId:", LastInsertId)
+		}
 	}
 	if RowsAffected, err := ret.RowsAffected(); nil == err {
 		log.Println(SQL_INSERT, "RowsAffected:", RowsAffected)
@@ -1286,10 +1298,14 @@ func (r DFilesList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx
 	defer stmt.Close()
 
 	if LastInsertId, err := ret.LastInsertId(); nil == err {
-		log.Println(SQL_UPDATE, "LastInsertId:", LastInsertId)
+		if r.Level == DEBUG {
+			log.Println(SQL_UPDATE, "LastInsertId:", LastInsertId)
+		}
 	}
 	if RowsAffected, err := ret.RowsAffected(); nil == err {
-		log.Println(SQL_UPDATE, "RowsAffected:", RowsAffected)
+		if r.Level == DEBUG {
+			log.Println(SQL_UPDATE, "RowsAffected:", RowsAffected)
+		}
 	}
 	if r.Level == DEBUG {
 		log.Println(SQL_ELAPSED, time.Since(l))
