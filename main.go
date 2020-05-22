@@ -1048,15 +1048,9 @@ func main() {
 			}
 			return true
 		})
-		for {
-			i, _ := getOnlineCount()
-			if i == 0 {
-				listen.Close()
-				PrintLog(STOP_THREAD, " Stoped...")
-				break
-			}
-			time.Sleep(time.Microsecond * 100)
-		}
+		time.Sleep(time.Second * 10)
+		listen.Close()
+
 	}(tcpListener)
 
 	defer func() {
