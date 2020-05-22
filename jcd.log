@@ -620,3 +620,237 @@
 2020/05/21 23:59:33.820490 util.go:53: 《========[Thread- 88888 ] [Init...]
 2020/05/21 23:59:33.820554 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
 2020/05/21 23:59:33.820595 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/22 14:51:07.289882 main.go:985: config file == config-ci.json
+2020/05/22 14:51:07.290529 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/22 14:51:07.290576 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/22 14:51:07.290596 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/22 17:08:02.549416 main.go:985: config file == config-ci.json
+2020/05/22 17:08:02.550143 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/22 17:08:02.550174 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/22 17:08:02.550208 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/22 17:08:02.722111 Dbcomm.go:30: Database Connected successful!
+2020/05/22 17:08:02.722178 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/05/22 17:08:02.722207 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/05/22 17:08:02.792353 Devices.go:592: Elapsed===> ===> 664
+2020/05/22 17:08:02.792398 Devices.go:594: Elapsed===> 70.189564ms
+2020/05/22 17:08:02.792439 Devices.go:1203: Update ===> Update lk_device set is_online=?,update_time=? where sn=?
+2020/05/22 17:11:09.782448 main.go:985: config file == config-ci.json
+2020/05/22 17:11:09.783031 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/22 17:11:09.783066 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/22 17:11:09.783085 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/22 17:11:09.919054 Dbcomm.go:30: Database Connected successful!
+2020/05/22 17:11:09.919123 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/05/22 17:11:09.919153 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/05/22 17:11:09.988951 Devices.go:592: Elapsed===> ===> 664
+2020/05/22 17:11:09.989020 Devices.go:594: Elapsed===> 69.865984ms
+2020/05/22 17:11:09.989103 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:11:10.062514 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:11:10.062567 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:11:10.062581 Devices.go:1235: Elapsed===> 73.491048ms
+2020/05/22 17:11:10.062660 util.go:57: --->[Thread- 88888 ] [011401K0600005 程序重启,设备复位！]
+2020/05/22 17:11:10.062717 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:16:43.044427 main.go:985: config file == config-ci.json
+2020/05/22 17:16:43.045101 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/22 17:16:43.045145 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/22 17:16:43.045166 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/22 17:16:43.184158 Dbcomm.go:30: Database Connected successful!
+2020/05/22 17:16:43.184225 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/05/22 17:16:43.184253 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/05/22 17:16:43.256784 Devices.go:592: Elapsed===> ===> 664
+2020/05/22 17:16:43.256858 Devices.go:594: Elapsed===> 72.590171ms
+2020/05/22 17:16:43.256909 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:16:43.331616 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:16:43.331658 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:16:43.331671 Devices.go:1235: Elapsed===> 74.786722ms
+2020/05/22 17:16:43.331699 util.go:57: --->[Thread- 88888 ] [011401K0600005 程序重启,设备复位！]
+2020/05/22 17:16:43.331719 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:16:43.406954 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:16:43.407046 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:16:43.407058 Devices.go:1235: Elapsed===> 75.340926ms
+2020/05/22 17:16:43.407107 util.go:57: --->[Thread- 88888 ] [D43D7E1C2E52 程序重启,设备复位！]
+2020/05/22 17:16:43.407127 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:48:40.678744 main.go:985: config file == config-ci.json
+2020/05/22 17:48:40.679347 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/22 17:48:40.679382 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/22 17:48:40.679402 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/22 17:48:40.823659 Dbcomm.go:30: Database Connected successful!
+2020/05/22 17:48:40.823747 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/05/22 17:48:40.823778 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/05/22 17:48:40.896339 Devices.go:592: Elapsed===> ===> 664
+2020/05/22 17:48:40.896377 Devices.go:594: Elapsed===> 72.596584ms
+2020/05/22 17:48:40.896418 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:48:40.974244 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:48:40.974285 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:48:40.974300 Devices.go:1235: Elapsed===> 77.895365ms
+2020/05/22 17:48:40.974334 util.go:57: --->[Thread- 88888 ] [011401K0600005 程序重启,设备复位！]
+2020/05/22 17:48:40.974357 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:55.619884 main.go:986: config file == config-ci.json
+2020/05/22 17:57:55.620500 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/22 17:57:55.620531 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/22 17:57:55.620548 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/22 17:57:55.759995 Dbcomm.go:30: Database Connected successful!
+2020/05/22 17:57:55.760059 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/05/22 17:57:55.760089 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/05/22 17:57:55.831256 Devices.go:592: Elapsed===> ===> 664
+2020/05/22 17:57:55.831327 Devices.go:594: Elapsed===> 71.235375ms
+2020/05/22 17:57:55.831372 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:55.906668 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:55.906705 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:55.906720 Devices.go:1235: Elapsed===> 75.361781ms
+2020/05/22 17:57:55.906753 util.go:57: --->[Thread- 88888 ] [011401K0600005 程序重启,设备复位！]
+2020/05/22 17:57:55.906781 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:55.985718 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:55.985763 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:55.985779 Devices.go:1235: Elapsed===> 79.00093ms
+2020/05/22 17:57:55.985813 util.go:57: --->[Thread- 88888 ] [D43D7E1C2E52 程序重启,设备复位！]
+2020/05/22 17:57:55.985836 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:56.064127 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:56.064173 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:56.064223 Devices.go:1235: Elapsed===> 78.388354ms
+2020/05/22 17:57:56.064258 util.go:57: --->[Thread- 88888 ] [002324488FB7 程序重启,设备复位！]
+2020/05/22 17:57:56.064281 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:56.140056 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:56.140095 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:56.140107 Devices.go:1235: Elapsed===> 75.82973ms
+2020/05/22 17:57:56.140138 util.go:57: --->[Thread- 88888 ] [011401K0600048 程序重启,设备复位！]
+2020/05/22 17:57:56.140159 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:56.216427 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:56.216471 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:56.216484 Devices.go:1235: Elapsed===> 76.327807ms
+2020/05/22 17:57:56.216517 util.go:57: --->[Thread- 88888 ] [011401J0900036 程序重启,设备复位！]
+2020/05/22 17:57:56.216540 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:56.294821 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:56.294868 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:56.294881 Devices.go:1235: Elapsed===> 78.343901ms
+2020/05/22 17:57:56.294914 util.go:57: --->[Thread- 88888 ] [011401K0600002 程序重启,设备复位！]
+2020/05/22 17:57:56.294934 Devices.go:1203: Update ===> Update lk_device set is_online=?,update_time=? where sn=?
+2020/05/22 17:57:56.498111 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:56.498151 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:56.498163 Devices.go:1235: Elapsed===> 203.232205ms
+2020/05/22 17:57:56.498195 util.go:57: --->[Thread- 88888 ] [011401K0600030 程序重启,设备复位！]
+2020/05/22 17:57:56.498216 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:56.578787 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:56.578841 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:56.578866 Devices.go:1235: Elapsed===> 80.65283ms
+2020/05/22 17:57:56.578933 util.go:57: --->[Thread- 88888 ] [98541B753361 程序重启,设备复位！]
+2020/05/22 17:57:56.578954 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:56.652222 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:56.652261 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:56.652274 Devices.go:1235: Elapsed===> 73.322245ms
+2020/05/22 17:57:56.652302 util.go:57: --->[Thread- 88888 ] [011401J0700046 程序重启,设备复位！]
+2020/05/22 17:57:56.652330 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:56.728726 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:56.728759 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:56.728772 Devices.go:1235: Elapsed===> 76.450693ms
+2020/05/22 17:57:56.728803 util.go:57: --->[Thread- 88888 ] [ABCDEFG123123 程序重启,设备复位！]
+2020/05/22 17:57:56.728824 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:56.804251 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:56.804288 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:56.804301 Devices.go:1235: Elapsed===> 75.478886ms
+2020/05/22 17:57:56.804332 util.go:57: --->[Thread- 88888 ] [011401K0600029 程序重启,设备复位！]
+2020/05/22 17:57:56.804368 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:57:56.878129 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:57:56.878170 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:57:56.878183 Devices.go:1235: Elapsed===> 73.817496ms
+2020/05/22 17:57:56.878214 util.go:57: --->[Thread- 88888 ] [30B49E9B18DF 程序重启,设备复位！]
+2020/05/22 17:57:56.878234 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:16.505694 main.go:986: config file == config-ci.json
+2020/05/22 17:59:16.506301 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/22 17:59:16.506333 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/22 17:59:16.506350 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/22 17:59:16.653016 Dbcomm.go:30: Database Connected successful!
+2020/05/22 17:59:16.653111 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/05/22 17:59:16.653137 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/05/22 17:59:16.725882 Devices.go:592: Elapsed===> ===> 664
+2020/05/22 17:59:16.725976 Devices.go:594: Elapsed===> 72.837344ms
+2020/05/22 17:59:16.726018 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:16.802338 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:16.802383 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:16.802420 Devices.go:1235: Elapsed===> 76.406024ms
+2020/05/22 17:59:16.802465 util.go:57: --->[Thread- 88888 ] [011401K0600005 程序重启,设备复位！]
+2020/05/22 17:59:16.802487 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:16.878144 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:16.878190 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:16.878205 Devices.go:1235: Elapsed===> 75.720706ms
+2020/05/22 17:59:16.878238 util.go:57: --->[Thread- 88888 ] [D43D7E1C2E52 程序重启,设备复位！]
+2020/05/22 17:59:16.878261 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:16.952381 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:16.952439 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:16.952455 Devices.go:1235: Elapsed===> 74.196339ms
+2020/05/22 17:59:16.952506 util.go:57: --->[Thread- 88888 ] [002324488FB7 程序重启,设备复位！]
+2020/05/22 17:59:16.952531 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:17.028949 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.028996 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.029012 Devices.go:1235: Elapsed===> 76.48272ms
+2020/05/22 17:59:17.029047 util.go:57: --->[Thread- 88888 ] [011401K0600048 程序重启,设备复位！]
+2020/05/22 17:59:17.029077 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:17.105423 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.105508 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.105541 Devices.go:1235: Elapsed===> 76.466948ms
+2020/05/22 17:59:17.105601 util.go:57: --->[Thread- 88888 ] [011401J0900036 程序重启,设备复位！]
+2020/05/22 17:59:17.105636 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:17.183686 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.183732 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.183748 Devices.go:1235: Elapsed===> 78.12737ms
+2020/05/22 17:59:17.183780 util.go:57: --->[Thread- 88888 ] [011401K0600002 程序重启,设备复位！]
+2020/05/22 17:59:17.183802 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:17.259589 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.259636 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.259652 Devices.go:1235: Elapsed===> 75.85211ms
+2020/05/22 17:59:17.259684 util.go:57: --->[Thread- 88888 ] [011401K0600030 程序重启,设备复位！]
+2020/05/22 17:59:17.259707 Devices.go:1203: Update ===> Update lk_device set is_online=?,update_time=? where sn=?
+2020/05/22 17:59:17.339598 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.339643 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.339721 Devices.go:1235: Elapsed===> 80.016764ms
+2020/05/22 17:59:17.339765 util.go:57: --->[Thread- 88888 ] [98541B753361 程序重启,设备复位！]
+2020/05/22 17:59:17.339785 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:17.418941 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.418980 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.418992 Devices.go:1235: Elapsed===> 79.209924ms
+2020/05/22 17:59:17.419036 util.go:57: --->[Thread- 88888 ] [011401J0700046 程序重启,设备复位！]
+2020/05/22 17:59:17.419090 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:17.501551 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.501590 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.501602 Devices.go:1235: Elapsed===> 82.514634ms
+2020/05/22 17:59:17.501631 util.go:57: --->[Thread- 88888 ] [ABCDEFG123123 程序重启,设备复位！]
+2020/05/22 17:59:17.501652 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:17.577951 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.577991 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.578003 Devices.go:1235: Elapsed===> 76.354149ms
+2020/05/22 17:59:17.578032 util.go:57: --->[Thread- 88888 ] [011401K0600029 程序重启,设备复位！]
+2020/05/22 17:59:17.578053 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:17.652377 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.652406 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.652418 Devices.go:1235: Elapsed===> 74.367457ms
+2020/05/22 17:59:17.652486 util.go:57: --->[Thread- 88888 ] [30B49E9B18DF 程序重启,设备复位！]
+2020/05/22 17:59:17.652543 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:17.729648 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.729773 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.729784 Devices.go:1235: Elapsed===> 77.265935ms
+2020/05/22 17:59:17.729841 util.go:57: --->[Thread- 88888 ] [011401K0600008 程序重启,设备复位！]
+2020/05/22 17:59:17.729888 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:17.805848 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.805888 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.805900 Devices.go:1235: Elapsed===> 76.027742ms
+2020/05/22 17:59:17.805932 util.go:57: --->[Thread- 88888 ] [448A5B87B391 程序重启,设备复位！]
+2020/05/22 17:59:17.805952 Devices.go:1203: Update ===> Update lk_device set is_online=?,update_time=? where sn=?
+2020/05/22 17:59:17.880208 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.880248 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.880260 Devices.go:1235: Elapsed===> 74.310948ms
+2020/05/22 17:59:17.880290 util.go:57: --->[Thread- 88888 ] [54E1AD0E6B82 程序重启,设备复位！]
+2020/05/22 17:59:17.880310 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:17.957726 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:17.957769 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:17.957796 Devices.go:1235: Elapsed===> 77.487651ms
+2020/05/22 17:59:17.957831 util.go:57: --->[Thread- 88888 ] [F04DA2EBCF93 程序重启,设备复位！]
+2020/05/22 17:59:17.957853 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:18.037151 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:18.037193 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:18.037205 Devices.go:1235: Elapsed===> 79.355215ms
+2020/05/22 17:59:18.037236 util.go:57: --->[Thread- 88888 ] [011401K0600023 程序重启,设备复位！]
+2020/05/22 17:59:18.037275 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/22 17:59:18.113106 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/22 17:59:18.113156 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/22 17:59:18.113170 Devices.go:1235: Elapsed===> 75.897465ms
+2020/05/22 17:59:18.113202 util.go:57: --->[Thread- 88888 ] [4487FCA251FC 程序重启,设备复位！]
+2020/05/22 17:59:18.113222 Devices.go:1203: Update ===> Update lk_device set is_online=?,update_time=? where sn=?

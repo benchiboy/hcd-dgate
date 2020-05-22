@@ -16,78 +16,86 @@ import (
 	"time"
 )
 
-const INIT_STATUS = "init_status"
+const (
+	INIT_STATUS = "init_status"
+	BUSI_PREFIX = "Busi_"
 
-const BUSI_PREFIX = "Busi_"
-const ONLINE = "online"
-const ONLINE_RESP = "online"
+	ONLINE      = "online"
+	ONLINE_RESP = "online"
 
-const GET_COLOPHON = "get_colophon"
-const GET_COLOPHON_RESP = "get_colophon"
+	GET_COLOPHON      = "get_colophon"
+	GET_COLOPHON_RESP = "get_colophon"
 
-const GET_INSTLL_DATADRIVE = "get_install_datadrive"
-const GET_INSTLL_DATADRIVE_RESP = "get_install_datadrive"
+	GET_INSTLL_DATADRIVE      = "get_install_datadrive"
+	GET_INSTLL_DATADRIVE_RESP = "get_install_datadrive"
 
-const POST_INSTLL_DATADRIVE = "post_install_datadrive"
-const POST_INSTLL_DATADRIVE_RESP = "post_install_datadrive"
+	POST_INSTLL_DATADRIVE      = "post_install_datadrive"
+	POST_INSTLL_DATADRIVE_RESP = "post_install_datadrive"
 
-const GET_FILE = "get_file"
-const GET_FILE_RESP = "get_file"
+	GET_FILE      = "get_file"
+	GET_FILE_RESP = "get_file"
 
-const POST_FILE_INFO = "post_file_info"
-const POST_FILE_INFO_RESP = "post_file_info"
-const POST_FILE = "post_file"
-const POST_FILE_RESP = "post_file"
+	POST_FILE_INFO      = "post_file_info"
+	POST_FILE_INFO_RESP = "post_file_info"
+	POST_FILE           = "post_file"
+	POST_FILE_RESP      = "post_file"
 
-const PUSH_FILE_INFO = "push_file_info"
-const PUSH_FILE_INFO_RESP = "push_file_info"
-const PUSH_FILE = "push_file"
-const PUSH_FILE_RESP = "push_file"
+	PUSH_FILE_INFO      = "push_file_info"
+	PUSH_FILE_INFO_RESP = "push_file_info"
+	PUSH_FILE           = "push_file"
+	PUSH_FILE_RESP      = "push_file"
 
-const PUSH_INFO = "push_info"
-const PUSH_INFO_RESP = "push_info"
+	PUSH_INFO      = "push_info"
+	PUSH_INFO_RESP = "push_info"
 
-const CHECK_UDATE = "check_update"
-const CHECK_UDATE_RESP = "check_update"
+	CHECK_UDATE      = "check_update"
+	CHECK_UDATE_RESP = "check_update"
 
-const HEARTBEAT = "heartbeat"
-const HEARTBEAT_RESP = "heartbeat"
+	HEARTBEAT      = "heartbeat"
+	HEARTBEAT_RESP = "heartbeat"
 
-const QUERY_STATUS = "query_status"
-const QUERY_STATUS_RESP = "query_status_resp"
+	QUERY_STATUS      = "query_status"
+	QUERY_STATUS_RESP = "query_status_resp"
 
-const OFFLINE = "off_line"
+	OFFLINE = "off_line"
 
-const TYPE_CHIP = "chip"
-const TYPE_UPGRADE = "upgrade"
-const TYPE_CONFIG = "config"
-const TYPE_RESULT = "result"
-const TYPE_RAW = "raw"
-const TYPE_LOG = "log"
+	TYPE_CHIP    = "chip"
+	TYPE_UPGRADE = "upgrade"
 
-const CMDTYPE_GET = "getfile"
-const CMDTYPE_PUSH = "pushfile"
-const CMDTYPE_INFO = "pushinfo"
-const CMDTYPE_VER = "getver"
-const CMDTYPE_DRIVE = "getdrive"
+	TYPE_CONFIG = "config"
+	TYPE_RESULT = "result"
 
-const ACTION_ONLINE = "ON"
-const ACTION_OFFLINE = "OFF"
+	TYPE_RAW = "raw"
+	TYPE_LOG = "log"
 
-const STATUS_INIT = "I"
-const STATUS_DOING = "D"
+	CMDTYPE_GET  = "getfile"
+	CMDTYPE_PUSH = "pushfile"
 
-const STATUS_SUCC = "S"
-const STATUS_FAIL = "F"
+	CMDTYPE_INFO  = "pushinfo"
+	CMDTYPE_VER   = "getver"
+	CMDTYPE_DRIVE = "getdrive"
 
-const STATUS_ONLINE = 1
-const STATUS_OFFLINE = 2
+	ACTION_ONLINE  = "ON"
+	ACTION_OFFLINE = "OFF"
 
-const MONITOR_THREAD = 99999
-const MAIN_THREAD = 88888
-const HTTP_THREAD = 77777
+	STATUS_INIT  = "I"
+	STATUS_DOING = "D"
 
-const HEAD_LEN = 6
+	STATUS_SUCC = "S"
+	STATUS_FAIL = "F"
+)
+
+const (
+	STATUS_ONLINE  = 1
+	STATUS_OFFLINE = 2
+
+	MONITOR_THREAD = 99999
+	MAIN_THREAD    = 88888
+	HTTP_THREAD    = 77777
+	STOP_THREAD    = 44444
+	HEAD_LEN       = 6
+)
+
 const UPDATE_TIME = "update_time"
 const DEVICE_TIME = "device_time"
 const IS_ONLINE = "is_online"
