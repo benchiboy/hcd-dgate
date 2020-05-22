@@ -165,7 +165,7 @@ func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 	3、更新数据库的在线状态
 */
 func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
-	PrintHead(threadId, ONLINE)
+	PrintHead(threadId, ONLINE+online.Devices[0].Sn)
 	var onlineResp OnlineResp
 	onlineResp.Method = online.Method
 	onlineResp.Sn = online.Devices[0].Sn
@@ -217,14 +217,14 @@ func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
 		log.Println(err.Error())
 	}
 	if _, ok := GSn2ConnMap.Load(online.Devices[0].Sn); ok {
-		PrintLog(threadId, online.Devices[0].Sn+"上线发现已经存在Map中!")
+		PrintLog(threadId, online.Devices[0].Sn+"上线时,发现已经存在Map中!")
 	}
 	//存储客服端的链接
 	GConn2SnMap.Store(conn, online.Devices[0].Sn)
 	GSn2ConnMap.Store(online.Devices[0].Sn, StoreInfo{CurrConn: conn, SignInTime: time.Now()})
 	Send_Resp(threadId, conn, string(onlineBuf))
 
-	PrintTail(threadId, ONLINE)
+	PrintTail(threadId, ONLINE+online.Devices[0].Sn)
 
 }
 
@@ -389,7 +389,6 @@ func CmdPostFileInfo(threadId int, conn *net.TCPConn, postFileInfo PostFileInfo)
 			PrintLog(threadId, "Mkdir===>", err)
 		}
 	}
-
 	e.FileUrl = newPath + e.FileName
 	e.FileLength = postFileInfo.File.Length
 	e.FileCrc32 = int32(postFileInfo.File.File_crc)
@@ -420,7 +419,7 @@ func CmdPostFileInfo(threadId int, conn *net.TCPConn, postFileInfo PostFileInfo)
 	if err != nil {
 		PrintLog(threadId, err)
 	}
-	PrintLog(threadId, "待传文件信息===>", postFileInfo.Total_file, postFileInfo.File_in_procesing)
+	PrintLog(threadId, postFileInfo.Sn+"待传文件信息===>", postFileInfo.File.Name, postFileInfo.Total_file, postFileInfo.File_in_procesing)
 	Send_Resp(threadId, conn, string(infoBuf))
 	PrintTail(threadId, POST_FILE_INFO+postFileInfo.Sn)
 }
@@ -445,6 +444,7 @@ func CmdPostFile(threadId int, conn *net.TCPConn, postFile PostFile) {
 		conn.Close()
 		return
 	}
+	PrintLog(threadId, postFile.Sn+"PostFile Len===>", len(fileBuf))
 	currNode.SignInTime = time.Now()
 	//文件开始时
 	var f *os.File
@@ -485,7 +485,7 @@ func CmdPostFile(threadId int, conn *net.TCPConn, postFile PostFile) {
 		if f != nil {
 			f.Close()
 		}
-		PrintLog(threadId, "文件索引===>", currNode.FileIndex, currNode.FileTotal)
+		PrintLog(threadId, postFile.Sn+"完成文件索引===>", currNode.FileIndex, currNode.FileTotal)
 		if currNode.FileTotal == currNode.FileIndex {
 			r := mfiles.New(dbcomm.GetDB(), mfiles.INFO)
 			var search mfiles.Search
@@ -517,9 +517,9 @@ func CmdPostFile(threadId int, conn *net.TCPConn, postFile PostFile) {
 	if fBuf, err := json.Marshal(&fResp); err != nil {
 		PrintLog(threadId, err)
 	} else {
+		PrintLog(threadId, string(fBuf))
 		Send_Resp(threadId, conn, string(fBuf))
 	}
-
 	PrintTail(threadId, POST_FILE+postFile.Sn)
 }
 
@@ -686,7 +686,7 @@ func ProcPacket(threadId int, conn *net.TCPConn, packBuf []byte) error {
 		if len(packBuf) < 256 {
 			PrintLog(threadId, string(packBuf))
 		} else {
-			PrintLog(threadId, "Total Len", len(packBuf))
+			PrintLog(threadId, "Recv Package Len===>", len(packBuf))
 		}
 	}
 	switch command.Method {
@@ -891,11 +891,11 @@ func tcpPipe(threadId int, conn *net.TCPConn) {
 			vv, _ := GSn2ConnMap.Load(sn)
 			if node, ok := vv.(StoreInfo); ok == true {
 				if node.CurrConn == conn {
-					PrintLog(threadId, "连接句柄匹配", node.CurrConn, conn)
+					PrintLog(threadId, sn+"连接句柄匹配", node.CurrConn, conn)
 					GSn2ConnMap.Delete(sn)
 					OffLine(threadId, sn)
 				} else {
-					PrintLog(threadId, "连接句柄不匹配", node.CurrConn, conn)
+					PrintLog(threadId, sn+"连接句柄不匹配", node.CurrConn, conn)
 				}
 			} else {
 				PrintLog(threadId, "GSn2ConnMap 非法的连接,断言错误.")
@@ -914,20 +914,14 @@ func tcpPipe(threadId int, conn *net.TCPConn) {
 	packBuf := make([]byte, 1024*1024*2)
 	var nSum int32
 	for {
-		conn.SetReadDeadline(time.Now().Add(time.Second * 180))
+		conn.SetReadDeadline(time.Now().Add(time.Second * 420))
 		readBuf := make([]byte, 1024*100)
 		var nLen int
 		nLen, err := reader.Read(readBuf)
-		// if nLen < 256 {
-		// 	PrintLog(threadId, "Recv Len==", nLen, string(readBuf[0:nLen]))
-		// } else {
-		// 	PrintLog(threadId, "Recv Len==", nLen)
-		// }
-		if err != nil || nLen < 0 {
-			PrintLog(threadId, err.Error())
+		if err != nil || nLen <= 0 {
+			PrintLog(threadId, "Read Error===>", err.Error(), "Len==", nLen)
 			return
 		}
-		//cancel timeout
 		conn.SetReadDeadline(time.Time{})
 		if nSum == 0 {
 			if int(readBuf[0]) != 0x7E {
@@ -1036,7 +1030,7 @@ func main() {
 				j++
 				return true
 			})
-			PrintLog(MONITOR_THREAD, "当前在线总数============>CONN:", i, "SN", j)
+			PrintLog(MONITOR_THREAD, "当前在线总数 Conn Cnt==>:", i, "Sn Cnt===>:", j)
 			time.Sleep(time.Second * 10)
 		}
 	}()
@@ -1052,6 +1046,7 @@ func main() {
 		}
 		PrintLog(MAIN_THREAD, tcpConn.RemoteAddr().String())
 		rand.Seed(time.Now().UnixNano())
+
 		go tcpPipe(rand.Intn(20000), tcpConn)
 	}
 
