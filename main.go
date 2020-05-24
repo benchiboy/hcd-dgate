@@ -160,7 +160,7 @@ func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 	3、更新数据库的在线状态
 */
 func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
-	PrintHead(threadId, ONLINE+"->"+online.Devices[0].Sn)
+	PrintHead(threadId, ONLINE+"--->"+online.Devices[0].Sn)
 	var onlineResp OnlineResp
 	onlineResp.Method = online.Method
 	onlineResp.Sn = online.Devices[0].Sn
@@ -171,7 +171,7 @@ func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
 		log.Println(err)
 	}
 	//检测设备是否存在，如果不存在，插入；否则更新
-	r := device.New(dbcomm.GetDB(), device.DEBUG)
+	r := device.New(dbcomm.GetDB(), device.INFO)
 	var search device.Search
 	search.Sn = onlineResp.Sn
 	if e, err := r.Get(search); err == nil {
@@ -195,7 +195,7 @@ func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
 		r.InsertEntity(e, nil)
 	}
 	//插入设备在线历史
-	rr := onlinehis.New(dbcomm.GetDB(), onlinehis.DEBUG)
+	rr := onlinehis.New(dbcomm.GetDB(), onlinehis.INFO)
 	var ne onlinehis.OnlineHis
 	ne.Sn = online.Devices[0].Sn
 	ne.ChipId = online.Devices[0].Chip_id
@@ -219,7 +219,7 @@ func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
 	GSn2ConnMap.Store(online.Devices[0].Sn, StoreInfo{CurrConn: conn, SignInTime: time.Now()})
 	Send_Resp(threadId, conn, string(onlineBuf))
 
-	PrintTail(threadId, ONLINE+online.Devices[0].Sn)
+	PrintTail(threadId, ONLINE+"--->"+online.Devices[0].Sn)
 
 }
 
@@ -802,11 +802,9 @@ func getOnlineCount() (int, int) {
 
 /*
 	网络端口，更新设备为线下
-
 */
 func OffLine(threadId int, sn string, offType string) {
 	PrintHead(threadId, OFFLINE, sn)
-
 	r := device.New(dbcomm.GetDB(), device.INFO)
 	onlineMap := map[string]interface{}{DEVICE_TIME: time.Now().Format("2006-01-02 15:04:05"),
 		IS_ONLINE: STATUS_OFFLINE}
@@ -823,7 +821,6 @@ func OffLine(threadId int, sn string, offType string) {
 	if err := rr.InsertEntity(ne, nil); err != nil {
 		PrintLog(threadId, err.Error())
 	}
-
 	//检查是否有未完成的工作，如果有设置为失败
 	rrr := mfiles.New(dbcomm.GetDB(), mfiles.INFO)
 	var search mfiles.Search
@@ -836,7 +833,11 @@ func OffLine(threadId int, sn string, offType string) {
 		mf.UpdateBy = UPDATE_USER
 		mf.EndTime = mf.UpdateTime
 		mf.Status = STATUS_FAIL
-		mf.FailMsg = "网络中断错误"
+		if offType == FORCE_OFFLINE {
+			mf.FailMsg = "网络中断或设备关闭连接错误"
+		} else {
+			mf.FailMsg = "程序重启,终止文件传输"
+		}
 		rrr.UpdataEntity(e.BatchNo, mf, nil)
 	}
 	//更新明细的结束时间
@@ -854,12 +855,10 @@ func InitStatus() {
 	var search device.Search
 	if dl, err := r.GetListEx(search); err == nil {
 		for _, v := range dl {
-			onlineMap := map[string]interface{}{UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05"),
-				IS_ONLINE: STATUS_OFFLINE}
-			err = r.UpdateMapEx(v.Sn, onlineMap, nil)
-			if err != nil {
-				PrintLog(MAIN_THREAD, "设备下线更新失败", err)
-			} else {
+			if v.IsOnline == STATUS_ONLINE {
+				onlineMap := map[string]interface{}{UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05"),
+					IS_ONLINE: STATUS_OFFLINE}
+				err = r.UpdateMapEx(v.Sn, onlineMap, nil)
 				PrintLog(MAIN_THREAD, v.Sn, "程序重启,设备复位！")
 			}
 		}
@@ -875,7 +874,8 @@ func InitStatus() {
 */
 func tcpPipe(threadId int, conn *net.TCPConn) {
 	ipStr := conn.RemoteAddr().String()
-	defer func(threadId int) {
+	var err error
+	defer func(threadId int, inErr error) {
 		PrintLog(threadId, "Disconnect===>:"+ipStr, "Conn:", conn)
 		snIf, _ := GConn2SnMap.Load(conn)
 		sn, ok := snIf.(string)
@@ -887,32 +887,35 @@ func tcpPipe(threadId int, conn *net.TCPConn) {
 				if node.CurrConn == conn {
 					PrintLog(threadId, sn+"连接句柄匹配", node.CurrConn, conn)
 					GSn2ConnMap.Delete(sn)
-					OffLine(threadId, sn, ACTION_OFFLINE)
+					if strings.Contains(err.Error(), "use of closed network connection") {
+						OffLine(threadId, sn, FORCE_OFFLINE)
+					} else {
+						OffLine(threadId, sn, ACTION_OFFLINE)
+					}
 				} else {
 					PrintLog(threadId, sn+"连接句柄不匹配", node.CurrConn, conn)
 				}
 			} else {
 				PrintLog(threadId, "GSn2ConnMap 非法的连接,断言错误.")
 			}
-
 			GConn2SnMap.Delete(conn)
 			i, j = getOnlineCount()
-
 			PrintLog(threadId, "断线之后在线数量:CONN", i, "SN:", j, sn)
 		} else {
 			PrintLog(threadId, "GConn2SnMap非法的连接,断言错误...")
 		}
-		PrintLog(threadId, "Close Result==>", conn.Close())
-	}(threadId)
+		conn.Close()
+	}(threadId, err)
 
 	reader := bufio.NewReader(conn)
 	packBuf := make([]byte, 1024*1024*2)
+
 	var nSum int32
 	for {
 		conn.SetReadDeadline(time.Now().Add(time.Second * 420))
 		readBuf := make([]byte, 1024*100)
 		var nLen int
-		nLen, err := reader.Read(readBuf)
+		nLen, err = reader.Read(readBuf)
 		if err != nil || nLen <= 0 {
 			PrintLog(threadId, "Read Error===>", err.Error(), "Len==", nLen)
 			return
@@ -931,18 +934,16 @@ func tcpPipe(threadId int, conn *net.TCPConn) {
 		}
 		for {
 			packLen := BytesToInt(packBuf[2:6])
-			//PrintLog(threadId, "解析包的长度==》", packLen)
 			if packLen < 6 {
-				PrintLog(threadId, "解析到一个错误的包!")
+				PrintLog(threadId, "PackLen <6 Error!")
 				return
 			}
 			if nSum >= packLen {
-				if err := ProcPacket(threadId, conn, packBuf[6:packLen]); err != nil {
+				if err = ProcPacket(threadId, conn, packBuf[6:packLen]); err != nil {
 					conn.Close()
 					return
 				}
 				nSum = nSum - packLen
-				//PrintLog(threadId, "nSum===>", nSum)
 				if nSum > 0 {
 					copy(packBuf, packBuf[packLen:])
 				}
@@ -1002,6 +1003,7 @@ func main() {
 	PrintLog(MAIN_THREAD, "<==========MicroPoint Gate Starting...==========>")
 	PrintLog(MAIN_THREAD, "<==========Version:", MainVer, "===================>")
 	dbcomm.InitDB(dbUrl, ccdbUrl, idleConns, openConns)
+
 	InitStatus()
 
 	var tcpAddr *net.TCPAddr
@@ -1009,7 +1011,6 @@ func main() {
 	signal.Notify(stop_chan, syscall.SIGINT, syscall.SIGTERM)
 
 	go go_WebServer()
-
 	///// 观察设备连接
 	go func() {
 		for {
@@ -1041,22 +1042,28 @@ func main() {
 	///// 程序关闭善后处理
 	go func(listen *net.TCPListener) {
 		<-stop_chan
-		PrintLog(STOP_THREAD, " Now Stoping...")
+		listen.Close()
+	}(tcpListener)
+
+	defer func() {
+		PrintLog(MAIN_THREAD, "退出前准备..")
 		GSn2ConnMap.Range(func(k, v interface{}) bool {
 			if value, ok := v.(StoreInfo); ok == true {
 				value.CurrConn.Close()
 			}
 			return true
 		})
-		time.Sleep(time.Second * 10)
-		listen.Close()
-
-	}(tcpListener)
-
-	defer func() {
-		PrintLog(MAIN_THREAD, "程序退出...")
+		for {
+			i, _ := getOnlineCount()
+			if i == 0 {
+				PrintLog(MAIN_THREAD, "链接完全释放...")
+				break
+			}
+			PrintLog(MAIN_THREAD, "有链接还未断开...")
+			time.Sleep(time.Second * 1)
+		}
+		PrintLog(MAIN_THREAD, "完全退出！")
 	}()
-
 	/////主流程处理
 	for {
 		tcpConn, err := tcpListener.AcceptTCP()

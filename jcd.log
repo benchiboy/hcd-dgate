@@ -854,3 +854,75 @@
 2020/05/22 17:59:18.113170 Devices.go:1235: Elapsed===> 75.897465ms
 2020/05/22 17:59:18.113202 util.go:57: --->[Thread- 88888 ] [4487FCA251FC 程序重启,设备复位！]
 2020/05/22 17:59:18.113222 Devices.go:1203: Update ===> Update lk_device set is_online=?,update_time=? where sn=?
+2020/05/24 13:18:06.372231 main.go:986: config file == config-ci.json
+2020/05/24 13:18:06.374531 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/24 13:18:06.374611 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/24 13:18:06.374655 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/24 13:37:55.942086 main.go:986: config file == config-ci.json
+2020/05/24 13:37:55.942772 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/24 13:37:55.942844 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/24 13:37:55.942895 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/24 13:37:56.152373 Dbcomm.go:30: Database Connected successful!
+2020/05/24 13:37:56.152618 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/05/24 13:37:56.152696 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/05/24 13:37:56.250948 Devices.go:592: Elapsed===> ===> 664
+2020/05/24 13:37:56.251137 Devices.go:594: Elapsed===> 98.419068ms
+2020/05/24 13:37:56.251294 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/24 13:37:56.368902 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/24 13:37:56.369060 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/24 13:37:56.369108 Devices.go:1235: Elapsed===> 117.87387ms
+2020/05/24 13:37:56.369262 util.go:57: --->[Thread- 88888 ] [011401K0600005 程序重启,设备复位！]
+2020/05/24 13:37:56.369334 Devices.go:1203: Update ===> Update lk_device set is_online=?,update_time=? where sn=?
+2020/05/24 13:38:51.032524 main.go:988: config file == config-ci.json
+2020/05/24 13:38:51.033015 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/24 13:38:51.033082 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/24 13:38:51.033140 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/24 13:38:51.229909 Dbcomm.go:30: Database Connected successful!
+2020/05/24 13:38:51.230273 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/05/24 13:38:51.230362 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/05/24 13:38:51.328778 Devices.go:592: Elapsed===> ===> 664
+2020/05/24 13:38:51.328934 Devices.go:594: Elapsed===> 98.549725ms
+2020/05/24 13:38:51.329051 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/24 13:38:51.436467 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/24 13:38:51.436657 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/24 13:38:51.436717 Devices.go:1235: Elapsed===> 107.6859ms
+2020/05/24 13:38:51.436972 util.go:57: --->[Thread- 88888 ] [011401K0600005 程序重启,设备复位！]
+2020/05/24 13:38:51.437090 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/24 13:38:51.543149 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/24 13:38:51.543271 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/24 13:38:51.543318 Devices.go:1235: Elapsed===> 106.277148ms
+2020/05/24 13:38:51.543457 util.go:57: --->[Thread- 88888 ] [D43D7E1C2E52 程序重启,设备复位！]
+2020/05/24 13:38:51.543520 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/24 13:38:51.645756 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/24 13:38:51.645996 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/24 13:38:51.646040 Devices.go:1235: Elapsed===> 102.522593ms
+2020/05/24 13:38:51.646187 util.go:57: --->[Thread- 88888 ] [002324488FB7 程序重启,设备复位！]
+2020/05/24 13:38:51.646286 Devices.go:1203: Update ===> Update lk_device set is_online=?,update_time=? where sn=?
+2020/05/24 13:38:51.747493 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/24 13:38:51.747579 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/24 13:38:51.747659 Devices.go:1235: Elapsed===> 101.37371ms
+2020/05/24 13:38:51.747740 util.go:57: --->[Thread- 88888 ] [011401K0600048 程序重启,设备复位！]
+2020/05/24 13:38:51.747833 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/24 13:38:51.847982 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/24 13:38:51.848107 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/24 13:38:51.848150 Devices.go:1235: Elapsed===> 100.319477ms
+2020/05/24 13:38:51.848257 util.go:57: --->[Thread- 88888 ] [011401J0900036 程序重启,设备复位！]
+2020/05/24 13:38:51.848335 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/24 13:38:51.968727 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/24 13:38:51.968820 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/24 13:38:51.968901 Devices.go:1235: Elapsed===> 120.56564ms
+2020/05/24 13:38:51.969005 util.go:57: --->[Thread- 88888 ] [011401K0600002 程序重启,设备复位！]
+2020/05/24 13:38:51.969128 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/24 13:38:52.074388 Devices.go:1226: Update ===> LastInsertId: 0
+2020/05/24 13:38:52.074470 Devices.go:1231: Update ===> RowsAffected: 1
+2020/05/24 13:38:52.074499 Devices.go:1235: Elapsed===> 105.374525ms
+2020/05/24 13:38:52.074706 util.go:57: --->[Thread- 88888 ] [011401K0600030 程序重启,设备复位！]
+2020/05/24 13:38:52.074765 Devices.go:1203: Update ===> Update lk_device set update_time=?,is_online=? where sn=?
+2020/05/24 13:47:58.477929 main.go:991: config file == config-ci.json
+2020/05/24 13:47:58.478652 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/24 13:47:58.478739 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/24 13:47:58.478779 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/24 14:03:18.702673 main.go:989: config file == config-ci.json
+2020/05/24 14:03:18.703694 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/24 14:03:18.703770 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/24 14:03:18.703814 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
