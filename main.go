@@ -839,6 +839,15 @@ func OffLine(threadId int, sn string, offType string) {
 			mf.FailMsg = "程序重启,终止文件传输"
 		}
 		rrr.UpdataEntity(e.BatchNo, mf, nil)
+		//删除终止引起下载的文件
+		rrrr := dfiles.New(dbcomm.GetDB(), dfiles.INFO)
+		var dsearch dfiles.Search
+		dsearch.BatchNo = e.BatchNo
+		ee, _ := rrrr.GetList(dsearch)
+		for _, vv := range ee {
+			PrintLog(threadId, "Remove--->", vv.FileUrl)
+			os.Remove(vv.FileUrl)
+		}
 	}
 	//更新明细的结束时间
 	PrintTail(threadId, OFFLINE)
