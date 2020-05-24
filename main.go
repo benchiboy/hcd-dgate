@@ -142,7 +142,6 @@ func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 	currNode, err := getCurrNode(threadId, heart.Sn)
 	if err != nil {
 		PrintLog(threadId, heart.Sn+"未在线收到心跳包")
-
 	} else {
 		currNode.SignInTime = time.Now()
 		currNode.CurrConn = conn
@@ -822,7 +821,7 @@ func OffLine(threadId int, sn string, offType string) {
 		PrintLog(threadId, err.Error())
 	}
 	//检查是否有未完成的工作，如果有设置为失败
-	rrr := mfiles.New(dbcomm.GetDB(), mfiles.INFO)
+	rrr := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
 	var search mfiles.Search
 	search.Sn = sn
 	search.Status = STATUS_INIT
@@ -840,7 +839,7 @@ func OffLine(threadId int, sn string, offType string) {
 		}
 		rrr.UpdataEntity(e.BatchNo, mf, nil)
 		//删除终止引起下载的文件
-		rrrr := dfiles.New(dbcomm.GetDB(), dfiles.INFO)
+		rrrr := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
 		var dsearch dfiles.Search
 		dsearch.BatchNo = e.BatchNo
 		ee, _ := rrrr.GetList(dsearch)

@@ -334,7 +334,7 @@ func (r MFilesList) Get(s Search) (*MFiles, error) {
 		where += s.ExtraWhere
 	}
 
-	qrySql := fmt.Sprintf("Select id,batch_no,todo_count,done_count,status from lk_device_mfiles where 1=1 %s ", where)
+	qrySql := fmt.Sprintf("Select id,batch_no,todo_count,done_count,status from lk_device_mfiles where 1=1 %s  order by id desc limit 1", where)
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
 	}
