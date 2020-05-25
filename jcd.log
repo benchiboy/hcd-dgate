@@ -942,3 +942,35 @@
 2020/05/24 22:19:17.165718 util.go:57: --->[Thread- 88888 ] [退出前准备..]
 2020/05/24 22:19:17.165802 util.go:57: --->[Thread- 88888 ] [链接完全释放...]
 2020/05/24 22:19:17.165846 util.go:57: --->[Thread- 88888 ] [完全退出！]
+2020/05/25 11:03:56.236536 main.go:995: config file == config-ci.json
+2020/05/25 11:03:56.237619 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/25 11:03:56.237701 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/25 11:03:56.238473 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/25 11:03:56.478817 Dbcomm.go:30: Database Connected successful!
+2020/05/25 11:03:56.478955 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/05/25 11:03:56.479026 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/05/25 11:03:56.565226 Devices.go:592: Elapsed===> ===> 664
+2020/05/25 11:03:56.566354 Devices.go:594: Elapsed===> 87.268762ms
+2020/05/25 11:03:56.569539 util.go:53: 《========[Thread- 88888 ] [init_status]
+2020/05/25 11:03:56.573072 util.go:57: --->[Thread- 99999 ] [当前在线总数 Conn Cnt==>: 0 Sn Cnt===>: 0]
+2020/05/25 11:03:56.573189 util.go:49: ========》[Thread- 77777 ] [WebServer]
+2020/05/25 11:03:56.746483 util.go:57: --->[Thread- 88888 ] [Accept==> accept tcp [::]:8089: use of closed network connection]
+2020/05/25 11:03:56.746734 util.go:57: --->[Thread- 88888 ] [退出前准备..]
+2020/05/25 11:03:56.746837 util.go:57: --->[Thread- 88888 ] [链接完全释放...]
+2020/05/25 11:03:56.746951 util.go:57: --->[Thread- 88888 ] [完全退出！]
+2020/05/25 11:11:02.340887 main.go:995: config file == config-ci.json
+2020/05/25 11:11:02.341797 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/05/25 11:11:02.341844 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/05/25 11:11:02.341868 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/05/25 11:11:02.641108 Dbcomm.go:30: Database Connected successful!
+2020/05/25 11:11:02.641322 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/05/25 11:11:02.641383 Devices.go:578: Select ===> Select id,sn,update_time from lk_device where 1=1 
+2020/05/25 11:11:02.710861 Devices.go:592: Elapsed===> ===> 664
+2020/05/25 11:11:02.710952 Devices.go:594: Elapsed===> 69.568702ms
+2020/05/25 11:11:02.711099 util.go:53: 《========[Thread- 88888 ] [init_status]
+2020/05/25 11:11:02.711697 util.go:57: --->[Thread- 99999 ] [当前在线总数 Conn Cnt==>: 0 Sn Cnt===>: 0]
+2020/05/25 11:11:02.711767 util.go:49: ========》[Thread- 77777 ] [WebServer]
+2020/05/25 11:11:02.839763 util.go:57: --->[Thread- 88888 ] [Accept==> accept tcp [::]:8089: use of closed network connection]
+2020/05/25 11:11:02.839871 util.go:57: --->[Thread- 88888 ] [退出前准备..]
+2020/05/25 11:11:02.839913 util.go:57: --->[Thread- 88888 ] [链接完全释放...]
+2020/05/25 11:11:02.839938 util.go:57: --->[Thread- 88888 ] [完全退出！]

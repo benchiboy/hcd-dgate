@@ -113,7 +113,7 @@ func Send_Resp(threadId int, conn *net.TCPConn, resp string) error {
 		//		if totalLen > 256 {
 		//			//PrintLog(threadId, "SendPush_File", sendLen, totalLen, nSum)
 		//		} else {
-		//			//PrintLog(threadId, "Send Len And Msg===>", string(head))
+		//PrintLog(threadId, "Send Len And Msg===>", string(head))
 		//		}
 		nSum += sendLen
 		totalLen = totalLen - sendLen
@@ -591,14 +591,15 @@ func pubPushFile(theadId int, conn *net.TCPConn, sn string, chipId string) (erro
 		return err, 0
 	}
 	pushFile.Fragment.Source = hex.EncodeToString(fileBuf[currNode.FileOffset : currNode.FileOffset+currNode.ReadSize])
-	crc32 := softwareCrc32(fileBuf, len(fileBuf))
+	crc32 := softwareCrc32(fileBuf[currNode.FileOffset:currNode.FileOffset+currNode.ReadSize], len(fileBuf[currNode.FileOffset:currNode.FileOffset+currNode.ReadSize]))
+	log.Println("Crc32--->", crc32)
 	pushFile.Fragment.Checksum = crc32
 	fBuf, _ := json.Marshal(&pushFile)
 	err = Send_Resp(theadId, conn, string(fBuf))
 
 	GSn2ConnMap.Store(sn, currNode)
-	return err, crc32
 
+	return err, crc32
 }
 
 /*
