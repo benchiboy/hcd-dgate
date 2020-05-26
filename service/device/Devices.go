@@ -570,9 +570,9 @@ func (r *DeviceList) GetListEx(s Search) ([]Device, error) {
 
 	var qrySql string
 	if s.PageSize == 0 && s.PageNo == 0 {
-		qrySql = fmt.Sprintf("Select id,sn,update_time from lk_device where 1=1 %s", where)
+		qrySql = fmt.Sprintf("Select id,sn,is_online from lk_device where 1=1 %s", where)
 	} else {
-		qrySql = fmt.Sprintf("Select id,sn,update_time from lk_device where 1=1 %s Limit %d offset %d", where, s.PageSize, (s.PageNo-1)*s.PageSize)
+		qrySql = fmt.Sprintf("Select id,sn,is_online from lk_device where 1=1 %s Limit %d offset %d", where, s.PageSize, (s.PageNo-1)*s.PageSize)
 	}
 	if r.Level == DEBUG {
 		log.Println(SQL_SELECT, qrySql)
@@ -586,7 +586,7 @@ func (r *DeviceList) GetListEx(s Search) ([]Device, error) {
 
 	var p Device
 	for rows.Next() {
-		rows.Scan(&p.Id, &p.Sn, &p.UpdateTime)
+		rows.Scan(&p.Id, &p.Sn, &p.IsOnline)
 		r.Devices = append(r.Devices, p)
 	}
 	log.Println(SQL_ELAPSED, "===>", len(r.Devices))

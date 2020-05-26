@@ -141,7 +141,8 @@ func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 	}
 	currNode, err := getCurrNode(threadId, heart.Sn)
 	if err != nil {
-		PrintLog(threadId, heart.Sn+"未在线收到心跳包")
+		PrintLog(threadId, heart.Sn+"未在线收到心跳包", conn)
+		conn.Close()
 	} else {
 		currNode.SignInTime = time.Now()
 		currNode.CurrConn = conn
@@ -868,7 +869,7 @@ func InitStatus() {
 				onlineMap := map[string]interface{}{UPDATE_TIME: time.Now().Format("2006-01-02 15:04:05"),
 					IS_ONLINE: STATUS_OFFLINE}
 				err = r.UpdateMapEx(v.Sn, onlineMap, nil)
-				PrintLog(MAIN_THREAD, v.Sn, "程序重启,设备复位！")
+				PrintLog(MAIN_THREAD, v.Sn, "程序重启,设备复位！", v.Sn)
 			}
 		}
 	}
