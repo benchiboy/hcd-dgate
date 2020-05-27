@@ -527,7 +527,8 @@ func CmdPushFileInfoResp(threadId int, conn *net.TCPConn, infoResp PushFileInfoR
 	currNode, _ := getCurrNode(threadId, infoResp.Sn)
 	_, crcCode := pubPushFile(threadId, conn, infoResp.Sn, infoResp.Chip_id)
 
-	PrintLog(threadId, "收到机器应答===>", infoResp.Total_file, currNode.FileName)
+	PrintLog(threadId, "收到机器应答确认===>", infoResp.Total_file, currNode.FileName)
+
 	r := dfiles.New(dbcomm.GetDB(), dfiles.DEBUG)
 	var e dfiles.DFiles
 	e.FileName = currNode.FileName
@@ -567,13 +568,14 @@ func CmdCheckUpdate(threadId int, conn *net.TCPConn, upDate CheckUpdate) {
 }
 
 func pubPushFile(theadId int, conn *net.TCPConn, sn string, chipId string) (error, int32) {
-
 	var pushFile PushFile
 	currNode, _ := getCurrNode(theadId, sn)
-
 	if currNode.FileSize <= currNode.FileOffset+FILE_BLOCK_SIZE {
 		pushFile.Fragment.Eof = true
 		currNode.ReadSize = currNode.FileSize - currNode.FileOffset
+		if currNode.ReadSize < 0 {
+			currNode.ReadSize = 0
+		}
 		log.Println("File eof block will happen!===>", sn, currNode.FileOffset, currNode.ReadSize)
 
 	} else {
