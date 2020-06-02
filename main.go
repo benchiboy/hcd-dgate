@@ -567,21 +567,22 @@ func CmdCheckUpdate(threadId int, conn *net.TCPConn, upDate CheckUpdate) {
 	PrintTail(threadId, CHECK_UDATE)
 }
 
-func pubPushFile(theadId int, conn *net.TCPConn, sn string, chipId string) (error, int32) {
+func pubPushFile(threadId int, conn *net.TCPConn, sn string, chipId string) (error, int32) {
 	var pushFile PushFile
-	currNode, _ := getCurrNode(theadId, sn)
+	currNode, _ := getCurrNode(threadId, sn)
 	if currNode.FileSize <= currNode.FileOffset+FILE_BLOCK_SIZE {
 		pushFile.Fragment.Eof = true
 		currNode.ReadSize = currNode.FileSize - currNode.FileOffset
 		if currNode.ReadSize < 0 {
 			currNode.ReadSize = 0
+			currNode.FileOffset = currNode.FileSize
 		}
-		log.Println("File eof block will happen!===>", sn, currNode.FileOffset, currNode.ReadSize)
+		PrintHead(threadId, "文件最后一块===>", sn, currNode.FileOffset, currNode.ReadSize, currNode.FileIndex)
 
 	} else {
 		pushFile.Fragment.Eof = false
 		currNode.ReadSize = FILE_BLOCK_SIZE
-		log.Println("FileOffSet===>", sn, currNode.FileOffset, currNode.ReadSize, currNode.FileIndex)
+		PrintHead(threadId, "Push的索引值===》", sn, currNode.FileOffset, currNode.ReadSize, currNode.FileIndex)
 	}
 	pushFile.Fragment.Length = int(currNode.ReadSize)
 	pushFile.Chip_id = chipId
@@ -595,10 +596,10 @@ func pubPushFile(theadId int, conn *net.TCPConn, sn string, chipId string) (erro
 	}
 	pushFile.Fragment.Source = hex.EncodeToString(fileBuf[currNode.FileOffset : currNode.FileOffset+currNode.ReadSize])
 	crc32 := softwareCrc32(fileBuf[currNode.FileOffset:currNode.FileOffset+currNode.ReadSize], len(fileBuf[currNode.FileOffset:currNode.FileOffset+currNode.ReadSize]))
-	log.Println("Crc32--->", crc32)
+	PrintLog(threadId, " 文件Crc32校验值===>", crc32)
 	pushFile.Fragment.Checksum = crc32
 	fBuf, _ := json.Marshal(&pushFile)
-	err = Send_Resp(theadId, conn, string(fBuf))
+	err = Send_Resp(threadId, conn, string(fBuf))
 
 	GSn2ConnMap.Store(sn, currNode)
 
@@ -613,17 +614,18 @@ func CmdPushFileResp(threadId int, conn *net.TCPConn, fileResp PushFileResp) {
 
 	currNode, _ := getCurrNode(threadId, fileResp.Sn)
 	if fileResp.Success {
+
+		PrintLog(threadId, "确认的索引值", fileResp.Index, "开始下一个")
 		currNode.SignInTime = time.Now()
 		currNode.FileOffset += currNode.ReadSize
 		currNode.FileIndex += 1
 		GSn2ConnMap.Store(fileResp.Sn, currNode)
 
 		if currNode.FileOffset == currNode.FileSize {
-			PrintLog(threadId, "===>文件结束...", currNode.FileOffset, currNode.FileSize)
 
+			PrintLog(threadId, "文件结束===>", currNode.FileOffset, currNode.FileSize)
 			currNode.Status = STATUS_INIT
 			GSn2ConnMap.Store(fileResp.Sn, currNode)
-
 			r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
 			var e mfiles.MFiles
 			e.UpdateBy = UPDATE_USER
@@ -638,10 +640,13 @@ func CmdPushFileResp(threadId int, conn *net.TCPConn, fileResp PushFileResp) {
 			de.UpdateTime = de.EndTime
 			de.UpdateBy = UPDATE_USER
 			rr.UpdataEntity2(currNode.BatchNo, de, nil)
-
-		} else {
+		} else if currNode.FileOffset < currNode.FileSize {
 			pubPushFile(threadId, conn, fileResp.Sn, fileResp.Chip_id)
+		} else {
+			PrintLog(threadId, "收到意外的确认...")
 		}
+	} else {
+		PrintLog(threadId, "设备不确认...")
 	}
 	PrintTail(threadId, PUSH_FILE_RESP+fileResp.Sn)
 }
@@ -935,6 +940,7 @@ func tcpPipe(threadId int, conn *net.TCPConn) {
 		conn.SetReadDeadline(time.Time{})
 		if nSum == 0 {
 			if int(readBuf[0]) != 0x7E {
+				err = fmt.Errorf("Error Packet And Close Connection...")
 				PrintLog(threadId, "Error Packet And Close Connection...")
 				return
 			}
@@ -948,6 +954,7 @@ func tcpPipe(threadId int, conn *net.TCPConn) {
 			packLen := BytesToInt(packBuf[2:6])
 			if packLen < 6 {
 				PrintLog(threadId, "PackLen <6 Error!")
+				err = fmt.Errorf("PackLen <6 Error!")
 				return
 			}
 			if nSum >= packLen {
