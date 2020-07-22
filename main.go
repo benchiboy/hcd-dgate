@@ -577,7 +577,7 @@ func pubPushFile(threadId int, conn *net.TCPConn, sn string, chipId string) (err
 			currNode.ReadSize = 0
 			currNode.FileOffset = currNode.FileSize
 		}
-		PrintHead(threadId, "文件最后一块===>", sn, currNode.FileOffset, currNode.ReadSize, currNode.FileIndex)
+		PrintHead(threadId, "文件最后一块===>", currNode.FileName, sn, currNode.FileOffset, currNode.ReadSize, currNode.FileIndex)
 
 	} else {
 		pushFile.Fragment.Eof = false
@@ -589,9 +589,10 @@ func pubPushFile(threadId int, conn *net.TCPConn, sn string, chipId string) (err
 	pushFile.Method = PUSH_FILE
 	pushFile.Sn = sn
 	pushFile.Fragment.Index = currNode.FileIndex
+	var err error
 	fileBuf, err := ioutil.ReadFile(currNode.FileName)
 	if err != nil {
-		log.Println(err)
+		PrintLog(threadId, err)
 		return err, 0
 	}
 	pushFile.Fragment.Source = hex.EncodeToString(fileBuf[currNode.FileOffset : currNode.FileOffset+currNode.ReadSize])
@@ -614,7 +615,6 @@ func CmdPushFileResp(threadId int, conn *net.TCPConn, fileResp PushFileResp) {
 
 	currNode, _ := getCurrNode(threadId, fileResp.Sn)
 	if fileResp.Success {
-
 		PrintLog(threadId, "确认的索引值", fileResp.Index, "开始下一个")
 		currNode.SignInTime = time.Now()
 		currNode.FileOffset += currNode.ReadSize
@@ -622,7 +622,6 @@ func CmdPushFileResp(threadId int, conn *net.TCPConn, fileResp PushFileResp) {
 		GSn2ConnMap.Store(fileResp.Sn, currNode)
 
 		if currNode.FileOffset == currNode.FileSize {
-
 			PrintLog(threadId, "文件结束===>", currNode.FileOffset, currNode.FileSize)
 			currNode.Status = STATUS_INIT
 			GSn2ConnMap.Store(fileResp.Sn, currNode)
@@ -641,7 +640,11 @@ func CmdPushFileResp(threadId int, conn *net.TCPConn, fileResp PushFileResp) {
 			de.UpdateBy = UPDATE_USER
 			rr.UpdataEntity2(currNode.BatchNo, de, nil)
 		} else if currNode.FileOffset < currNode.FileSize {
-			pubPushFile(threadId, conn, fileResp.Sn, fileResp.Chip_id)
+			err, _ := pubPushFile(threadId, conn, fileResp.Sn, fileResp.Chip_id)
+			if err != nil {
+				currNode.Status = STATUS_INIT
+				GSn2ConnMap.Store(fileResp.Sn, currNode)
+			}
 		} else {
 			PrintLog(threadId, "收到意外的确认...")
 		}

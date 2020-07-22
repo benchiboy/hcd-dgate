@@ -633,6 +633,14 @@ func BusiPushFileCtl(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
+	PrintLog(HTTP_THREAD, pushFile.Name, stat.Size())
+	if stat.Size() < 1 {
+		pushFileResp.ErrorCode = ERR_CODE_NOTEXIST
+		pushFileResp.ErrorMsg = pushFile.Name + "文件不能为空！"
+		Write_Response(pushFileResp, w, req, PUSH_FILE_INFO)
+		return
+	}
+
 	currNode.FileSize = stat.Size()
 	currNode.FileName = pushFile.Name
 	currNode.FileOffset = 0
