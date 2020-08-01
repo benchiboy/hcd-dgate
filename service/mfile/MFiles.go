@@ -955,6 +955,11 @@ func (r MFilesList) UpdataEntity(keyNo string, p MFiles, tr *sql.Tx) error {
 		valSlice = append(valSlice, p.Status)
 	}
 
+	if p.Percent != 0 {
+		colNames += "percent=?,"
+		valSlice = append(valSlice, p.Percent)
+	}
+
 	if p.FailMsg != "" {
 		colNames += "fail_msg=?,"
 
