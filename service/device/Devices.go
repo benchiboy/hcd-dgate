@@ -33,6 +33,7 @@ type Search struct {
 	DLong        string `json:"d_long"`
 	DLat         string `json:"d_lat"`
 	ImgUrl       string `json:"img_url"`
+	Icicd        string `json:"icicd"`
 	FcdClass     string `json:"hcd_class"`
 	EnteringTime string `json:"entering_time"`
 	FactoryTime  string `json:"factory_time"`
@@ -66,6 +67,7 @@ type Device struct {
 	Hospital     string `json:"hospital"`
 	DLong        string `json:"d_long"`
 	DLat         string `json:"d_lat"`
+	Icicd        string `json:"icicd"`
 	ImgUrl       string `json:"img_url"`
 	FcdClass     string `json:"hcd_class"`
 	EnteringTime string `json:"entering_time"`
@@ -816,6 +818,12 @@ func (r DeviceList) InsertEntity(p Device, tr *sql.Tx) error {
 		colNames += "img_url,"
 		colTags += "?,"
 		valSlice = append(valSlice, p.ImgUrl)
+	}
+
+	if p.Icicd != "" {
+		colNames += "icicd,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.Icicd)
 	}
 
 	if p.FcdClass != "" {

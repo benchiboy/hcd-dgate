@@ -36,6 +36,7 @@ type Search struct {
 	DoneCount  int    `json:"done_count"`
 	InfoMsg    string `json:"info_msg"`
 	Status     string `json:"status"`
+	Percent    int    `json:"percent"`
 	FailMsg    string `json:"fail_msg"`
 	StartTime  string `json:"start_time"`
 	EndTime    string `json:"end_time"`
@@ -71,6 +72,7 @@ type MFiles struct {
 	DoneCount  int    `json:"done_count"`
 	InfoMsg    string `json:"info_msg"`
 	Status     string `json:"status"`
+	Percent    int    `json:"percent"`
 	FailMsg    string `json:"fail_msg"`
 	StartTime  string `json:"start_time"`
 	EndTime    string `json:"end_time"`

@@ -144,8 +144,25 @@ func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 		PrintLog(threadId, heart.Sn+"未在线收到心跳包", conn)
 		conn.Close()
 	} else {
+
+		r := device.New(dbcomm.GetDB(), device.INFO)
+		var search device.Search
+		search.Sn = heart.Sn
+		if e, err := r.Get(search); err == nil {
+			if e.IsOnline == STATUS_OFFLINE {
+				PrintLog(threadId, heart.Sn+"未在线收到心跳包,更新数据库", conn)
+				onlineMap := map[string]interface{}{
+					IS_ONLINE: STATUS_ONLINE, DEVICE_TIME: time.Now().Format("2006-01-02 15:04:05")}
+				err = r.UpdateMap(fmt.Sprintf("%d", e.Id), onlineMap, nil)
+				if err != nil {
+					log.Println("更新失败", err)
+				}
+			}
+		}
+
 		currNode.SignInTime = time.Now()
 		currNode.CurrConn = conn
+
 		GSn2ConnMap.Store(heart.Sn, currNode)
 		GConn2SnMap.Store(conn, heart.Sn)
 		Send_Resp(threadId, conn, string(heartBuf))
@@ -182,17 +199,20 @@ func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
 			log.Println("更新失败", err)
 		}
 	} else {
-		var e device.Device
-		e.IsOnline = STATUS_ONLINE
-		e.DeviceTime = time.Now().Format("2006-01-02 15:04:05")
-		e.Sn = online.Devices[0].Sn
-		e.IsEnable = 1
-		e.FcdClass = "C"
-		e.ChipId = online.Devices[0].Chip_id
-		e.ProductType = online.Devices[0].Device_series
-		e.ProductNo = online.Devices[0].Device_name
-		e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
-		r.InsertEntity(e, nil)
+		for _, v := range online.Devices {
+			var e device.Device
+			e.IsOnline = STATUS_ONLINE
+			e.DeviceTime = time.Now().Format("2006-01-02 15:04:05")
+			e.Sn = v.Sn
+			e.IsEnable = 1
+			e.Icicd = v.Icicd
+			e.FcdClass = "C"
+			e.ChipId = v.Chip_id
+			e.ProductType = v.Device_series
+			e.ProductNo = v.Device_name
+			e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
+			r.InsertEntity(e, nil)
+		}
 	}
 	//插入设备在线历史
 	rr := onlinehis.New(dbcomm.GetDB(), onlinehis.INFO)
@@ -504,6 +524,18 @@ func CmdPostFile(threadId int, conn *net.TCPConn, postFile PostFile) {
 		de.UpdateBy = UPDATE_USER
 		rr.UpdataEntityExt(currNode.BatchNo, currNode.FileIndex, de, nil)
 	}
+	//更新文件传输的进度
+	{
+		rate := GetPercent(int64(currNode.FileIndex), int64(currNode.FileTotal))
+		PrintLog(threadId, "传输%", rate)
+		r := mfiles.New(dbcomm.GetDB(), mfiles.INFO)
+		var search mfiles.Search
+		search.BatchNo = currNode.BatchNo
+		var ne mfiles.MFiles
+		ne.Percent = rate
+		r.UpdataEntity(currNode.BatchNo, ne, nil)
+	}
+
 	var fResp PostFileResp
 	fResp.Method = postFile.Method
 	fResp.Sn = postFile.Sn
@@ -648,6 +680,18 @@ func CmdPushFileResp(threadId int, conn *net.TCPConn, fileResp PushFileResp) {
 		} else {
 			PrintLog(threadId, "收到意外的确认...")
 		}
+		//更新进度百分比
+		{
+			rate := GetPercent(int64(currNode.FileOffset), int64(currNode.FileSize))
+			PrintLog(threadId, "传输%", rate)
+			r := mfiles.New(dbcomm.GetDB(), mfiles.INFO)
+			var search mfiles.Search
+			search.BatchNo = currNode.BatchNo
+			var ne mfiles.MFiles
+			ne.Percent = rate
+			r.UpdataEntity(currNode.BatchNo, ne, nil)
+		}
+
 	} else {
 		PrintLog(threadId, "设备不确认...")
 	}

@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"time"
 )
 
@@ -167,6 +168,7 @@ type Device struct {
 	Device_series string `json:"device_series"`
 	Device_name   string `json:"device_name"`
 	Device_ver    string `json:"device_ver"`
+	Icicd         string `json:"icicd"`
 	Hw_ver        string `json:"hw_ver"`
 	Sw_ver        string `json:"sw_ver"`
 	Sn            string `json:"sn"`
@@ -1025,4 +1027,9 @@ func PathIsExist(path string) bool {
 		return false
 	}
 	return true
+}
+
+func GetPercent(a, b int64) int {
+	rate, _ := strconv.Atoi(fmt.Sprintf("%.f", float32(a)/float32(b)*100))
+	return rate
 }
