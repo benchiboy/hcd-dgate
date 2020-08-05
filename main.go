@@ -21,6 +21,7 @@ import (
 	"hcd-dgate/service/dbcomm"
 	"hcd-dgate/service/device"
 	"hcd-dgate/service/dfile"
+	"hcd-dgate/service/heartbeat"
 	"hcd-dgate/service/onlinehis"
 	"hcd-dgate/service/ver"
 
@@ -41,14 +42,15 @@ import (
 )
 
 var (
-	http_srv    *http.Server
-	dbUrl       string
-	ccdbUrl     string
-	listenPort  int
-	idleConns   int
-	openConns   int
-	GSn2ConnMap = &sync.Map{}
-	GConn2SnMap = &sync.Map{}
+	http_srv     *http.Server
+	dbUrl        string
+	ccdbUrl      string
+	listenPort   int
+	idleConns    int
+	saveHearbeat bool
+	openConns    int
+	GSn2ConnMap  = &sync.Map{}
+	GConn2SnMap  = &sync.Map{}
 )
 
 func SysConsoleDetail(w http.ResponseWriter, req *http.Request) {
@@ -129,7 +131,7 @@ func Send_Resp(threadId int, conn *net.TCPConn, resp string) error {
 */
 func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 	//PrintHead(threadId, HEARTBEAT)
-	PrintLog(threadId, heart.Sn, "HearBeat Remote Ip===>", conn.RemoteAddr().String())
+	PrintLog(threadId, heart.Sn, "HearBeat Remote Ip===>", heart.Sn, conn.RemoteAddr().String())
 	var heartResp HeartbeatResp
 	heartResp.Chip_id = heart.Chip_id
 	heartResp.Method = HEARTBEAT_RESP
@@ -159,6 +161,13 @@ func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 				}
 			}
 		}
+
+		//log.Println("SaveHearbeat===>")
+		h := heartbeat.New(dbcomm.GetDB(), heartbeat.INFO)
+		var e heartbeat.Heartbeat
+		e.Sn = heart.Sn
+		e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
+		h.InsertEntity(e, nil)
 
 		currNode.SignInTime = time.Now()
 		currNode.CurrConn = conn
@@ -1062,6 +1071,8 @@ func init() {
 	c.Get("/config/CCDB_URL", &ccdbUrl)
 	c.Get("/config/OPEN_CONNS", &openConns)
 	c.Get("/config/IDLE_CONNS", &idleConns)
+	c.Get("/config/SAVE_HEARBEAT", &saveHearbeat)
+
 	PrintTail(MAIN_THREAD, "Init...")
 }
 
