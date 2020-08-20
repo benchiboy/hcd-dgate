@@ -26,7 +26,7 @@ func InitDB(dbUrl string, ccdbUrl string, idleConns int, openConns int) {
 	}
 	db.SetMaxIdleConns(idleConns)
 	db.SetMaxOpenConns(openConns)
-	db.SetConnMaxLifetime(time.Second * 2)
+	db.SetConnMaxLifetime(time.Second * 3600 * 2)
 	log.Println("Database Connected successful!")
 
 }

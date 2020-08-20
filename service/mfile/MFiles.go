@@ -955,7 +955,7 @@ func (r MFilesList) UpdataEntity(keyNo string, p MFiles, tr *sql.Tx) error {
 		valSlice = append(valSlice, p.Status)
 	}
 
-	if p.Percent != 0 {
+	if p.Percent != -1 {
 		colNames += "percent=?,"
 		valSlice = append(valSlice, p.Percent)
 	}
@@ -1023,14 +1023,14 @@ func (r MFilesList) UpdataEntity(keyNo string, p MFiles, tr *sql.Tx) error {
 
 	ret, err := stmt.Exec(valSlice...)
 	if err != nil {
-		log.Println(SQL_INSERT, "Update data error: %v\n", err)
+		log.Println(SQL_UPDATE, "Update data error: %v\n", err)
 		return err
 	}
 	if LastInsertId, err := ret.LastInsertId(); nil == err {
-		log.Println(SQL_INSERT, "LastInsertId:", LastInsertId)
+		log.Println(SQL_UPDATE, "LastInsertId:", LastInsertId)
 	}
 	if RowsAffected, err := ret.RowsAffected(); nil == err {
-		log.Println(SQL_INSERT, "RowsAffected:", RowsAffected)
+		log.Println(SQL_UPDATE, "RowsAffected:", RowsAffected)
 	}
 
 	if r.Level == DEBUG {
@@ -1062,6 +1062,7 @@ func (r MFilesList) UpdateMap(keyNo string, m map[string]interface{}, tr *sql.Tx
 	}
 	var stmt *sql.Stmt
 	var err error
+
 	if tr == nil {
 		stmt, err = r.DB.Prepare(updateSql)
 	} else {

@@ -532,17 +532,19 @@ func CmdPostFile(threadId int, conn *net.TCPConn, postFile PostFile) {
 		de.UpdateTime = de.EndTime
 		de.UpdateBy = UPDATE_USER
 		rr.UpdataEntityExt(currNode.BatchNo, currNode.FileIndex, de, nil)
-	}
-	//更新文件传输的进度
-	{
-		rate := GetPercent(int64(currNode.FileIndex), int64(currNode.FileTotal))
-		PrintLog(threadId, "传输%", rate)
-		r := mfiles.New(dbcomm.GetDB(), mfiles.INFO)
-		var search mfiles.Search
-		search.BatchNo = currNode.BatchNo
-		var ne mfiles.MFiles
-		ne.Percent = rate
-		r.UpdataEntity(currNode.BatchNo, ne, nil)
+
+		//更新文件传输的进度
+		{
+			rate := GetPercent(int64(currNode.FileIndex), int64(currNode.FileTotal))
+			PrintLog(threadId, "传输%", rate)
+			r := mfiles.New(dbcomm.GetDB(), mfiles.INFO)
+			var search mfiles.Search
+			search.BatchNo = currNode.BatchNo
+			var ne mfiles.MFiles
+			ne.Percent = rate
+			r.UpdataEntity(currNode.BatchNo, ne, nil)
+		}
+
 	}
 
 	var fResp PostFileResp
