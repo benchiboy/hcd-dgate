@@ -1003,7 +1003,7 @@ func (r DFilesList) UpdataEntityExt(batchNo string, indexNo int, p DFiles, tr *s
 		valSlice = append(valSlice, p.FileName)
 	}
 
-	if p.FileIndex != 0 {
+	if p.FileIndex != -1 {
 		colNames += "file_index=?,"
 		valSlice = append(valSlice, p.FileIndex)
 	}
@@ -1064,6 +1064,8 @@ func (r DFilesList) UpdataEntityExt(batchNo string, indexNo int, p DFiles, tr *s
 	if r.Level == DEBUG {
 		log.Println(SQL_INSERT, exeSql)
 	}
+
+	log.Println(SQL_INSERT, exeSql)
 
 	var stmt *sql.Stmt
 	var err error

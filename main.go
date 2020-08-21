@@ -532,7 +532,6 @@ func CmdPostFile(threadId int, conn *net.TCPConn, postFile PostFile) {
 		de.UpdateTime = de.EndTime
 		de.UpdateBy = UPDATE_USER
 		rr.UpdataEntityExt(currNode.BatchNo, currNode.FileIndex, de, nil)
-
 		//更新文件传输的进度
 		{
 			rate := GetPercent(int64(currNode.FileIndex), int64(currNode.FileTotal))
@@ -902,7 +901,7 @@ func OffLine(threadId int, sn string, offType string) {
 		if offType == FORCE_OFFLINE {
 			mf.FailMsg = "网络中断或设备关闭连接错误"
 		} else {
-			mf.FailMsg = "程序重启,终止文件传输"
+			mf.FailMsg = "终止文件传输"
 		}
 		rrr.UpdataEntity(e.BatchNo, mf, nil)
 		//删除终止引起下载的文件
