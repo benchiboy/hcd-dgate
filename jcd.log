@@ -325,3 +325,51 @@
 2020/08/21 00:03:48.120640 util.go:57: --->[Thread- 88888 ] [退出前准备..]
 2020/08/21 00:03:48.120670 util.go:57: --->[Thread- 88888 ] [链接完全释放...]
 2020/08/21 00:03:48.120693 util.go:57: --->[Thread- 88888 ] [完全退出！]
+2020/09/08 07:20:50.010121 main.go:1063: config file == config-ci.json
+2020/09/08 07:20:50.011504 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/09/08 07:20:50.011585 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/09/08 07:20:50.011617 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/09/08 07:20:50.187035 Dbcomm.go:30: Database Connected successful!
+2020/09/08 07:20:50.187184 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/09/08 07:20:50.187237 Devices.go:580: Select ===> Select id,sn,is_online from lk_device where 1=1 
+2020/09/08 07:20:50.274293 Devices.go:594: Elapsed===> ===> 664
+2020/09/08 07:20:50.274376 Devices.go:596: Elapsed===> 87.130904ms
+2020/09/08 07:20:50.274524 util.go:53: 《========[Thread- 88888 ] [init_status]
+2020/09/08 07:20:50.274830 util.go:49: ========》[Thread- 77777 ] [WebServer]
+2020/09/08 07:20:50.274932 util.go:57: --->[Thread- 99999 ] [当前在线总数 Conn Cnt==>: 0 Sn Cnt===>: 0]
+2020/09/08 07:20:52.368196 util.go:57: --->[Thread- 88888 ] [Accept==> accept tcp [::]:8089: use of closed network connection]
+2020/09/08 07:20:52.368374 util.go:57: --->[Thread- 88888 ] [退出前准备..]
+2020/09/08 07:20:52.368417 util.go:57: --->[Thread- 88888 ] [链接完全释放...]
+2020/09/08 07:20:52.368442 util.go:57: --->[Thread- 88888 ] [完全退出！]
+2020/09/08 11:34:56.069853 main.go:1064: config file == config-ci.json
+2020/09/08 11:34:56.071850 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/09/08 11:34:56.071923 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/09/08 11:34:56.071960 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/09/08 11:34:56.311864 Dbcomm.go:30: Database Connected successful!
+2020/09/08 11:34:56.312163 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/09/08 11:34:56.312297 Devices.go:580: Select ===> Select id,sn,is_online from lk_device where 1=1 
+2020/09/08 11:34:56.376949 Devices.go:594: Elapsed===> ===> 664
+2020/09/08 11:34:56.377131 Devices.go:596: Elapsed===> 64.8265ms
+2020/09/08 11:34:56.377231 util.go:53: 《========[Thread- 88888 ] [init_status]
+2020/09/08 11:34:56.377566 util.go:49: ========》[Thread- 77777 ] [WebServer]
+2020/09/08 11:34:56.377687 util.go:57: --->[Thread- 99999 ] [当前在线总数 Conn Cnt==>: 0 Sn Cnt===>: 0]
+2020/09/08 11:34:58.325225 util.go:57: --->[Thread- 88888 ] [Accept==> accept tcp [::]:8089: use of closed network connection]
+2020/09/08 11:34:58.325374 util.go:57: --->[Thread- 88888 ] [退出前准备..]
+2020/09/08 11:34:58.325440 util.go:57: --->[Thread- 88888 ] [链接完全释放...]
+2020/09/08 11:34:58.325472 util.go:57: --->[Thread- 88888 ] [完全退出！]
+2020/09/08 11:39:28.480835 main.go:1066: config file == config-ci.json
+2020/09/08 11:39:28.481308 util.go:53: 《========[Thread- 88888 ] [Init...]
+2020/09/08 11:39:28.481384 util.go:57: --->[Thread- 88888 ] [<==========MicroPoint Gate Starting...==========>]
+2020/09/08 11:39:28.481425 util.go:57: --->[Thread- 88888 ] [<==========Version: 0.8.0 ===================>]
+2020/09/08 11:39:28.615979 Dbcomm.go:30: Database Connected successful!
+2020/09/08 11:39:28.616101 util.go:49: ========》[Thread- 88888 ] [init_status]
+2020/09/08 11:39:28.616231 Devices.go:580: Select ===> Select id,sn,is_online from lk_device where 1=1 
+2020/09/08 11:39:28.687152 Devices.go:594: Elapsed===> ===> 664
+2020/09/08 11:39:28.687320 Devices.go:596: Elapsed===> 71.066355ms
+2020/09/08 11:39:28.687426 util.go:53: 《========[Thread- 88888 ] [init_status]
+2020/09/08 11:39:28.687625 util.go:49: ========》[Thread- 77777 ] [WebServer]
+2020/09/08 11:39:28.687741 util.go:57: --->[Thread- 99999 ] [当前在线总数 Conn Cnt==>: 0 Sn Cnt===>: 0]
+2020/09/08 11:39:30.719831 util.go:57: --->[Thread- 88888 ] [Accept==> accept tcp [::]:8089: use of closed network connection]
+2020/09/08 11:39:30.719929 util.go:57: --->[Thread- 88888 ] [退出前准备..]
+2020/09/08 11:39:30.719976 util.go:57: --->[Thread- 88888 ] [链接完全释放...]
+2020/09/08 11:39:30.720003 util.go:57: --->[Thread- 88888 ] [完全退出！]

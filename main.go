@@ -197,11 +197,14 @@ func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
 		log.Println(err)
 	}
 	//检测设备是否存在，如果不存在，插入；否则更新
-	r := device.New(dbcomm.GetDB(), device.INFO)
+
+	log.Printf("Online %+v", online)
+
+	r := device.New(dbcomm.GetDB(), device.DEBUG)
 	var search device.Search
 	search.Sn = onlineResp.Sn
 	if e, err := r.Get(search); err == nil {
-		onlineMap := map[string]interface{}{
+		onlineMap := map[string]interface{}{"icicd": online.Devices[0].Icicd,
 			IS_ONLINE: STATUS_ONLINE, DEVICE_TIME: time.Now().Format("2006-01-02 15:04:05")}
 		err = r.UpdateMap(fmt.Sprintf("%d", e.Id), onlineMap, nil)
 		if err != nil {

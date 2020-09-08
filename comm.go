@@ -168,7 +168,7 @@ type Device struct {
 	Device_series string `json:"device_series"`
 	Device_name   string `json:"device_name"`
 	Device_ver    string `json:"device_ver"`
-	Icicd         string `json:"icicd"`
+	Icicd         string `json:"iccid"`
 	Hw_ver        string `json:"hw_ver"`
 	Sw_ver        string `json:"sw_ver"`
 	Sn            string `json:"sn"`
