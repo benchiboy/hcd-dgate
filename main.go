@@ -341,7 +341,7 @@ func CmdPostInstallDrive(threadId int, conn *net.TCPConn, postInstDrive PostInst
 	currNode, _ := getCurrNode(threadId, postInstDrive.Sn)
 	var e chips.Chips
 	e.Sn = postInstDrive.Sn
-	log.Println("postInstDrive===>%+v", postInstDrive)
+	log.Printf("postInstDrive===>%+v\n", postInstDrive)
 	for _, v := range postInstDrive.Datadrive {
 		e.ChipLot = v.Lot
 		e.ChipInstallDate = v.Install_time
