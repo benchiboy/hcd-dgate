@@ -341,6 +341,7 @@ func CmdPostInstallDrive(threadId int, conn *net.TCPConn, postInstDrive PostInst
 	currNode, _ := getCurrNode(threadId, postInstDrive.Sn)
 	var e chips.Chips
 	e.Sn = postInstDrive.Sn
+	log.Println("postInstDrive===>%+v", postInstDrive)
 	for _, v := range postInstDrive.Datadrive {
 		e.ChipLot = v.Lot
 		e.ChipInstallDate = v.Install_time
@@ -743,7 +744,8 @@ func CmdPushInfoResp(threadId int, conn *net.TCPConn, infoResp PushInfoResp) {
 func ProcPacket(threadId int, conn *net.TCPConn, packBuf []byte) error {
 	var command Command
 	if err := json.Unmarshal(packBuf, &command); err != nil {
-		log.Println(err)
+		log.Println("错误包===>", err)
+		return err
 	}
 	if command.Method != HEARTBEAT {
 		if len(packBuf) < 256 {
