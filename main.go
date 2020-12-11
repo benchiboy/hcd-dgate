@@ -347,6 +347,7 @@ func CmdPostInstallDrive(threadId int, conn *net.TCPConn, postInstDrive PostInst
 		e.ChipInstallDate = v.Install_time
 		e.ProductDate = v.Create_time
 		e.CreateTime = time.Now().Format("2006-01-02 15:04:05")
+		e.InstallType = v.Install_type
 		r.InsertEntity(e, nil)
 	}
 	rr := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)

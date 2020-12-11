@@ -32,6 +32,7 @@ type Search struct {
 	ActiveDate      string `json:"active_date"`
 	ChipInstallDate string `json:"chip_install_date"`
 	CreateTime      string `json:"create_time"`
+	InstallType     string `json:"install_type"`
 	CreateBy        int64  `json:"create_by"`
 	UpdateTime      string `json:"update_time"`
 	UpdateBy        int64  `json:"update_by"`
@@ -58,6 +59,7 @@ type Chips struct {
 	ActiveDate      string `json:"active_date"`
 	ChipInstallDate string `json:"chip_install_date"`
 	CreateTime      string `json:"create_time"`
+	InstallType     string `json:"install_type"`
 	CreateBy        int64  `json:"create_by"`
 	UpdateTime      string `json:"update_time"`
 	UpdateBy        int64  `json:"update_by"`

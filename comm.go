@@ -239,6 +239,7 @@ type Datadrive struct {
 	Lot          string `json:"lot"`
 	Create_time  string `json:"create_time"`
 	Install_time string `json:"install_time"`
+	Install_type string `json:"install_type"`
 }
 
 type PostInstallDataDriveResp struct {
