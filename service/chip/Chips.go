@@ -525,6 +525,12 @@ func (r ChipsList) InsertEntity(p Chips, tr *sql.Tx) error {
 		valSlice = append(valSlice, p.ProductDate)
 	}
 
+	if p.InstallType != "" {
+		colNames += "install_type,"
+		colTags += "?,"
+		valSlice = append(valSlice, p.InstallType)
+	}
+
 	if p.ActiveDate != "" {
 		colNames += "active_date,"
 		colTags += "?,"

@@ -60,7 +60,7 @@ func SysConsoleDetail(w http.ResponseWriter, req *http.Request) {
 	if err = json.Unmarshal(reqBuf, &snDetail); err != nil {
 		snDetailResp.ErrorCode = ERR_CODE_JSONERR
 		snDetailResp.ErrorMsg = err.Error()
-		Write_Response(snDetailResp, w, req, GET_FILE)
+		Write_Response(HTTP_THREAD, snDetailResp, w, req, GET_FILE)
 		return
 	}
 	defer req.Body.Close()
@@ -70,7 +70,7 @@ func SysConsoleDetail(w http.ResponseWriter, req *http.Request) {
 	e, _ := GSn2ConnMap.Load(snDetail.Sn)
 	info, _ := e.(StoreInfo)
 	snDetailResp.Info = info
-	Write_Response(snDetailResp, w, req, "DETAIL")
+	Write_Response(HTTP_THREAD, snDetailResp, w, req, "DETAIL")
 
 }
 
@@ -161,7 +161,6 @@ func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 				}
 			}
 		}
-
 		//log.Println("SaveHearbeat===>")
 		h := heartbeat.New(dbcomm.GetDB(), heartbeat.INFO)
 		var e heartbeat.Heartbeat
@@ -186,7 +185,29 @@ func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 	3、更新数据库的在线状态
 */
 func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
+
 	PrintHead(threadId, ONLINE+"--->"+online.Devices[0].Sn)
+	sn := online.Devices[0].Sn
+	if len(sn) != 14 {
+		PrintHead(threadId, "SN长度不对,拒绝")
+		conn.Close()
+		return
+	}
+
+	if sn[6:7] < "A" || sn[6:7] > "Z" {
+		PrintHead(threadId, "SN 第7位不是字母")
+		conn.Close()
+		return
+	}
+
+	if sn[0:2] != "01" {
+		PrintHead(threadId, "SN两位位不是01")
+		conn.Close()
+		return
+	}
+
+	fmt.Println(len(sn), sn[0:2], sn[6:7])
+
 	var onlineResp OnlineResp
 	onlineResp.Method = online.Method
 	onlineResp.Sn = online.Devices[0].Sn
@@ -200,7 +221,7 @@ func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
 
 	log.Printf("Online %+v", online)
 
-	r := device.New(dbcomm.GetDB(), device.DEBUG)
+	r := device.New(dbcomm.GetDB(), device.INFO)
 	var search device.Search
 	search.Sn = onlineResp.Sn
 	if e, err := r.Get(search); err == nil {
@@ -259,7 +280,7 @@ func CmdGetColoPhonResp(threadId int, conn *net.TCPConn, phonResp GetColophonRes
 	PrintHead(threadId, GET_COLOPHON_RESP)
 
 	currNode, _ := getCurrNode(threadId, phonResp.Sn)
-	r := mfiles.New(dbcomm.GetDB(), mfiles.DEBUG)
+	r := mfiles.New(dbcomm.GetDB(), mfiles.INFO)
 	var ne mfiles.MFiles
 	ne.EndTime = time.Now().Format("2006-01-02 15:04:05")
 	ne.UpdateTime = ne.EndTime
@@ -745,7 +766,7 @@ func CmdPushInfoResp(threadId int, conn *net.TCPConn, infoResp PushInfoResp) {
 func ProcPacket(threadId int, conn *net.TCPConn, packBuf []byte) error {
 	var command Command
 	if err := json.Unmarshal(packBuf, &command); err != nil {
-		log.Println("错误包===>", err)
+		PrintLog(threadId, "错误包===>", err)
 		return err
 	}
 	if command.Method != HEARTBEAT {
@@ -876,7 +897,9 @@ func getOnlineCount() (int, int) {
 */
 func OffLine(threadId int, sn string, offType string) {
 	PrintHead(threadId, OFFLINE, sn)
+
 	r := device.New(dbcomm.GetDB(), device.INFO)
+
 	onlineMap := map[string]interface{}{DEVICE_TIME: time.Now().Format("2006-01-02 15:04:05"),
 		IS_ONLINE: STATUS_OFFLINE}
 	err := r.UpdateMapEx(sn, onlineMap, nil)
@@ -903,11 +926,13 @@ func OffLine(threadId int, sn string, offType string) {
 		mf.UpdateTime = time.Now().Format("2006-01-02 15:04:05")
 		mf.UpdateBy = UPDATE_USER
 		mf.EndTime = mf.UpdateTime
-		mf.Status = STATUS_FAIL
+
 		if offType == FORCE_OFFLINE {
-			mf.FailMsg = "网络中断或设备关闭连接错误"
+			mf.FailMsg = "人工终止操作"
+			mf.Status = STATUS_CANCEL
 		} else {
-			mf.FailMsg = "终止文件传输"
+			mf.FailMsg = "网络中断或设备关闭连接错误"
+			mf.Status = STATUS_FAIL
 		}
 		rrr.UpdataEntity(e.BatchNo, mf, nil)
 		//删除终止引起下载的文件
@@ -967,11 +992,12 @@ func tcpPipe(threadId int, conn *net.TCPConn) {
 				if node.CurrConn == conn {
 					PrintLog(threadId, sn+"连接句柄匹配", node.CurrConn, conn)
 					GSn2ConnMap.Delete(sn)
-					if strings.Contains(err.Error(), "use of closed network connection") {
+					if node.IsStop {
 						OffLine(threadId, sn, FORCE_OFFLINE)
 					} else {
 						OffLine(threadId, sn, ACTION_OFFLINE)
 					}
+
 				} else {
 					PrintLog(threadId, sn+"连接句柄不匹配", node.CurrConn, conn)
 				}
@@ -993,13 +1019,19 @@ func tcpPipe(threadId int, conn *net.TCPConn) {
 	var nSum int32
 	for {
 		conn.SetReadDeadline(time.Now().Add(time.Second * 420))
+
 		readBuf := make([]byte, 1024*100)
 		var nLen int
 		nLen, err = reader.Read(readBuf)
-		if err != nil || nLen <= 0 {
+
+		if err == io.EOF {
+			PrintLog(threadId, "Client disconnected")
+			return
+		} else if err != nil {
 			PrintLog(threadId, "Read Error===>", err.Error(), "Len==", nLen)
 			return
 		}
+
 		conn.SetReadDeadline(time.Time{})
 		if nSum == 0 {
 			if int(readBuf[0]) != 0x7E {
@@ -1044,6 +1076,7 @@ func go_WebServer() {
 	http.HandleFunc("/dgate/busiGetDataDrives", BusiGetDataDriveCtl)
 	http.HandleFunc("/dgate/busiPushInfo", BusiPushInfoCtl)
 	http.HandleFunc("/dgate/busiQueryStatus", BusiQueryStatusCtl)
+	http.HandleFunc("/dgate/busiCancel", BusiCancelCtl)
 	http.HandleFunc("/dgate/consoleDetail", SysConsoleDetail)
 	http.HandleFunc("/dgate/console", SysConsole)
 	http_srv = &http.Server{
@@ -1083,47 +1116,49 @@ func init() {
 	PrintTail(MAIN_THREAD, "Init...")
 }
 
+func watch() {
+	for {
+		i := 0
+		GConn2SnMap.Range(func(k, v interface{}) bool {
+			i++
+			return true
+		})
+		j := 0
+		GSn2ConnMap.Range(func(k, v interface{}) bool {
+			if value, ok := v.(StoreInfo); ok == true {
+				duration := time.Now().Sub(value.SignInTime)
+				sn, _ := k.(string)
+				if duration.Minutes() > 6.00 {
+					PrintLog(MONITOR_THREAD, "发现超时设备", duration.Minutes(), sn)
+				}
+			}
+			j++
+			return true
+		})
+		PrintLog(MONITOR_THREAD, "当前在线总数 Conn Cnt==>:", i, "Sn Cnt===>:", j)
+		time.Sleep(time.Second * 10)
+	}
+}
+
 func main() {
 	PrintLog(MAIN_THREAD, "<==========MicroPoint Gate Starting...==========>")
 	PrintLog(MAIN_THREAD, "<==========Version:", MainVer, "===================>")
-	dbcomm.InitDB(dbUrl, ccdbUrl, idleConns, openConns)
 
+	dbcomm.InitDB(dbUrl, ccdbUrl, idleConns, openConns)
 	InitStatus()
 
 	var tcpAddr *net.TCPAddr
 	stop_chan := make(chan os.Signal) // 接收系统中断信号
 	signal.Notify(stop_chan, syscall.SIGINT, syscall.SIGTERM)
 
+	//
 	go go_WebServer()
-	///// 观察设备连接
-	go func() {
-		for {
-			i := 0
-			GConn2SnMap.Range(func(k, v interface{}) bool {
-				i++
-				return true
-			})
-			j := 0
-			GSn2ConnMap.Range(func(k, v interface{}) bool {
-				if value, ok := v.(StoreInfo); ok == true {
-					duration := time.Now().Sub(value.SignInTime)
-					sn, _ := k.(string)
-					if duration.Minutes() > 6.00 {
-						PrintLog(MONITOR_THREAD, "发现超时设备", duration.Minutes(), sn)
-					}
-				}
-				j++
-				return true
-			})
-			PrintLog(MONITOR_THREAD, "当前在线总数 Conn Cnt==>:", i, "Sn Cnt===>:", j)
-			time.Sleep(time.Second * 10)
-		}
-	}()
+	// 观察设备连接
+	go watch()
 
 	tcpAddr, _ = net.ResolveTCPAddr("tcp", ":8089")
 	tcpListener, _ := net.ListenTCP("tcp", tcpAddr)
-
-	///// 程序关闭善后处理
+	// 程序关闭善后处理
 	go func(listen *net.TCPListener) {
 		<-stop_chan
 		listen.Close()
@@ -1148,14 +1183,15 @@ func main() {
 		}
 		PrintLog(MAIN_THREAD, "完全退出！")
 	}()
-	/////主流程处理
+	//主流程处理
 	for {
 		tcpConn, err := tcpListener.AcceptTCP()
 		if err != nil {
 			PrintLog(MAIN_THREAD, "Accept==>", err)
 			break
 		}
-		PrintLog(MAIN_THREAD, "New Conn====>"+tcpConn.RemoteAddr().String())
+		tcpConn.SetKeepAlive(true)
+		PrintLog(MAIN_THREAD, "New Conn===>"+tcpConn.RemoteAddr().String())
 		rand.Seed(time.Now().UnixNano())
 		go tcpPipe(rand.Intn(20000), tcpConn)
 	}
