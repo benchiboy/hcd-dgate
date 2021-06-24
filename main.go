@@ -23,6 +23,9 @@ import (
 	"hcd-dgate/service/dfile"
 	"hcd-dgate/service/heartbeat"
 	"hcd-dgate/service/onlinehis"
+
+	"hcd-dgate/service/denylog"
+
 	"hcd-dgate/service/ver"
 
 	//	"hcd-dgate/util"
@@ -178,6 +181,16 @@ func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 	//PrintTail(threadId, HEARTBEAT)
 }
 
+func DenyLog(threadId int, conn *net.TCPConn, online Online, reason string) {
+	var d denylog.Deny
+	r := denylog.New(dbcomm.GetDB(), denylog.INFO)
+	d.DeviceName = online.Devices[0].Device_name
+	d.Sn = online.Devices[0].Sn
+	d.Reason = reason
+	d.OnlineTime = time.Now().Format("2006-01-02 15:04:05")
+	r.Insert(d)
+}
+
 /*
 	接收设备在线登录，完成功能如下：
 	1、把设备的当前连接保存在全局MAP
@@ -185,28 +198,61 @@ func CmdHeartBeat(threadId int, conn *net.TCPConn, heart Heartbeat) {
 	3、更新数据库的在线状态
 */
 func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
-
 	PrintHead(threadId, ONLINE+"--->"+online.Devices[0].Sn)
 	sn := online.Devices[0].Sn
+	fmt.Println("Sn拒绝分解:", len(sn), sn[0:2], sn[6:7])
+
+	if online.Devices[0].Device_name == "I300" {
+		if sn[0:5] != "01150" {
+			conn.Close()
+			DenyLog(threadId, conn, online, "I300不是01150开头")
+			return
+		}
+	}
+	if online.Devices[0].Device_name == "I200" {
+		if sn[0:5] != "01180" {
+			conn.Close()
+			DenyLog(threadId, conn, online, "I200不是01180开头")
+			return
+		}
+	}
+
+	if online.Devices[0].Device_name == "Smart" {
+		if sn[0:5] != "01160" {
+			conn.Close()
+			DenyLog(threadId, conn, online, "Smart不是01160开头")
+			return
+		}
+	}
+
+	if online.Devices[0].Device_name == "mLabs V3" {
+		if !(sn[0:5] == "01140" || sn[0:5] == "01400") {
+			conn.Close()
+			DenyLog(threadId, conn, online, "mLabs V3不是01140或开头")
+			return
+		}
+	}
+
 	if len(sn) != 14 {
 		PrintHead(threadId, "SN长度不对,拒绝")
 		conn.Close()
+		DenyLog(threadId, conn, online, "SN长度不对,拒绝")
 		return
 	}
 
 	if sn[6:7] < "A" || sn[6:7] > "Z" {
 		PrintHead(threadId, "SN 第7位不是字母")
+		DenyLog(threadId, conn, online, "SN 第7位不是字母")
 		conn.Close()
 		return
 	}
 
 	if sn[0:2] != "01" {
 		PrintHead(threadId, "SN两位位不是01")
+		DenyLog(threadId, conn, online, "SN两位位不是01")
 		conn.Close()
 		return
 	}
-
-	fmt.Println(len(sn), sn[0:2], sn[6:7])
 
 	var onlineResp OnlineResp
 	onlineResp.Method = online.Method
@@ -278,6 +324,8 @@ func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
 
 func CmdGetColoPhonResp(threadId int, conn *net.TCPConn, phonResp GetColophonResp) {
 	PrintHead(threadId, GET_COLOPHON_RESP)
+
+	log.Printf("====>phonResp %+v", phonResp)
 
 	currNode, _ := getCurrNode(threadId, phonResp.Sn)
 	r := mfiles.New(dbcomm.GetDB(), mfiles.INFO)

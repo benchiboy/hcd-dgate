@@ -207,9 +207,13 @@ type OnlineResp struct {
 }
 
 type Version struct {
+	//老版本
 	Sw_ver       string `json:"sw_ver"`
 	Upgrade_time string `json:"upgrade_time"`
 	Channel      string `json:"channel"`
+	//新版本
+	Version_number string `json:"version_number"`
+	Version_name   string `json:"version_name"`
 }
 
 type GetColophonResp struct {
