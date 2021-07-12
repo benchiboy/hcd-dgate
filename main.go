@@ -199,8 +199,19 @@ func DenyLog(threadId int, conn *net.TCPConn, online Online, reason string) {
 */
 func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
 	PrintHead(threadId, ONLINE+"--->"+online.Devices[0].Sn)
+
+	if len(online.Devices) == 0 {
+		log.Printf("上线设备为空，拒绝")
+		conn.Close()
+		return
+	}
 	sn := online.Devices[0].Sn
-	fmt.Println("Sn拒绝分解:", len(sn), sn[0:2], sn[6:7])
+	if len(sn) != 14 {
+		PrintHead(threadId, "SN长度不对,拒绝")
+		conn.Close()
+		DenyLog(threadId, conn, online, "SN长度不对,拒绝")
+		return
+	}
 
 	if online.Devices[0].Device_name == "I300" {
 		if sn[0:5] != "01150" {
@@ -231,13 +242,6 @@ func CmdOnLine(threadId int, conn *net.TCPConn, online Online) {
 			DenyLog(threadId, conn, online, "mLabs V3不是01140或开头")
 			return
 		}
-	}
-
-	if len(sn) != 14 {
-		PrintHead(threadId, "SN长度不对,拒绝")
-		conn.Close()
-		DenyLog(threadId, conn, online, "SN长度不对,拒绝")
-		return
 	}
 
 	if sn[6:7] < "A" || sn[6:7] > "Z" {
